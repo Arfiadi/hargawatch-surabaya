@@ -11,25 +11,26 @@
   - 6 pasar termasuk Genteng; leading NaN dipangkas; `harga_kemarin` statis dihapus
 - ✅ **Silver layer tervalidasi**: `fact_harga_pasar` 477.097 baris, 0 NaN, 0 desimal, PK/FK konsisten
 - ✅ **Migrasi Supabase selesai** (`scripts/ingest_supabase.py`): 5 tabel terisi, verifikasi 0 NULL / 0 orphan
-- ✅ **Cron harian via GitHub Actions** (`.github/workflows/update_harian.yml` + `scripts/update_harian.py`)
-  - Jadwal 05:30 WIB, target data = kemarin
-  - Upsert incremental (ON CONFLICT DO UPDATE) — aman dijalankan berulang
+- ✅ **Cron harian lokal** — Task Scheduler Windows (`update_catchup.py`, jadwal 07:00, self-healing jendela 30 hari)
+- ⚠️ **GitHub Actions dihentikan** — Cloudflare memblokir IP datacenter runner (403 saat scrape); workflow dihapus dari repo. Alternatif masa depan: Oracle Cloud Always Free VM + Playwright stealth.
 
-## Setup GitHub Actions (sekali saja)
+## Setup GitHub Actions (ARSIP — dihentikan karena 403 Cloudflare)
 
-1. Buka repo GitHub → **Settings → Secrets and variables → Actions → New repository secret**
-2. Tambahkan 5 secret (nilai sama persis dengan `.env`):
-   `SUPABASE_HOST`, `SUPABASE_PORT`, `SUPABASE_DB`, `SUPABASE_USER`, `SUPABASE_PASSWORD`
-3. Workflow harus ada di **default branch (main)** — jadwal hanya jalan di situ
-4. Test manual: tab **Actions → update-harian → Run workflow**
-5. Cek log di tab Actions setelahnya; data baru terlihat di Table Editor Supabase
+~~Cron GitHub Actions~~ **TIDAK DIPAKAI.** Runner GitHub memakai IP datacenter yang
+diblokir Cloudflare milik siskaperbapo. Cron kini berjalan lokal via Task Scheduler:
 
-Catatan: scheduled workflow otomatis pause bila repo 60 hari tanpa aktivitas — cukup commit kecil untuk mengaktifkan lagi.
+```powershell
+schtasks /Create /TN "HargaWatch Update Harian" /TR "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd" /SC DAILY /ST 07:00 /F
+```
+
+Manual run: `python scripts/update_catchup.py`. Log: `logs/catchup.log`.
+Alternatif cloud yang layak dicoba nanti: Oracle Cloud Always Free VM (IP dedicated)
+dengan Playwright stealth sebagai pengganti `requests`.
 
 ## Yang sedang / berikutnya
 
 - [x] Jalankan `ingest_supabase.py` ke project Supabase (butuh `.env`, lihat `.env.example`)
-- [x] Cron harian: `update_harian.py` (scrape kemarin → upsert Supabase) via GitHub Actions
+- [x] Cron harian lokal (Task Scheduler + catch-up self-healing)
 - [ ] Tabel `fact_cuaca` & `fact_inflasi` (data sudah ada di `data/external/`)
 - [ ] Forecasting 7–14 hari + aturan early warning (Normal–Waspada–Tinggi)
 - [ ] Dashboard publik (Public View + Government/Analyst View)
