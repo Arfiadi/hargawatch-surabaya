@@ -1,0 +1,13 @@
+# Rahasia / kredensial
+.env
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Data besar hasil scrape & pipeline (tetap lokal, dibuat ulang lewat script)
+data/raw/
+data/processed/
+data/external/cuaca/
+*.json
