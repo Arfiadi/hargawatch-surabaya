@@ -107,21 +107,25 @@ def koneksi(retry=3):
     if not host:
         raise SystemExit("Kredensial belum ada. Buat file .env (lihat .env.example) "
                          "lalu isi SUPABASE_HOST/PORT/DB/USER/PASSWORD.")
-    param = dict(
-        host=host, port=os.getenv("SUPABASE_PORT", "6543"),
-        dbname=os.getenv("SUPABASE_DB", "postgres"),
+    port_utama = os.getenv("SUPABASE_PORT", "6543")
+    # Fallback: kalau port utama (6543 transaction pooler) macet, coba 5432 (session pooler)
+    kandidat_port = [port_utama] + (["5432"] if port_utama != "5432" else [])
+
+    param_dasar = dict(
+        host=host, dbname=os.getenv("SUPABASE_DB", "postgres"),
         user=os.getenv("SUPABASE_USER"), password=os.getenv("SUPABASE_PASSWORD"),
         sslmode="require", connect_timeout=30,
     )
     last_err = None
-    for percobaan in range(1, retry + 1):
-        try:
-            return psycopg2.connect(**param)
-        except psycopg2.OperationalError as e:
-            last_err = e
-            print(f"  [!] koneksi gagal (percobaan {percobaan}/{retry}): {e}")
-            if percobaan < retry:
-                time.sleep(5 * percobaan)
+    for port in kandidat_port:
+        for percobaan in range(1, retry + 1):
+            try:
+                return psycopg2.connect(**{**param_dasar, "port": port})
+            except psycopg2.OperationalError as e:
+                last_err = e
+                print(f"  [!] koneksi gagal (port {port}, percobaan {percobaan}/{retry}): {e}")
+                if percobaan < retry:
+                    time.sleep(5 * percobaan)
     raise last_err
 
 
