@@ -1,78 +1,151 @@
 # HargaWatch — Surabaya Food Price Intelligence & Early Warning
 
-Platform intelijen harga pangan dan peringatan dini Kota Surabaya: harga harian per pasar,
-perbandingan antar pasar, tren, volatilitas, margin produsen-konsumen, hingga dasar
-forecasting dan early warning.
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)
+![Data](https://img.shields.io/badge/Dataset-2020--2026%20%C2%B7%20476k%20baris-4479A1)
+![Pipeline](https://img.shields.io/badge/Update-Otomatis%20Harian-success)
 
-## Sumber Data
+Platform intelijen harga pangan dan peringatan dini Kota Surabaya. Pipeline data
+end-to-end yang mengubah data harga pasar tradisional menjadi dataset analitik siap
+pakai: harga harian per pasar, perbandingan antar pasar, tren, volatilitas, margin
+produsen–konsumen, hingga dasar forecasting dan early warning.
 
-| Sumber | Isi | Frekuensi | Cara |
-|---|---|---|---|
-| [SISKAPERBAPO Jatim](https://siskaperbapo.jatimprov.go.id/harga/tabel) | Harga konsumen 6 pasar Surabaya × 37 komoditas pangan | Harian | Scraping (endpoint AJAX internal) |
-| SISKAPERBAPO Jatim | Harga produsen (titik pantau Surabaya) | Harian | Scraping |
-| [Open-Meteo Archive](https://archive-api.open-meteo.com/) | Curah hujan, suhu, kelembapan Surabaya | Harian | API publik |
-| [BPS](https://www.bps.go.id/id/statistics-table) | Inflasi bulanan (M-to-M) per kota + nasional | Bulanan | Unduh manual → `data/external/inflasi/` |
-| Kalender Indonesia (`holidays`) | Libur nasional, cuti bersama, Ramadan | Statis | Dihitung saat preprocessing |
+---
 
-## Struktur Proyek
+## ✨ Fitur
 
+| Fitur | Keterangan |
+|---|---|
+| 🏪 **Harga harian 6 pasar** | Tambahrejo, Wonokromo, Genteng, Pucang Anom, Keputran, Soponyono |
+| 🥬 **37 komoditas pangan** | Beras, gula, minyak, daging, telur, cabai, bawang, sayur, ikan, dst. |
+| 📈 **Sejarah panjang** | Januari 2020 — hari ini (±2.435 hari × 37 komoditas × 6 pasar) |
+| ⚖️ **Dual-price column** | `harga_asli` (murni lapangan) vs `harga_imputasi` (kontinu, transparan via flag) |
+| 📅 **Kalender event** | Libur nasional, cuti bersama, Ramadan & pra-Ramadan, weekend |
+| 🌦 **Variabel eksternal** | Cuaca (Open-Meteo), inflasi (BPS), harga produsen |
+| 🔄 **Update otomatis** | Cron harian — tanpa intervensi manual |
+
+## 🏗 Arsitektur Pipeline
+
+```mermaid
+flowchart LR
+    subgraph Sumber Data
+        A[SISKAPERBAPO Jatim]
+        C[Open-Meteo API]
+        E[BPS Inflasi]
+    end
+    subgraph Lokal
+        B[Scrapers + Downloader]
+        R[data/raw]
+        G[preprocessing_final.py]
+        P[data/processed]
+    end
+    subgraph Cloud
+        H[(Supabase PostgreSQL)]
+    end
+    A --> B --> R --> G --> P --> H
+    C --> D[data/external] --> G
+    E --> F[data/external] --> G
+    H --> K[Dashboard / Analitik / Forecasting / Anggota tim]
 ```
-├── data/
-│   ├── external/          # cuaca (API), inflasi (manual), koordinat pasar
-│   ├── raw/               # hasil scraping mentah (tidak di-commit, regenerable)
-│   └── processed/         # silver layer: dim_* & fact_* (tidak di-commit)
-├── notebook/
-│   ├── eda_pasar.ipynb            # EDA data mentah pasar
-│   ├── eda_produsen.ipynb         # EDA data mentah produsen
-│   ├── eda_silver.ipynb           # EDA data bersih: tren, volatilitas, margin, Ramadan
-│   └── preprocessing_final.ipynb  # pipeline preprocessing (6 temuan audit terpecahkan)
-├── scripts/
-│   ├── scrape_data.py         # scraper harga konsumen per pasar
-│   ├── scrape_produsen.py     # scraper harga produsen
-│   ├── download_cuaca.py      # unduh cuaca historis (Open-Meteo)
-│   ├── tambah_kalender.py     # enrich kolom kalender/libur/Ramadan
-│   ├── preprocessing_final.py # raw → silver layer (dim_* + fact_*)
-│   └── ingest_supabase.py     # muat silver layer ke Supabase (PostgreSQL)
-└── .env.example               # template kredensial Supabase
-```
 
-## Dataset (Silver Layer)
+**Prinsip kualitas data** (hasil audit sains data):
+- `harga_asli` — nilai murni lapangan; hari tanpa entri = `NULL` (0 dibuang)
+- `harga_imputasi` — deret kontinu untuk grafik/model; gap ditambal *forward-fill murni*
+  (tanpa interpolasi → **tidak ada lookahead bias**), dibulatkan ke rupiah
+- `is_imputed` — transparansi penuh: setiap nilai estimasi tertanda
+- Foreign key + composite primary key — integritas relasional dijaga database
 
-| Tabel | Isi | Baris |
-|---|---|---|
-| `dim_pasar` | 6 pasar + koordinat (lat/lon) | 6 |
-| `dim_komoditas` | komoditas pangan + grup + satuan | 37 |
-| `dim_kalender` | kalender + libur + Ramadan | 2.439 |
-| `fact_harga_pasar` | harga harian per pasar × komoditas | 477.097 |
-| `fact_harga_produsen` | harga produsen titik pantau Surabaya | 4.872 |
+## 🗃 Dataset (Silver Layer)
 
-Periode: **2020-01-01 s.d. hari ini**. Desain mengikuti prinsip *dual-price column*:
-`harga_asli` (NULL bila tidak ada pencatatan) berdampingan dengan `harga_imputasi`
-(ffill murni, rupiah bulat, NOT NULL) + flag `is_imputed` — tanpa lookahead bias.
+| Tabel | Baris | Isi |
+|---|---:|---|
+| `dim_pasar` | 6 | Master pasar + koordinat (lat/lon) |
+| `dim_komoditas` | 37 | Master komoditas + grup + satuan |
+| `dim_kalender` | 2.439 | Kalender + libur + Ramadan (2020–2026) |
+| `fact_harga_pasar` | 477.097 | ⭐ Harga harian konsumen per pasar × komoditas |
+| `fact_harga_produsen` | 4.872 | Harga produsen (PS Bendul Mrisi, RPH Pegirikan) |
 
-## Cara Menjalankan Ulang Pipeline
+## 🚀 Menjalankan Pipeline
 
 ```bash
-# 1. Scrape harga (resume otomatis — hanya tanggal baru yang diambil)
+pip install -r requirements.txt
+
+# 1. Scrape harga konsumen (6 pasar) & produsen — resume otomatis
 python scripts/scrape_data.py
 python scripts/scrape_produsen.py
 
-# 2. Cuaca
+# 2. Cuaca historis (Open-Meteo, tanpa key)
 python scripts/download_cuaca.py
 
-# 3. Raw → silver layer
+# 3. Raw → silver layer (validasi, dual-price, kalender, trimming)
 python scripts/preprocessing_final.py
 
-# 4. Muat ke Supabase (butuh .env, lihat .env.example)
+# 4. Muat / sinkron ke Supabase (butuh .env — lihat .env.example)
 python scripts/ingest_supabase.py
+
+# 5. Isi tanggal yang bolong saja (idempotent, aman diulang)
+python scripts/update_catchup.py
 ```
 
-## Branch
+## ⏰ Otomatisasi Harian
 
-- **`main`** — ringkasan proyek & pipeline stabil
-- **`development`** — pekerjaan aktif (migrasi Supabase); lihat README development di branch tersebut
+Jadwal **harian 07:00** di Task Scheduler Windows (dipasang sekali):
 
-## Lisensi & Atribusi
+```powershell
+schtasks /Create /TN "HargaWatch Update Harian" /TR "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd" /SC DAILY /ST 07:00 /F
+```
 
-Data harga: SISKAPERBAPO (Disperindag Jatim). Cuaca: Open-Meteo / ERA5.
-Inflasi: BPS. Gunakan sesuai ketentuan masing-masing sumber.
+Script `update_catchup.py` akan mendeteksi sendiri tanggal yang bolong (jendela 30 hari)
+lalu mengisinya — laptop mati beberapa hari pun begitu nyala, data mengejar sendiri.
+Log: `logs/catchup.log`.
+
+> Catatan: cron via GitHub Actions sempat diuji, tetapi Cloudflare memblokir IP
+> datacenter runner (403) — cron dipindah ke Task Scheduler lokal.
+
+## 📁 Struktur Proyek
+
+```
+├── data/
+│   ├── external/           # koordinat pasar, inflasi BPS, cuaca (lokal)
+│   ├── raw/                # hasil scrape mentah (di-gitignore, regenerable)
+│   └── processed/          # silver layer: dim_* & fact_* (di-gitignore)
+├── notebook/
+│   ├── eda_pasar.ipynb             # EDA data mentah pasar
+│   ├── eda_produsen.ipynb          # EDA data mentah produsen
+│   ├── eda_silver.ipynb            # EDA data bersih + margin + efek Ramadan
+│   └── preprocessing_final.ipynb   # pipeline + verifikasi audit
+├── scripts/
+│   ├── scrape_data.py          # scraper harga konsumen (endpoint AJAX internal)
+│   ├── scrape_produsen.py      # scraper harga produsen
+│   ├── download_cuaca.py       # unduh cuaca historis (Open-Meteo)
+│   ├── tambah_kalender.py      # enrich kalender ke CSV pasar
+│   ├── preprocessing_final.py  # raw → silver layer (6 temuan audit terpecahkan)
+│   ├── ingest_supabase.py      # DDL + muat data + verifikasi
+│   ├── update_harian.py        # upsert 1 tanggal (dipakai sebagai library)
+│   ├── update_catchup.py       # isi tanggal bolong (cron harian)
+│   └── update_catchup_task.cmd # wrapper Task Scheduler
+└── .env.example            # template kredensial Supabase
+```
+
+## 🗺 Roadmap
+
+- [x] Scrape → validasi → cleaning → silver layer → database
+- [x] Update otomatis harian + self-healing catch-up
+- [x] EDA lengkap (tren, volatilitas, margin, pola Ramadan)
+- [ ] `fact_cuaca` & `fact_inflasi` di database (data sudah ada)
+- [ ] Forecasting 7–14 hari + baseline comparison
+- [ ] Aturan early warning transparan (Normal – Waspada – Tinggi)
+- [ ] Dashboard publik + Government/Analyst View
+
+## 🤝 Konsumen Data
+
+Anggota tim mengakses database lewat REST API Supabase (publishable key) — panduan
+lengkap berisi skema, aturan query, dan contoh kode tersedia dari pengelola.
+Kredensial & kunci sensitif tidak pernah masuk repositori (lihat `.gitignore`).
+
+## 📌 Sumber Data & Atribusi
+
+- **Harga**: [SISKAPERBAPO](https://siskaperbapo.jatimprov.go.id) — Disperindag Jawa Timur
+- **Cuaca**: [Open-Meteo](https://open-meteo.com) (ERA5 reanalysis)
+- **Inflasi**: [BPS](https://www.bps.go.id) — Badan Pusat Statistik
+- **Kalender**: pustaka [`holidays`](https://pypi.org/project/holidays/) + SKB 3 Menteri (Ramadan)
