@@ -11,3 +11,6 @@ data/raw/
 data/processed/
 data/external/cuaca/
 *.json
+
+# Log catch-up lokal
+logs/
