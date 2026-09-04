@@ -77,8 +77,15 @@ def target_tanggal(opsi):
     return kemarin
 
 
+def ambil_komoditas_valid(conn):
+    with conn.cursor() as cur:
+        cur.execute("SELECT komoditas_id FROM dim_komoditas")
+        return {r[0] for r in cur.fetchall()}
+
+
 def scrape_pasar(tgl, conn):
     """Scrape semua pasar Surabaya untuk satu tanggal -> baris fact siap upsert."""
+    valid_ids = ambil_komoditas_valid(conn)
     pasar = ambil_daftar_pasar(KABKOTA)
     semua = []
     for p in pasar:
@@ -94,6 +101,8 @@ def scrape_pasar(tgl, conn):
             if not is_pangan(b.get("grup"), b.get("komoditas")):
                 continue
             if not b["harga"]:  # 0 / kosong = tidak ada entri hari itu
+                continue
+            if b["komoditas_id"] not in valid_ids:
                 continue
             semua.append((tgl, psr_id, b["komoditas_id"], b["harga"], b["harga"], False))
             n += 1
