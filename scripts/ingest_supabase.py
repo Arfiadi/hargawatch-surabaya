@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pandas as pd
 import psycopg2
+from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -115,7 +116,11 @@ def koneksi():
 
 def bersihkan(df, tabel):
     """Sesuaikan kolom & tipe CSV -> skema tabel."""
-    df = df.rename(columns={"lat": "latitude", "lon": "longitude"}).copy()
+    rename = {"lat": "latitude", "lon": "longitude"}
+    if tabel == "dim_komoditas":
+        # CSV memakai 'komoditas', DDL dim_komoditas memakai 'nama_komoditas'
+        rename["komoditas"] = "nama_komoditas"
+    df = df.rename(columns=rename).copy()
     df = df[[c for c in KOLOM[tabel] if c in df.columns]]
 
     for c in ("tanggal",):
@@ -132,11 +137,11 @@ def bersihkan(df, tabel):
 
 
 def muat(cur, tabel, df):
+    """Muat cepat: kemas ratusan baris per INSERT (execute_values)."""
     kolom = list(df.columns)
-    placeholders = ",".join(["%s"] * len(kolom))
-    sql = f"INSERT INTO {tabel} ({','.join(kolom)}) VALUES ({placeholders})"
     records = list(df.itertuples(index=False, name=None))
-    cur.executemany(sql, records)
+    execute_values(cur, f"INSERT INTO {tabel} ({','.join(kolom)}) VALUES %s",
+                   records, page_size=1000)
     return len(records)
 
 

@@ -1,0 +1,37 @@
+name: update-harian
+
+# Cron harian HargaWatch: scrape harga kemarin -> upsert Supabase.
+# CATATAN: scheduled workflow HANYA jalan di default branch (main).
+# Bisa juga dijalankan manual: tab Actions -> update-harian -> Run workflow.
+
+on:
+  schedule:
+    - cron: '30 22 * * *'   # 22:30 UTC = 05:30 WIB setiap hari
+  workflow_dispatch: {}      # tombol "Run workflow" manual
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Jalankan update harian
+        env:
+          SUPABASE_HOST: ${{ secrets.SUPABASE_HOST }}
+          SUPABASE_PORT: ${{ secrets.SUPABASE_PORT }}
+          SUPABASE_DB: ${{ secrets.SUPABASE_DB }}
+          SUPABASE_USER: ${{ secrets.SUPABASE_USER }}
+          SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
+        run: python scripts/update_harian.py
