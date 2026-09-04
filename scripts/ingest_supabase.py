@@ -100,18 +100,28 @@ KOLOM = {
 }
 
 
-def koneksi():
+def koneksi(retry=3):
     load_dotenv(BASE_DIR / ".env")
     host = os.getenv("SUPABASE_HOST")
     if not host:
         raise SystemExit("Kredensial belum ada. Buat file .env (lihat .env.example) "
                          "lalu isi SUPABASE_HOST/PORT/DB/USER/PASSWORD.")
-    return psycopg2.connect(
+    param = dict(
         host=host, port=os.getenv("SUPABASE_PORT", "6543"),
         dbname=os.getenv("SUPABASE_DB", "postgres"),
         user=os.getenv("SUPABASE_USER"), password=os.getenv("SUPABASE_PASSWORD"),
         sslmode="require", connect_timeout=30,
     )
+    last_err = None
+    for percobaan in range(1, retry + 1):
+        try:
+            return psycopg2.connect(**param)
+        except psycopg2.OperationalError as e:
+            last_err = e
+            print(f"  [!] koneksi gagal (percobaan {percobaan}/{retry}): {e}")
+            if percobaan < retry:
+                time.sleep(5 * percobaan)
+    raise last_err
 
 
 def bersihkan(df, tabel):
