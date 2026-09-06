@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60" fill="none">
+  <rect width="44" height="44" x="8" y="8" rx="12" fill="#0D5C3A"/>
+  <path d="M22 36V22L30 16L38 22V36" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="30" cy="27" r="3.5" fill="#34D399"/>
+  <path d="M26 36V29H34V36" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17 38C22 41 38 41 43 38" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+  <text x="62" y="32" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="20" fill="#0F172A" letter-spacing="-0.5">Harga<tspan fill="#0D5C3A">Watch</tspan></text>
+  <text x="63" y="46" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="600" font-size="9" fill="#64748B" letter-spacing="1.2">KOTA SURABAYA</text>
+  <circle cx="178" cy="28" r="4" fill="#10B981"/>
+</svg>
