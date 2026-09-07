@@ -13,7 +13,8 @@ Memperbaiki 6 temuan audit:
 
 Output (data/processed/):
   dim_pasar.csv, dim_komoditas.csv, dim_kalender.csv,
-  fact_harga_pasar.csv (6 pasar tergabung), fact_harga_produsen.csv
+  fact_harga_pasar.csv (6 pasar tergabung), fact_harga_produsen.csv,
+  fact_cuaca.csv, fact_inflasi.csv
 
 Pemakaian:
   python preprocessing_final.py          # dari root proyek
@@ -67,7 +68,7 @@ def buat_kalender(tanggal_min, tanggal_maks):
     libur = holidays.ID(years=range(semua.min().year, semua.max().year + 1),
                         categories=(holidays.PUBLIC, holidays.GOVERNMENT))
     # Rentang Ramadan sesuai SKB 3 Menteri (sama dengan tambah_kalender.py)
-    ramadan_ranges = [
+    ramadan_ranges = [ 
         (date(2020, 4, 24), date(2020, 5, 23)),
         (date(2021, 4, 13), date(2021, 5, 12)),
         (date(2022, 4, 3), date(2022, 5, 1)),
@@ -158,27 +159,67 @@ def bersihkan_produsen(kal):
     df["harga_asli"] = df["harga"].replace(0, pd.NA)
     df = df.drop(columns=[c for c in ["harga", "harga_kemarin", "imputed"] if c in df.columns])
 
-    # Kalender kontinu per (komoditas, titik_pantau) lalu ffill murni
+    # Kombinasi produsen unik: (titik_pantau, komoditas, kabupaten, satuan)
+    dim_prod = df[["titik_pantau", "komoditas", "kabupaten", "satuan"]].drop_duplicates().reset_index(drop=True)
     full_tanggal = pd.date_range(df["tanggal"].min(), df["tanggal"].max(), freq="D")
-    grid = pd.MultiIndex.from_product(
-        [df["titik_pantau"].unique(), full_tanggal],
-        names=["titik_pantau", "tanggal"]).to_frame(index=False)
-    df = grid.merge(df, on=["titik_pantau", "tanggal"], how="left")
-    for kolom in ["komoditas", "kabupaten", "satuan"]:
-        df[kolom] = df.groupby("titik_pantau")[kolom].ffill().bfill()
-    df = df.sort_values(["titik_pantau", "tanggal"]).reset_index(drop=True)
 
-    # 6. Pangkas leading NaN per titik_pantau (pola sama dengan pasar)
-    first_valid = df.groupby("titik_pantau")["harga_asli"].apply(
+    # Grid kalender kontinu x (titik_pantau, komoditas)
+    grid = dim_prod.merge(pd.DataFrame({"tanggal": full_tanggal}), how="cross")
+    df = grid.merge(df, on=["titik_pantau", "komoditas", "kabupaten", "satuan", "tanggal"], how="left")
+    df = df.sort_values(["titik_pantau", "komoditas", "tanggal"]).reset_index(drop=True)
+
+    # 6. Pangkas leading NaN per (titik_pantau, komoditas)
+    first_valid = df.groupby(["titik_pantau", "komoditas"])["harga_asli"].apply(
         lambda s: s.first_valid_index())
-    df = df[df.index >= df["titik_pantau"].map(first_valid)].copy()
+    valid_map = first_valid.to_dict()
+    keys = list(zip(df["titik_pantau"], df["komoditas"]))
+    df_first_valid = [valid_map.get(k) for k in keys]
+    mask = [idx >= fv if fv is not None else False for idx, fv in zip(df.index, df_first_valid)]
+    df = df[mask].copy().reset_index(drop=True)
 
     df["is_imputed"] = df["harga_asli"].isna()
-    harga_ffill = df.groupby("titik_pantau")["harga_asli"].ffill()
+    harga_ffill = df.groupby(["titik_pantau", "komoditas"])["harga_asli"].ffill()
     harga_ffill = pd.to_numeric(harga_ffill, errors="coerce")
     df["harga_imputasi"] = harga_ffill.round(0).astype("Int64")
     df = df.merge(kal, on="tanggal", how="left")
     return df
+
+
+def buat_fact_cuaca():
+    """Cuaca harian Surabaya (Open-Meteo) -> fact_cuaca.csv (raw sudah bersih, 0 NaN)."""
+    df = pd.read_csv(f"{BASE_DIR}/data/external/cuaca/cuaca_surabaya.csv",
+                     parse_dates=["tanggal"])
+    df["tanggal"] = df["tanggal"].dt.date
+    df.to_csv(f"{OUT}/fact_cuaca.csv", index=False, encoding="utf-8-sig")
+    print(f"fact_cuaca.csv      : {len(df)} baris")
+    return df
+
+
+def buat_fact_inflasi():
+    """Inflasi M-to-M BPS (wide per tahun) -> unpivot KOTA SURABAYA -> fact_inflasi.csv.
+
+    Format file: 3 baris header (judul, satuan, tahun) + 1 baris nama bulan,
+    lalu 1 baris per kota: [kota, Jan..Des, Tahunan]. '-' = belum terbit.
+    """
+    rows = []
+    for path in sorted((BASE_DIR / "data/external/inflasi").glob("*.csv")):
+        tahun = int(path.stem.rsplit(" ", 1)[-1])
+        df = pd.read_csv(path, header=None, skiprows=4)
+        surabaya = df[df[0].astype(str).str.strip().str.upper() == "KOTA SURABAYA"]
+        if surabaya.empty:
+            print(f"  [!] KOTA SURABAYA tidak ditemukan di {path.name}")
+            continue
+        for bulan in range(1, 13):  # kolom 1..12 = Jan..Des (kolom 13 = Tahunan, dibuang)
+            rows.append({
+                "tahun": tahun,
+                "bulan": bulan,
+                "inflasi_pct": pd.to_numeric(surabaya.iloc[0, bulan], errors="coerce"),
+            })
+    hasil = pd.DataFrame(rows).sort_values(["tahun", "bulan"]).reset_index(drop=True)
+    hasil.to_csv(f"{OUT}/fact_inflasi.csv", index=False, encoding="utf-8-sig")
+    print(f"fact_inflasi.csv    : {len(hasil)} baris "
+          f"({int(hasil['inflasi_pct'].isna().sum())} NULL: belum terbit)")
+    return hasil
 
 
 def main():
@@ -204,11 +245,12 @@ def main():
 
     # dim_pasar: gabung koordinat dari data/external/pasar/koordinat_pasar.csv
     dim_pasar = pd.DataFrame(dim_pasar_rows)[["pasar_id", "nama_pasar", "tipe_pasar"]]
-    path_koordinat = "data/external/pasar/koordinat_pasar.csv"
-    if os.path.exists(path_koordinat):
-        koord = pd.read_csv(path_koordinat).rename(columns={"psr_id": "pasar_id"})
+    path_koordinat = BASE_DIR / "data" / "external" / "pasar" / "koordinat_pasar.csv"
+    if path_koordinat.exists():
+        koord = pd.read_csv(path_koordinat).rename(
+            columns={"psr_id": "pasar_id", "lat": "latitude", "lon": "longitude", "sumber": "sumber_koordinat"})
         dim_pasar = dim_pasar.merge(
-            koord[["pasar_id", "lat", "lon", "sumber"]],
+            koord[["pasar_id", "latitude", "longitude", "sumber_koordinat"]],
             on="pasar_id", how="left")
     dim_pasar.to_csv(f"{OUT}/dim_pasar.csv", index=False, encoding="utf-8-sig")
     print(f"dim_pasar.csv    : {len(dim_pasar)} baris")
@@ -226,6 +268,9 @@ def main():
     fact_prod = bersihkan_produsen(kal)
     fact_prod.to_csv(f"{OUT}/fact_harga_produsen.csv", index=False, encoding="utf-8-sig")
     print(f"fact_harga_produsen.csv : {len(fact_prod)} baris")
+
+    buat_fact_cuaca()
+    buat_fact_inflasi()
 
     # Verifikasi cepat
     sisa_nan = int(fact_pasar["harga_imputasi"].isna().sum())

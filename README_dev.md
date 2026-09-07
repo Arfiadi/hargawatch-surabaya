@@ -20,7 +20,10 @@
 diblokir Cloudflare milik siskaperbapo. Cron kini berjalan lokal via Task Scheduler:
 
 ```powershell
-schtasks /Create /TN "HargaWatch Update Harian" /TR "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd" /SC DAILY /ST 07:00 /F
+$action = New-ScheduledTaskAction -Execute "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd"
+$trigger = New-ScheduledTaskTrigger -Daily -At 07:00
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName "HargaWatch Update Harian" -Action $action -Trigger $trigger -Settings $settings -Force
 ```
 
 Manual run: `python scripts/update_catchup.py`. Log: `logs/catchup.log`.
