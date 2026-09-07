@@ -1091,22 +1091,24 @@ export default function EarlyWarningPage() {
         </div>
 
         {/* Notification Toast for Dispatch */}
-        {toastMessage && (
-          <div
-            className="fixed bottom-6 right-6 z-50 bg-surface-card text-on-surface p-space-md rounded-xl shadow-xl flex items-center gap-space-sm pointer-events-auto animate-in fade-in slide-in-from-bottom-5 duration-300"
-            id="dispatch-toast"
-          >
-            <div className="w-10 h-10 rounded-full bg-status-normal-bg text-status-normal flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-headline-sm">check</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-headline-sm text-body-md font-bold">Instruksi Intervensi Terkirim</span>
-              <span className="font-body-sm text-body-sm text-text-secondary" id="toast-message">
-                {toastMessage}
-              </span>
-            </div>
+        <div
+          className={`fixed bottom-6 right-6 z-50 bg-surface-card text-on-surface p-space-md rounded-xl shadow-xl flex items-center gap-space-sm transform transition-all duration-300 ${
+            toastMessage
+              ? "translate-y-0 opacity-100 pointer-events-auto"
+              : "translate-y-28 opacity-0 pointer-events-none"
+          }`}
+          id="dispatch-toast"
+        >
+          <div className="w-10 h-10 rounded-full bg-status-normal-bg text-status-normal flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-headline-sm">check</span>
           </div>
-        )}
+          <div className="flex flex-col">
+            <span className="font-headline-sm text-body-md font-bold">Instruksi Intervensi Terkirim</span>
+            <span className="font-body-sm text-body-sm text-text-secondary" id="toast-message">
+              {toastMessage || "Armada Operasi Pasar Murah dijadwalkan meluncur pukul 10:00 WIB."}
+            </span>
+          </div>
+        </div>
       </main>
 
       <Footer />
