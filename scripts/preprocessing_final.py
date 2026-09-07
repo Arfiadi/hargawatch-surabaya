@@ -105,8 +105,8 @@ def bersihkan_pasar(slug, psr_id):
     """Proses satu pasar -> DataFrame fact siap gabung."""
     df = pd.read_csv(f"{RAW_PASAR}/data_{slug}_kalender.csv", parse_dates=["tanggal"])
 
-    # 0 -> NULL (harga_asli), buang komoditas non-pangan/selalu kosong
-    df["harga_asli"] = df["harga"].replace(0, pd.NA)
+    # 0 atau <= 0 -> NULL (harga_asli), buang komoditas non-pangan/selalu kosong
+    df["harga_asli"] = df["harga"].apply(lambda x: pd.NA if pd.isna(x) or x <= 0 else x)
     df = df[~df["komoditas"].isin(DROP_KOMODITAS)].copy()
     df["komoditas"] = df["komoditas"].replace(RENAME_KOMODITAS)
 
@@ -134,9 +134,9 @@ def bersihkan_pasar(slug, psr_id):
         lambda s: s.first_valid_index())
     df = df[df.index >= df["komoditas_id"].map(first_valid)].copy()
 
-    # 1. Imputasi ffill MURNI + bulatkan ke rupiah (tanpa interpolate)
+    # 1. Imputasi ffill dengan batasan limit=7 hari + bulatkan ke rupiah (mencegah zombie data)
     df["is_imputed"] = df["harga_asli"].isna()
-    harga_ffill = df.groupby("komoditas_id")["harga_asli"].ffill()
+    harga_ffill = df.groupby("komoditas_id")["harga_asli"].ffill(limit=7)
     harga_ffill = pd.to_numeric(harga_ffill, errors="coerce")
     df["harga_imputasi"] = harga_ffill.round(0).astype("Int64")
 
@@ -174,7 +174,7 @@ def bersihkan_produsen(kal):
     df = df[df.index >= df["titik_pantau"].map(first_valid)].copy()
 
     df["is_imputed"] = df["harga_asli"].isna()
-    harga_ffill = df.groupby("titik_pantau")["harga_asli"].ffill()
+    harga_ffill = df.groupby("titik_pantau")["harga_asli"].ffill(limit=7)
     harga_ffill = pd.to_numeric(harga_ffill, errors="coerce")
     df["harga_imputasi"] = harga_ffill.round(0).astype("Int64")
     df = df.merge(kal, on="tanggal", how="left")

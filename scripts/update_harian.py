@@ -34,6 +34,7 @@ from preprocessing_final import buat_kalender
 from scrape_data import ambil_daftar_pasar, get_html_table, is_pangan, parse_tabel
 from scrape_produsen import get_html_table as get_produsen_html
 from scrape_produsen import parse_tabel as parse_produsen
+from utils_alerting import send_telegram_alert
 
 KABKOTA = "surabayakota"
 KOTA_PRODUSEN = "Kota Surabaya"
@@ -140,7 +141,14 @@ def main():
     tgl = target_tanggal(args.tanggal)
     print(f"HargaWatch update harian | target: {tgl}")
 
-    conn = koneksi()
+    try:
+        conn = koneksi()
+    except Exception as e:
+        err_msg = f"🚨 *[HargaWatch Alert]* Gagal koneksi ke Supabase ({tgl}):\n`{e}`"
+        print(err_msg)
+        send_telegram_alert(err_msg)
+        return 1
+
     try:
         with conn.cursor() as cur:
             cur.execute(DDL)  # IF NOT EXISTS - idempotent
@@ -162,18 +170,33 @@ def main():
             n1 = upsert(cur, UPSERT_PASAR, pasar_rows)
             n2 = upsert(cur, UPSERT_PRODUSEN, prod_rows)
             conn.commit()
-            print(f"Upsert fact_harga_pasar    : {n1} baris")
-            print(f"Upsert fact_harga_produsen : {n2} baris")
+            print(f"✅ Upsert fact_harga_pasar    : {n1} baris ke Supabase")
+            print(f"✅ Upsert fact_harga_produsen : {n2} baris ke Supabase")
 
             if not records:
-                print("Tidak ada data untuk tanggal ini (mis. libur). Selesai tanpa perubahan.")
+                warn_msg = f"⚠️ *[HargaWatch Info]* Tidak ada data scraped untuk {tgl} (misal hari libur)."
+                print(warn_msg)
                 return 0
 
-            print("\nVerifikasi tanggal", tgl)
+            print("\nVerifikasi penyimpanan database tanggal", tgl)
+            total_saved = 0
             for tabel in ["fact_harga_pasar", "fact_harga_produsen"]:
                 cur.execute(f"SELECT COUNT(*) FROM {tabel} WHERE tanggal = %s", (tgl,))
-                print(f"  {tabel:<22} {cur.fetchone()[0]:>5} baris")
+                cnt = cur.fetchone()[0]
+                total_saved += cnt
+                print(f"  {tabel:<22} {cnt:>5} baris tersimpan")
+
+            if total_saved == 0:
+                warn_msg = f"⚠️ *[HargaWatch Alert]* Scraping berjalan tapi 0 baris tersimpan di Supabase untuk {tgl}."
+                send_telegram_alert(warn_msg)
+
+        print("Update harian selesai dengan sukses.")
         return 0
+    except Exception as e:
+        err_msg = f"🚨 *[HargaWatch Error]* Pipeline update harian gagal pada {tgl}:\n`{str(e)[:400]}`"
+        print(err_msg)
+        send_telegram_alert(err_msg)
+        return 1
     finally:
         conn.close()
 
