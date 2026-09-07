@@ -21,4 +21,4 @@ prophet>=1.1.5
 supabase>=2.3.0
 wandb>=0.16.0
 seaborn>=0.13.0
-
+pytest>=8.0.0
