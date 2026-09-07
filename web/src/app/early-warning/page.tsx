@@ -999,15 +999,16 @@ export default function EarlyWarningPage() {
         </div>
 
         {/* Interactive Modal: Trigger Operasi Pasar Murah */}
-        {modalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/60 backdrop-blur-sm p-space-md"
-            id="operasi-modal"
-          >
-            <div className="bg-surface-card w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-              <div className="bg-primary text-on-primary px-space-md py-space-sm flex items-center justify-between">
-                <div className="flex items-center gap-space-xs">
-                  <span className="material-symbols-outlined text-headline-sm">campaign</span>
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-on-surface/60 backdrop-blur-sm p-space-md ${
+            modalOpen ? "" : "hidden"
+          }`}
+          id="operasi-modal"
+        >
+          <div className="bg-surface-card w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="bg-primary text-on-primary px-space-md py-space-sm flex items-center justify-between">
+              <div className="flex items-center gap-space-xs">
+                <span className="material-symbols-outlined text-headline-sm">campaign</span>
                   <h4 className="font-headline-sm text-headline-sm">Pemicu Operasi Pasar Murah Cepat</h4>
                 </div>
                 <button
@@ -1086,9 +1087,8 @@ export default function EarlyWarningPage() {
                   </button>
                 </div>
               </div>
-            </div>
           </div>
-        )}
+        </div>
 
         {/* Notification Toast for Dispatch */}
         {toastMessage && (

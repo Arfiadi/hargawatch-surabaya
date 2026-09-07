@@ -186,8 +186,7 @@ export default function HomePage() {
   };
 
   const handleResetBasket = () => {
-    setResetMessage("Simulasi keranjang belanja telah diatur ulang ke formula default konsumsi keluarga.");
-    setTimeout(() => setResetMessage(null), 3000);
+    alert("Simulasi keranjang belanja telah diatur ulang ke formula default konsumsi keluarga.");
   };
 
   const filteredCommodities = commodities.filter((item) => {

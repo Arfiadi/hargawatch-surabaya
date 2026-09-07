@@ -9,7 +9,6 @@ export default function ForecastingPage() {
   const [selectedCommodity, setSelectedCommodity] = useState<string>("cabai-rawit");
   const [filterRisk, setFilterRisk] = useState<string>("all");
   const [dispatched, setDispatched] = useState<boolean>(false);
-  const [exporting, setExporting] = useState<boolean>(false);
 
   const projectionRows = [
     {
@@ -138,8 +137,10 @@ export default function ForecastingPage() {
     return true;
   });
 
+  const [exportState, setExportState] = useState<"idle" | "downloading" | "success">("idle");
+
   const handleExport = () => {
-    setExporting(true);
+    setExportState("downloading");
     setTimeout(() => {
       const csvContent =
         "Hari/Tanggal,Batas Bawah (80% CI),Proyeksi Rata-rata,Batas Atas (95% CI),Delta vs Hari Ini,Status,Rekomendasi Aksi\n" +
@@ -157,8 +158,12 @@ export default function ForecastingPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setExporting(false);
-    }, 800);
+
+      setExportState("success");
+      setTimeout(() => {
+        setExportState("idle");
+      }, 2000);
+    }, 1200);
   };
 
   const handleDispatch = () => {
@@ -218,10 +223,22 @@ export default function ForecastingPage() {
                   id="btnExportSimulation"
                   onClick={handleExport}
                 >
-                  <span className="material-symbols-outlined text-body-md">
-                    {exporting ? "sync" : "download"}
-                  </span>
-                  <span>{exporting ? "Mengunduh..." : "Unduh Matriks CSV"}</span>
+                  {exportState === "downloading" ? (
+                    <>
+                      <span className="material-symbols-outlined text-body-md animate-spin">sync</span>
+                      <span>Mengunduh...</span>
+                    </>
+                  ) : exportState === "success" ? (
+                    <>
+                      <span className="material-symbols-outlined text-body-md">check</span>
+                      <span>Berhasil Diunduh</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-body-md">download</span>
+                      <span>Unduh Matriks CSV</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
