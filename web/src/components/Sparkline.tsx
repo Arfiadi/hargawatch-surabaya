@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 interface Props {
   data: number[];
   status?: "NORMAL" | "WASPADA" | "TINGGI";
@@ -11,6 +13,7 @@ export default function Sparkline({
   height = 36,
   width = 120,
 }: Props) {
+  const reactId = useId();
   if (!data || data.length === 0) return null;
 
   const min = Math.min(...data);
@@ -32,7 +35,7 @@ export default function Sparkline({
     TINGGI: { stroke: "#DC2626", fill: "#DC2626" },
   }[status];
 
-  const gradientId = `spark-grad-${status}-${Math.random().toString(36).substring(2, 7)}`;
+  const gradientId = `spark-grad-${status}-${reactId.replace(/:/g, "")}`;
 
   return (
     <svg

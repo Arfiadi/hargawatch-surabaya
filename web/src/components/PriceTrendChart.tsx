@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { COMMODITIES, Commodity } from "@/data/mockData";
+import { COMMODITIES } from "@/data/mockData";
 
 export default function PriceTrendChart() {
   const [selectedCommodityId, setSelectedCommodityId] = useState<number>(1);

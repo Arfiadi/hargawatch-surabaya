@@ -182,11 +182,13 @@ export default function HomePage() {
   };
 
   const handleDownloadList = () => {
-    alert("Daftar Belanja Pasar Berhasil diunduh dalam format ringkas untuk perangkat Anda.");
+    setResetMessage("Daftar Belanja Pasar Berhasil disiapkan untuk perangkat Anda.");
+    setTimeout(() => setResetMessage(null), 3000);
   };
 
   const handleResetBasket = () => {
-    alert("Simulasi keranjang belanja telah diatur ulang ke formula default konsumsi keluarga.");
+    setResetMessage("Simulasi keranjang belanja telah diatur ulang ke formula default konsumsi keluarga.");
+    setTimeout(() => setResetMessage(null), 3000);
   };
 
   const filteredCommodities = commodities.filter((item) => {
