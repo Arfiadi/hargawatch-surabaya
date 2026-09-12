@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS fact_harga_pasar (
     harga_asli     NUMERIC(12, 2),
     harga_imputasi NUMERIC(12, 2) NOT NULL,
     is_imputed     BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (tanggal, pasar_id, komoditas_id)
 );
 
@@ -75,9 +75,67 @@ CREATE TABLE IF NOT EXISTS fact_harga_produsen (
     harga_asli     NUMERIC(12, 2),
     harga_imputasi NUMERIC(12, 2) NOT NULL,
     is_imputed     BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (tanggal, komoditas, titik_pantau)
 );
+
+CREATE TABLE IF NOT EXISTS fact_cuaca (
+    tanggal            DATE PRIMARY KEY REFERENCES dim_kalender(tanggal),
+    curah_hujan_mm     NUMERIC(8, 2),
+    jam_hujan          NUMERIC(6, 1),
+    hari_hujan         INTEGER,
+    suhu_mean_c        NUMERIC(5, 2),
+    suhu_max_c         NUMERIC(5, 2),
+    suhu_min_c         NUMERIC(5, 2),
+    kelembapan_mean_pct NUMERIC(5, 2),
+    angin_max_kmh      NUMERIC(5, 2)
+);
+
+CREATE TABLE IF NOT EXISTS fact_inflasi (
+    tahun       INTEGER NOT NULL,
+    bulan       INTEGER NOT NULL CHECK (bulan BETWEEN 1 AND 12),
+    inflasi_pct NUMERIC(6, 2),
+    PRIMARY KEY (tahun, bulan)
+);
+
+-- Indeks performa analitik & dashboard
+CREATE INDEX IF NOT EXISTS idx_fact_harga_pasar_komoditas ON fact_harga_pasar (komoditas_id, pasar_id, tanggal);
+CREATE INDEX IF NOT EXISTS idx_fact_harga_pasar_tanggal ON fact_harga_pasar (tanggal);
+CREATE INDEX IF NOT EXISTS idx_fact_harga_produsen_komoditas ON fact_harga_produsen (komoditas, titik_pantau, tanggal);
+
+-- Row Level Security (RLS) & Public Read-Only Policies
+ALTER TABLE dim_pasar ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dim_komoditas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dim_kalender ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fact_harga_pasar ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fact_harga_produsen ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fact_cuaca ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fact_inflasi ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'dim_pasar' AND policyname = 'Public read-only dim_pasar') THEN
+        CREATE POLICY "Public read-only dim_pasar" ON dim_pasar FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'dim_komoditas' AND policyname = 'Public read-only dim_komoditas') THEN
+        CREATE POLICY "Public read-only dim_komoditas" ON dim_komoditas FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'dim_kalender' AND policyname = 'Public read-only dim_kalender') THEN
+        CREATE POLICY "Public read-only dim_kalender" ON dim_kalender FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'fact_harga_pasar' AND policyname = 'Public read-only fact_harga_pasar') THEN
+        CREATE POLICY "Public read-only fact_harga_pasar" ON fact_harga_pasar FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'fact_harga_produsen' AND policyname = 'Public read-only fact_harga_produsen') THEN
+        CREATE POLICY "Public read-only fact_harga_produsen" ON fact_harga_produsen FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'fact_cuaca' AND policyname = 'Public read-only fact_cuaca') THEN
+        CREATE POLICY "Public read-only fact_cuaca" ON fact_cuaca FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'fact_inflasi' AND policyname = 'Public read-only fact_inflasi') THEN
+        CREATE POLICY "Public read-only fact_inflasi" ON fact_inflasi FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+END $$;
 """
 
 # (file csv, nama tabel) - urutan dim dulu karena fact punya FK
@@ -87,6 +145,8 @@ TABEL = [
     ("dim_kalender.csv", "dim_kalender"),
     ("fact_harga_pasar.csv", "fact_harga_pasar"),
     ("fact_harga_produsen.csv", "fact_harga_produsen"),
+    ("fact_cuaca.csv", "fact_cuaca"),
+    ("fact_inflasi.csv", "fact_inflasi"),
 ]
 
 KOLOM = {
@@ -98,6 +158,10 @@ KOLOM = {
                          "harga_imputasi", "is_imputed"],
     "fact_harga_produsen": ["tanggal", "komoditas", "titik_pantau", "kabupaten",
                             "satuan", "harga_asli", "harga_imputasi", "is_imputed"],
+    "fact_cuaca": ["tanggal", "curah_hujan_mm", "jam_hujan", "hari_hujan",
+                   "suhu_mean_c", "suhu_max_c", "suhu_min_c",
+                   "kelembapan_mean_pct", "angin_max_kmh"],
+    "fact_inflasi": ["tahun", "bulan", "inflasi_pct"],
 }
 
 
@@ -126,12 +190,15 @@ def koneksi(retry=3):
                 print(f"  [!] koneksi gagal (port {port}, percobaan {percobaan}/{retry}): {e}")
                 if percobaan < retry:
                     time.sleep(5 * percobaan)
+    # last_err selalu terisi di sini: OperationalError ter-catch di setiap iterasi
+    # (exception tipe lain dilempar langsung, bukan di-telan loop).
+    assert last_err is not None
     raise last_err
 
 
 def bersihkan(df, tabel):
     """Sesuaikan kolom & tipe CSV -> skema tabel."""
-    rename = {"lat": "latitude", "lon": "longitude"}
+    rename = {"lat": "latitude", "lon": "longitude", "sumber": "sumber_koordinat"}
     if tabel == "dim_komoditas":
         # CSV memakai 'komoditas', DDL dim_komoditas memakai 'nama_komoditas'
         rename["komoditas"] = "nama_komoditas"
@@ -147,7 +214,12 @@ def bersihkan(df, tabel):
         df["harga_asli"] = df["harga_asli"].where(df["harga_asli"].notna(), None)
     if "latitude" in df.columns:
         df["latitude"] = df["latitude"].where(df["latitude"].notna(), None)
+    if "longitude" in df.columns:
         df["longitude"] = df["longitude"].where(df["longitude"].notna(), None)
+    if "sumber_koordinat" in df.columns:
+        df["sumber_koordinat"] = df["sumber_koordinat"].where(df["sumber_koordinat"].notna(), None)
+    if tabel in ("fact_cuaca", "fact_inflasi"):  # NaN -> None (NULL)
+        df = df.where(df.notna(), None)
     return df
 
 
@@ -171,12 +243,20 @@ def verifikasi(cur):
           (SELECT COUNT(*) FROM fact_harga_pasar WHERE harga_imputasi IS NULL),
           (SELECT COUNT(*) FROM fact_harga_pasar WHERE harga_asli = 0),
           (SELECT COUNT(*) FROM fact_harga_pasar f
-             LEFT JOIN dim_komoditas k USING (komoditas_id) WHERE k.komoditas_id IS NULL)
+             LEFT JOIN dim_komoditas k USING (komoditas_id) WHERE k.komoditas_id IS NULL),
+          (SELECT COUNT(*) FROM fact_cuaca),
+          (SELECT COUNT(*) FROM fact_cuaca c
+             LEFT JOIN dim_kalender k USING (tanggal) WHERE k.tanggal IS NULL),
+          (SELECT COUNT(*) FROM fact_inflasi WHERE inflasi_pct IS NOT NULL),
+          (SELECT COUNT(*) FROM dim_pasar WHERE latitude IS NULL)
     """)
-    n_null, n_zero, n_orphan = cur.fetchone()
+    n_null, n_zero, n_orphan, n_cuaca, n_cuaca_orphan, n_inflasi, n_pasar_no_coord = cur.fetchone()
     print(f"\n  harga_imputasi NULL : {n_null} (harus 0)")
     print(f"  harga_asli = 0      : {n_zero} (harus 0)")
     print(f"  FK orphan           : {n_orphan} (harus 0)")
+    print(f"  fact_cuaca          : {n_cuaca} baris | FK orphan: {n_cuaca_orphan} (harus 0)")
+    print(f"  fact_inflasi terisi : {n_inflasi} bulan (sisanya NULL = belum terbit)")
+    print(f"  pasar tanpa koord   : {n_pasar_no_coord} (harus 0)")
 
 
 def main():
@@ -191,11 +271,42 @@ def main():
             if args.drop:
                 print("Drop tabel (urutan fact dulu)...")
                 cur.execute("DROP TABLE IF EXISTS fact_harga_pasar, fact_harga_produsen, "
+                            "fact_cuaca, fact_inflasi, "
                             "dim_kalender, dim_komoditas, dim_pasar CASCADE")
 
-            print("Buat tabel (IF NOT EXISTS)...")
+            print("Buat tabel & terapkan indeks/RLS (IF NOT EXISTS)...")
             cur.execute(DDL)
             conn.commit()
+
+            # Selalu sinkronkan master dimensi pasar & komoditas (upsert idempotent)
+            # agar koordinat pasar dan perubahan master segera terisi di database
+            if (PROCESSED / "dim_pasar.csv").exists():
+                df_psr = bersihkan(pd.read_csv(PROCESSED / "dim_pasar.csv"), "dim_pasar")
+                execute_values(cur, """
+                    INSERT INTO dim_pasar (pasar_id, nama_pasar, tipe_pasar, latitude, longitude, sumber_koordinat)
+                    VALUES %s
+                    ON CONFLICT (pasar_id) DO UPDATE
+                    SET nama_pasar = EXCLUDED.nama_pasar,
+                        tipe_pasar = EXCLUDED.tipe_pasar,
+                        latitude = EXCLUDED.latitude,
+                        longitude = EXCLUDED.longitude,
+                        sumber_koordinat = EXCLUDED.sumber_koordinat
+                """, list(df_psr.itertuples(index=False, name=None)))
+                conn.commit()
+                print("dim_pasar              sinkron (koordinat & metadata diperbarui)")
+
+            if (PROCESSED / "dim_komoditas.csv").exists():
+                df_kom = bersihkan(pd.read_csv(PROCESSED / "dim_komoditas.csv"), "dim_komoditas")
+                execute_values(cur, """
+                    INSERT INTO dim_komoditas (komoditas_id, nama_komoditas, grup, satuan)
+                    VALUES %s
+                    ON CONFLICT (komoditas_id) DO UPDATE
+                    SET nama_komoditas = EXCLUDED.nama_komoditas,
+                        grup = EXCLUDED.grup,
+                        satuan = EXCLUDED.satuan
+                """, list(df_kom.itertuples(index=False, name=None)))
+                conn.commit()
+                print("dim_komoditas          sinkron (metadata diperbarui)")
 
             if args.verify:
                 verifikasi(cur)
@@ -214,7 +325,6 @@ def main():
 
             conn.commit()
             verifikasi(cur)
-            print("\nMigrasi selesai ✓")
     except psycopg2.Error as e:
         conn.rollback()
         raise SystemExit(f"DB error: {e}")

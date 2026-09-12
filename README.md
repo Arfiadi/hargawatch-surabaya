@@ -64,6 +64,8 @@ flowchart LR
 | `dim_kalender` | 2.439 | Kalender + libur + Ramadan (2020–2026) |
 | `fact_harga_pasar` | 477.097 | ⭐ Harga harian konsumen per pasar × komoditas |
 | `fact_harga_produsen` | 4.872 | Harga produsen (PS Bendul Mrisi, RPH Pegirikan) |
+| `fact_cuaca` | 2.435 | Cuaca harian Surabaya (Open-Meteo: hujan, suhu, kelembapan, angin) |
+| `fact_inflasi` | 84 | Inflasi M-to-M Surabaya (BPS, unpivot bulanan 2020–2026) |
 
 ## 🚀 Menjalankan Pipeline
 
@@ -77,6 +79,9 @@ python scripts/scrape_produsen.py
 # 2. Cuaca historis (Open-Meteo, tanpa key)
 python scripts/download_cuaca.py
 
+# 2b. Inflasi BPS (WebAPI resmi, butuh BPS_API_KEY gratis di .env)
+python scripts/download_inflasi_bps.py
+
 # 3. Raw → silver layer (validasi, dual-price, kalender, trimming)
 python scripts/preprocessing_final.py
 
@@ -89,15 +94,23 @@ python scripts/update_catchup.py
 
 ## ⏰ Otomatisasi Harian
 
-Jadwal **harian 07:00** di Task Scheduler Windows (dipasang sekali):
+Jadwal **harian 07:00** di Task Scheduler Windows (dipasang sekali). Disarankan via PowerShell agar tugas otomatis mengejar (*catch-up*) saat laptop baru dinyalakan jika melewatkan jam 07:00:
 
 ```powershell
-schtasks /Create /TN "HargaWatch Update Harian" /TR "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd" /SC DAILY /ST 07:00 /F
+$action = New-ScheduledTaskAction -Execute "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd"
+$trigger = New-ScheduledTaskTrigger -Daily -At 07:00
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName "HargaWatch Update Harian" -Action $action -Trigger $trigger -Settings $settings -Force
 ```
 
-Script `update_catchup.py` akan mendeteksi sendiri tanggal yang bolong (jendela 30 hari)
-lalu mengisinya — laptop mati beberapa hari pun begitu nyala, data mengejar sendiri.
-Log: `logs/catchup.log`.
+*(Atau via cmd biasa: `schtasks /Create /TN "HargaWatch Update Harian" /TR "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd" /SC DAILY /ST 07:00 /F`)*
+
+Script `update_catchup.py` akan mendeteksi sendiri tanggal yang bolong (jejak mundur
+s.d. 400 hari, dikerjakan terbaru dulu) lalu mengisinya — laptop mati berapa lama pun,
+begitu nyala data mengejar sendiri. Log harian: `logs/catchup_YYYY-MM-DD.log`
+(rotasi otomatis, disimpan 14 hari), diakhiri baris `===== SUKSES =====` atau
+`===== GAGAL =====`. Exit code: 0 = sukses, 1 = ada sumber yang gagal scrape
+(diretry otomatis run berikutnya) — monitoring/Task Scheduler bisa memberi alert.
 
 > Catatan: cron via GitHub Actions sempat diuji, tetapi Cloudflare memblokir IP
 > datacenter runner (403) — cron dipindah ke Task Scheduler lokal.
@@ -132,7 +145,7 @@ Log: `logs/catchup.log`.
 - [x] Scrape → validasi → cleaning → silver layer → database
 - [x] Update otomatis harian + self-healing catch-up
 - [x] EDA lengkap (tren, volatilitas, margin, pola Ramadan)
-- [ ] `fact_cuaca` & `fact_inflasi` di database (data sudah ada)
+- [x] `fact_cuaca` & `fact_inflasi` di database (data sudah ada)
 - [ ] Forecasting 7–14 hari + baseline comparison
 - [ ] Aturan early warning transparan (Normal – Waspada – Tinggi)
 - [ ] Dashboard publik + Government/Analyst View
