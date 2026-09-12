@@ -59,21 +59,24 @@ flowchart TD
 
 ## Pembagian Tanggung Jawab (Separation of Concerns)
 
-1. **Famos (Data Engineer):** Mengelola ekstraksi data dari sumber eksternal, membersihkan data yang kotor, dan menyimpannya ke tabel *Silver Layer* (act_harga_pasar).
-2. **Arfi (Data Scientist / ML Engineer):** Murni membaca data historis dari *Silver Layer*, menjalankan komputasi *Forecasting* dan *Anomaly Detection*, lalu menyimpan hasilnya kembali ke *Gold Layer* (act_forecast, act_early_warning).
+1. **Famos (Data Engineer):** Mengelola ekstraksi data dari sumber eksternal, membersihkan data yang kotor, dan menyimpannya ke tabel *Silver Layer* (`fact_harga_pasar`).
+2. **Arfi (Data Scientist / ML Engineer):** Murni membaca data historis dari *Silver Layer*, menjalankan komputasi *Forecasting* dan *Anomaly Detection*, lalu menyimpan hasilnya kembali ke *Gold Layer* (`fact_forecast`, `fact_early_warning`).
 3. **Kayla (Data Analyst / Frontend Developer):** Merakit UI web menggunakan **Next.js** dan mengambil data (*read-only*) dari Supabase untuk visualisasi yang interaktif.
 
 ## Database Schema (Core Tables)
 
 ### Silver Layer
-- dim_pasar: Data master 6 pasar (id, nama, lokasi).
-- dim_komoditas: Data master 37 komoditas (id, nama, satuan).
-- dim_kalender: Data dimensi waktu, libur nasional, dan bulan Ramadan.
-- act_harga_pasar: Tabel harga harian (observasi aktual harga_asli dan harga_imputasi).
+- `dim_pasar`: Data master 6 pasar (id, nama, lokasi).
+- `dim_komoditas`: Data master 37 komoditas (id, nama, satuan).
+- `dim_kalender`: Data dimensi waktu, libur nasional, dan bulan Ramadan.
+- `fact_harga_pasar`: Tabel harga harian (observasi aktual harga_asli dan harga_imputasi).
+- `fact_harga_produsen`: Tabel harga historis dari tingkat produsen.
+- `fact_cuaca`: Data historis cuaca harian Surabaya (suhu, curah hujan) dari Open-Meteo.
+- `fact_inflasi`: Data riwayat inflasi bulanan Kota Surabaya dari BPS.
 
 ### Gold Layer (ML Targets)
-- act_forecast: Menyimpan hasil ramalan harga jangka pendek (7-14 hari ke depan). Memiliki batas bawah, batas tengah, dan batas atas.
-- act_early_warning: Menyimpan status anomali harga komposit (NORMAL, WASPADA, TINGGI).
+- `fact_forecast`: Menyimpan hasil ramalan harga jangka pendek (7-14 hari ke depan). Memiliki batas bawah, batas tengah, dan batas atas.
+- `fact_early_warning`: Menyimpan status anomali harga komposit (NORMAL, WASPADA, TINGGI).
 
 ## Struktur Direktori Proyek
 
