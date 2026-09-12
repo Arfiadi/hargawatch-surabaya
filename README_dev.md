@@ -5,12 +5,12 @@
 
 ## Yang sudah selesai di branch ini
 
-- ✅ **Preprocessing final sesuai audit** (`scripts/preprocessing_final.py` + `notebook/preprocessing_final.ipynb`)
+- ✅ **Preprocessing final sesuai audit** (`src/pipeline/preprocessing_final.py` + `notebook/preprocessing_final.ipynb`)
   - Dual-price column: `harga_asli` (0→NULL) / `harga_imputasi` (ffill murni, NOT NULL) / `is_imputed`
   - Tanpa lookahead bias (interpolasi dihapus), rupiah bulat
   - 6 pasar termasuk Genteng; leading NaN dipangkas; `harga_kemarin` statis dihapus
 - ✅ **Silver layer tervalidasi**: `fact_harga_pasar` 477.097 baris, 0 NaN, 0 desimal, PK/FK konsisten
-- ✅ **Migrasi Supabase selesai** (`scripts/ingest_supabase.py`): 5 tabel terisi, verifikasi 0 NULL / 0 orphan
+- ✅ **Migrasi Supabase selesai** (`src/utils/ingest_supabase.py`): 5 tabel terisi, verifikasi 0 NULL / 0 orphan
 - ✅ **Cron harian lokal** — Task Scheduler Windows (`update_catchup.py`, jadwal 07:00, self-healing jendela 30 hari)
 - ⚠️ **GitHub Actions dihentikan** — Cloudflare memblokir IP datacenter runner (403 saat scrape); workflow dihapus dari repo. Alternatif masa depan: Oracle Cloud Always Free VM + Playwright stealth.
 
@@ -43,8 +43,8 @@ dengan Playwright stealth sebagai pengganti `requests`.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env                   # isi kredensial Supabase Anda (JANGAN commit .env)
-python scripts/ingest_supabase.py      # buat tabel + muat silver layer
-python scripts/ingest_supabase.py --verify   # cek ulang
+python src/utils/ingest_supabase.py      # buat tabel + muat silver layer
+python src/utils/ingest_supabase.py --verify   # cek ulang
 ```
 
 ## Konvensi commit

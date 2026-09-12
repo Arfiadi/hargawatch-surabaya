@@ -73,20 +73,20 @@ flowchart LR
 pip install -r requirements.txt
 
 # 1. Scrape harga konsumen (6 pasar) & produsen — resume otomatis
-python scripts/scrape_data.py
-python scripts/scrape_produsen.py
+python src/pipeline/scrape_data.py
+python src/pipeline/scrape_produsen.py
 
 # 2. Cuaca historis (Open-Meteo, tanpa key)
-python scripts/download_cuaca.py
+python src/pipeline/download_cuaca.py
 
 # 2b. Inflasi BPS (WebAPI resmi, butuh BPS_API_KEY gratis di .env)
-python scripts/download_inflasi_bps.py
+python src/pipeline/download_inflasi_bps.py
 
 # 3. Raw → silver layer (validasi, dual-price, kalender, trimming)
-python scripts/preprocessing_final.py
+python src/pipeline/preprocessing_final.py
 
 # 4. Muat / sinkron ke Supabase (butuh .env — lihat .env.example)
-python scripts/ingest_supabase.py
+python src/utils/ingest_supabase.py
 
 # 5. Isi tanggal yang bolong saja (idempotent, aman diulang)
 python scripts/update_catchup.py

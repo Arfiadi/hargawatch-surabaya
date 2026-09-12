@@ -10,12 +10,13 @@
 ## 2. Status Saat Ini (The Current State)
 - Keseluruhan **logika Machine Learning saat ini masih terisolasi di dalam Jupyter Notebook** (
 otebook/forecasting_experiments.ipynb). 
-- File-file .py terkait ML di folder scripts/ (seperti un_forecasting.py, setup_ml_tables.py) saat ini masih berstatus **draf/eksperimental/kerangka kosong**.
+- File-file .py terkait ML di folder src/ (seperti 
+un_forecasting.py, setup_ml_tables.py) saat ini masih berstatus **draf/eksperimental/kerangka kosong**.
 - Setup frontend awal (Next.js 14 App Router) telah terinisialisasi di folder web/.
 
 ## 3. Backlog Mendesak (Prioritas Selanjutnya)
 1. **[Machine Learning]** Melakukan *porting* (pemindahan) logika *forecasting* dan *Early Warning* dari 
-otebook/ ke dalam *production batch script* di folder scripts/.
+otebook/ ke dalam *production batch script* di folder src/.
 2. **[Database]** Eksekusi DDL di Supabase untuk membuat tabel *Gold Layer* (act_forecast, act_early_warning) yang akan menampung hasil prediksi ML.
 3. **[Data Engineering]** Migrasi sistem *cron job* harian lokal (Windows Task Scheduler) ke *cloud environment* (VPS/Serverless) dan penambahan sistem *alerting* (misal: webhook Telegram).
 

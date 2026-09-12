@@ -60,7 +60,7 @@ Tabel berikut adalah spesifikasi produk sesuai brief dari dosen, disalin apa ada
 ## 2. Sequential Execution Plan (Agentic Workflow)
 
 ### Phase 1: Database Setup & Data Fetching Interface
-- **Tugas:** Setup *Supabase client* di Next.js (`web/lib/supabase.ts`) dan Python (`scripts/utils.py`). Buat fungsi untuk menarik data mentah `fact_harga_pasar` (filter >= H-90 untuk mencegah penarikan >400k baris).
+- **Tugas:** Setup *Supabase client* di Next.js (`web/lib/supabase.ts`) dan Python (`src/utils/ingest_supabase.py`). Buat fungsi untuk menarik data mentah `fact_harga_pasar` (filter >= H-90 untuk mencegah penarikan >400k baris).
 - **Kendali:** Gunakan arsitektur *Server Components* pada Next.js agar *fetching* Supabase terjadi di *backend* untuk keamanan dan performa.
 
 ### Phase 2: Machine Learning Batch Script (`scripts/run_forecasting.py`)
