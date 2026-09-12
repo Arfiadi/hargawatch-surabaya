@@ -1,5 +1,5 @@
 # AI-Actionable PRD: HargaWatch Surabaya
-**Version:** 3.0 (Next.js Frontend + ML Batch Pipeline Integration)
+**Version:** 3.1 (Optimized AI Context)
 **Target:** Next.js (React) + Tailwind CSS + Python ML Batch Pipeline
 
 **Platform Intelijen Harga Pangan dan Early Warning Kota Surabaya**
@@ -10,7 +10,6 @@
 
 ### Visi
 HargaWatch bukan sekadar dashboard harga pasar. Sistem ini dibangun untuk menjawab tiga pertanyaan inti bagi masyarakat, pedagang, dan pemerintah Surabaya:
-
 1. **Harga hari ini** — di pasar mana harga suatu komoditas paling murah?
 2. **Tren ke depan** — apakah harga suatu komoditas cenderung naik atau turun?
 3. **Peringatan dini** — kalau ada lonjakan harga tidak wajar, kita tahu lebih awal, bukan setelah harga sudah tinggi.
@@ -58,104 +57,20 @@ Tabel berikut adalah spesifikasi produk sesuai brief dari dosen, disalin apa ada
 
 ---
 
-## 2. Strict Tech Stack & Dependencies
-Eksekusi pengembangan harus dibatasi pada pustaka dan versi berikut untuk menjamin stabilitas integrasi sistem.
-
-**Konfigurasi Environment Backend (`.env`):**
-```env
-SUPABASE_URL=https://ylzcvgmkaciawvfhbxvn.supabase.co
-SUPABASE_KEY=<SERVICE_ROLE_KEY_FOR_ML_WRITE>
-```
-
-**Konfigurasi Environment Frontend (`web/.env.local`):**
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://ylzcvgmkaciawvfhbxvn.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY_DARI_FAMOS>
-```
-
-**`requirements.txt` (Hanya untuk Machine Learning):**
-```text
-plotly>=5.18.0
-pandas>=2.0.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
-prophet>=1.1.5       # Untuk model baseline Time-Series Forecasting
-supabase>=2.3.0      # Harus menggunakan versi 2+ untuk API terbaru
-```
-
-**Frontend Stack (`web/package.json`):**
-- Framework: **Next.js 14+** (App Router, React, TypeScript)
-- Styling: **Tailwind CSS** (Sesuai dengan HTML Stitch)
-- Database Client: `@supabase/ssr` dan `@supabase/supabase-js`
-- Charting: `recharts` atau library sejenis
-
-## 3. Database Schema (DDL) Extension
-Di samping tabel *Silver Layer* yang sudah ada (`dim_pasar`, `dim_komoditas`, `dim_kalender`, `fact_harga_pasar`), agen AI harus mengeksekusi DDL berikut di Supabase untuk menampung hasil Machine Learning:
-
-```sql
--- Tabel untuk menyimpan hasil prediksi 7-14 hari ke depan
-CREATE TABLE IF NOT EXISTS public.fact_forecast (
-    tanggal DATE NOT NULL,          -- Tanggal prediksi di masa depan
-    pasar_id INT NOT NULL REFERENCES public.dim_pasar(pasar_id),
-    komoditas_id INT NOT NULL REFERENCES public.dim_komoditas(komoditas_id),
-    harga_prediksi INT NOT NULL,
-    batas_bawah INT,
-    batas_atas INT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (tanggal, pasar_id, komoditas_id)
-);
-
--- Tabel untuk menyimpan hasil sistem skoring komposit Early Warning
-CREATE TABLE IF NOT EXISTS public.fact_early_warning (
-    tanggal DATE NOT NULL,          -- Tanggal analisis berjalan (hari ini)
-    pasar_id INT NOT NULL REFERENCES public.dim_pasar(pasar_id),
-    komoditas_id INT NOT NULL REFERENCES public.dim_komoditas(komoditas_id),
-    skor_tren INT DEFAULT 0,
-    skor_volatilitas INT DEFAULT 0,
-    skor_anomali INT DEFAULT 0,
-    skor_prediksi INT DEFAULT 0,
-    total_skor INT NOT NULL,
-    status_warning VARCHAR(20) NOT NULL CHECK (status_warning IN ('NORMAL', 'WASPADA', 'TINGGI')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (tanggal, pasar_id, komoditas_id)
-);
-```
-
-## 4. Repository File Structure (Target State)
-Agen harus membangun atau memperbarui file dengan mematuhi hierarki berikut:
-
-```text
-hargawatch-surabaya/
-├── data/                       # (Existing)
-├── scripts/                    # (Existing)
-│   ├── update_catchup.py
-│   └── ml_pipeline.py          # [NEW] Skrip utama ML Batch Job
-├── web/                        # [NEW] Direktori web Next.js
-│   ├── package.json            # [NEW] Dependensi Next.js & React
-│   ├── app/                    # [NEW] App Router Next.js
-│   │   ├── page.tsx            # [NEW] Landing & Dashboard Publik (Best Price Finder)
-│   │   └── dashboard/          # [NEW] Dashboard Pemerintah (Early Warning, Analitik)
-│   │       └── page.tsx        
-│   ├── components/             # [NEW] UI Components dari mockups Stitch HTML/CSS
-│   └── lib/                    # [NEW] Supabase client utils (@supabase/ssr)
-├── requirements.txt            # Python dependencies (ML)
-└── .env                        # Python env vars
-```
-
-## 5. Sequential Execution Plan (Agentic Workflow)
+## 2. Sequential Execution Plan (Agentic Workflow)
 
 ### Phase 1: Database Setup & Data Fetching Interface
 - **Tugas:** Setup *Supabase client* di Next.js (`web/lib/supabase.ts`) dan Python (`scripts/utils.py`). Buat fungsi untuk menarik data mentah `fact_harga_pasar` (filter >= H-90 untuk mencegah penarikan >400k baris).
 - **Kendali:** Gunakan arsitektur *Server Components* pada Next.js agar *fetching* Supabase terjadi di *backend* untuk keamanan dan performa.
 
-### Phase 2: Machine Learning Batch Script (`scripts/ml_pipeline.py`)
+### Phase 2: Machine Learning Batch Script (`scripts/run_forecasting.py`)
 - **Tugas:** 
   1. *Fetch* data historis (menggunakan kolom `harga_imputasi` agar time-series tidak *bolong*).
-  2. Latih model `Prophet` untuk *forecast* harian (H+1 sampai H+7).
+  2. Latih model *Machine Learning / Time-Series* (berdasarkan algoritma terbaik dari eksperimen di folder `notebook/`) untuk *forecast* harian (H+1 sampai H+14).
   3. Hitung Z-Score volatilitas (30 hari terakhir).
-  4. Agregasi *Composite Score* (Sesuai PRD: Tren + Volatilitas + Anomali + Prediksi).
+  4. Agregasi *Composite Score* (Tren + Volatilitas + Anomali + Prediksi) untuk Early Warning.
   5. *Upsert* hasil ke tabel `fact_forecast` dan `fact_early_warning`.
-- **Kendali:** Loop *training* dibatasi hanya pada komoditas utama (beras, gula, minyak, cabai, telur, daging) terlebih dahulu untuk memvalidasi *pipeline*.
+- **Kendali:** Logika ML harus di-*porting* secara rapi dari eksplorasi di dalam folder `notebook/`.
 
 ### Phase 3: Next.js Frontend Development (`web/`)
 - **Tugas:** Bangun UI web modern mengadaptasi kode HTML/CSS dari *Stitch mockups*.
@@ -164,10 +79,25 @@ hargawatch-surabaya/
   3. Tampilkan *Metric Card* Early Warning menarik data dari `fact_early_warning`.
 - **Kendali:** Pastikan desain *pixel-perfect* semirip mungkin dengan mockup Stitch. Hindari *hardcode* tanggal.
 
-## 6. Agentic Acceptance Criteria (Syarat Kelulusan Biner)
+## 3. Agentic Acceptance Criteria (Syarat Kelulusan Biner)
 
 Agen dilarang berpindah fase jika kriteria berikut memberikan respon `False`:
 
 - **Phase 1 AC:** Koneksi Supabase dari Next.js *Server Component* berhasil mereturn data JSON harga tanpa error CORS atau koneksi. `(True/False)`
-- **Phase 2 AC:** `ml_pipeline.py` ketika dieksekusi via terminal berakhir dengan `exit code 0` dan merekam baris *insert* baru ke tabel `fact_forecast`. `(True/False)`
+- **Phase 2 AC:** Skrip ML ketika dieksekusi via terminal berakhir dengan `exit code 0` dan merekam baris *insert* baru ke tabel `fact_forecast` di Supabase. `(True/False)`
 - **Phase 3 AC:** Proyek web dapat di-*build* (`npm run build`) tanpa menimbulkan *TypeScript error* atau kegagalan *bundling*. Visualisasi data termuat minimal untuk satu komoditas secara sukses. `(True/False)`
+
+## 4. Persyaratan Non-Fungsional & Aturan Domain Bisnis (Data Rules)
+Untuk memastikan akurasi fitur-fitur di atas, pengembangan (terutama oleh AI) harus mematuhi logika domain pasar berikut:
+
+### A. Konteks Pasar Keputran (Grosir vs Eceran)
+- Sistem memantau 6 pasar. 5 di antaranya adalah pasar eceran (Tambahrejo, Wonokromo, Genteng, Pucang Anom, Soponyono).
+- **Pasar Keputran adalah pasar GROSIR (Induk).**
+- **Aturan:** Harga Keputran tidak boleh dibandingkan secara langsung (apple-to-apple) dengan 5 pasar eceran pada fitur *Best Price Finder* atau *Shopping Basket*, karena harga grosir secara alami selalu lebih murah. Keputran utamanya digunakan sebagai *leading signal* untuk model *Forecasting* dan *Early Warning System*.
+
+### B. Filosofi Imputasi Data (Zero Lookahead Bias)
+- Kolom `harga_asli` di tabel `fact_harga_pasar` adalah nilai murni observasi lapangan (berisi `NULL` pada hari libur/kosong). Nilai ini harus digunakan saat menampilkan data harga hari ini ke pengguna akhir.
+- Kolom `harga_imputasi` adalah nilai kontinu yang diisi menggunakan **Forward-Fill Murni (maksimal 7 hari)** untuk keperluan *training* Machine Learning dan grafik *Time-Series*.
+- **Aturan:** Dilarang keras menggunakan interpolasi linier untuk mengisi kekosongan data, karena hal ini membocorkan data masa depan ke masa lalu (*Lookahead Bias*).
+- Sistem **tidak melakukan pemotongan outlier (Non-Winsorization)**. Lonjakan harga ekstrem dipertahankan karena merupakan sinyal anomali nyata yang justru dicari oleh model.
+- Setiap pengambilan data (*query*) dari `fact_harga_pasar` **wajib di-filter berdasarkan tanggal** untuk mencegah *over-fetching* dari database.
