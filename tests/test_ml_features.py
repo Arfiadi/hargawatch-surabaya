@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from scripts.ml.features import (
+from src.analytics.features import (
     prepare_base_series,
     build_lag_features,
     build_weather_features

@@ -31,16 +31,16 @@ from zoneinfo import ZoneInfo
 
 from psycopg2.extras import execute_values
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ingest_supabase import DDL, koneksi
-from preprocessing_final import buat_kalender
-from update_harian import (KABKOTA, UPSERT_CUACA, UPSERT_INFLASI, UPSERT_KALENDER,
+from src.utils.ingest_supabase import DDL, koneksi
+from src.pipeline.preprocessing_final import buat_kalender
+from scripts.update_harian import (KABKOTA, UPSERT_CUACA, UPSERT_INFLASI, UPSERT_KALENDER,
                            UPSERT_PASAR, UPSERT_PRODUSEN, ambil_komoditas_valid,
                            scrape_pasar, scrape_produsen, upsert,
                            imputasi_pasar_missing, imputasi_produsen_missing)
-from scrape_data import ambil_daftar_pasar
-from download_cuaca import unduh
+from src.pipeline.scrape_data import ambil_daftar_pasar
+from src.pipeline.download_cuaca import unduh
 
 # Jejak mundur maksimum saat mencari bolong (laptop mati ~1 tahun masih tertangkap)
 JEJAK_MAKS_HARI = 400

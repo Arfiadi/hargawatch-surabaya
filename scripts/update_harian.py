@@ -30,14 +30,14 @@ from zoneinfo import ZoneInfo
 
 from psycopg2.extras import execute_values
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ingest_supabase import DDL, koneksi
-from preprocessing_final import buat_kalender
-from scrape_data import ambil_daftar_pasar, get_html_table, is_pangan, parse_tabel
-from scrape_produsen import get_html_table as get_produsen_html
-from scrape_produsen import parse_tabel as parse_produsen
-from utils_alerting import send_telegram_alert
+from src.utils.ingest_supabase import DDL, koneksi
+from src.pipeline.preprocessing_final import buat_kalender
+from src.pipeline.scrape_data import ambil_daftar_pasar, get_html_table, is_pangan, parse_tabel
+from src.pipeline.scrape_produsen import get_html_table as get_produsen_html
+from src.pipeline.scrape_produsen import parse_tabel as parse_produsen
+from src.utils.utils_alerting import send_telegram_alert
 
 KABKOTA = "surabayakota"
 KOTA_PRODUSEN = "Kota Surabaya"

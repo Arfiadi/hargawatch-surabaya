@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from scripts.ml.models import NaiveLastValueForecaster, NaiveSMAForecaster, LightGBMForecaster
+from src.models.models import NaiveLastValueForecaster, NaiveSMAForecaster, LightGBMForecaster
 
 
 def test_baseline_forecasters():

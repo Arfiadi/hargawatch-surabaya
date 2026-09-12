@@ -16,12 +16,12 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from scripts.ml.features import (
+from src.analytics.features import (
     load_raw_datasets, prepare_base_series, build_lag_features,
     build_weather_features, build_supervised_dataset, DATA_PROCESSED
 )
-from scripts.ml.models import LightGBMForecaster
-from scripts.ml.early_warning import compute_early_warning_scores
+from src.models.models import LightGBMForecaster
+from src.safety.early_warning import compute_early_warning_scores
 
 # Strategic priority commodities identified in EDA
 PRIORITY_KOMODITAS_IDS = [

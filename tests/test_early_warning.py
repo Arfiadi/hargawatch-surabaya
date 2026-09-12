@@ -1,7 +1,7 @@
 """Unit tests untuk skoring komposit Early Warning System."""
 
 import pytest
-from scripts.ml.early_warning import compute_early_warning_scores
+from src.safety.early_warning import compute_early_warning_scores
 
 
 def test_early_warning_score_bounds_and_classification(sample_ews_inputs):

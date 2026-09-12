@@ -4,7 +4,7 @@ import os
 from unittest.mock import patch, MagicMock
 import pytest
 
-from scripts.utils_alerting import send_telegram_alert
+from src.utils.utils_alerting import send_telegram_alert
 
 
 def test_telegram_alert_graceful_handling_when_unconfigured(monkeypatch):

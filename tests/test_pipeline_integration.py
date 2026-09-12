@@ -3,7 +3,7 @@
 import os
 import psycopg2
 import pytest
-from scripts.ingest_supabase import koneksi
+from src.utils.ingest_supabase import koneksi
 
 
 def test_supabase_connection_and_schema():

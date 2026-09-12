@@ -19,14 +19,14 @@ import wandb
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from scripts.ml.features import build_supervised_dataset
-from scripts.ml.models import LightGBMForecaster
-from scripts.ml.backtest import compute_metrics
+from src.analytics.features import build_supervised_dataset
+from src.models.models import LightGBMForecaster
+from src.models.backtest import compute_metrics
 
 
 def run_experiment(commodity_name: str, horizon: int, include_weather: bool):
     # 1. Temukan komoditas_id
-    from scripts.ml.features import DATA_PROCESSED
+    from src.analytics.features import DATA_PROCESSED
     df_kom = pd.read_csv(DATA_PROCESSED / "dim_komoditas.csv")
     match = df_kom[df_kom["komoditas"].str.lower() == commodity_name.lower()]
     if match.empty:

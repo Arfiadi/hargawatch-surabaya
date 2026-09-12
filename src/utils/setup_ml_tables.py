@@ -8,7 +8,7 @@ from pathlib import Path
 import psycopg2
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # DDL untuk tabel hasil Machine Learning
 DDL_ML = """
@@ -65,7 +65,7 @@ def koneksi(retry=3):
                 last_err = e
                 print(f"  [!] koneksi gagal (port {port}, percobaan {percobaan}/{retry}): {e}")
                 if percobaan < retry:
-                    time.sleep(2 * percobaan)
+                    time.sleep(2 ** percobaan)
     raise last_err
 
 def main():
