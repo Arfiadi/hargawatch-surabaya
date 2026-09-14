@@ -9,8 +9,8 @@ __pycache__/
 # Data besar hasil scrape & pipeline (tetap lokal, dibuat ulang lewat script)
 data/raw/
 data/processed/
-data/external/cuaca/
-*.json
+# Data JSON hasil download/scrape lokal
+data/**/*.json
 
 # Log catch-up lokal
 logs/
