@@ -306,6 +306,18 @@ def main(argv=None):
             print("\nSELESAI DENGAN GAGAL: ada tanggal yang belum lengkap (exit 1)")
             send_telegram_alert(msg_gagal)
             return 1
+
+        if (total_p > 0 or total_d > 0):
+            sukses_msg = (
+                f"✅ *[HargaWatch Catch-up - BERHASIL]*\n\n"
+                f"📅 *Rentang:* {len(tanggal)} hari ({tanggal[-1]} s.d. {tanggal[0]})\n"
+                f"📊 *Hasil Upsert Supabase:*\n"
+                f"  • fact_harga_pasar: {total_p} baris\n"
+                f"  • fact_harga_produsen: {total_d} baris\n\n"
+                f"✨ Tanggal bolong berhasil diisi & disinkronkan."
+            )
+            send_telegram_alert(sukses_msg)
+
         print("\nSELESAI: OK")
         return 0
     except Exception as e:

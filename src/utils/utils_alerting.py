@@ -51,12 +51,32 @@ def send_telegram_alert(pesan: str) -> bool:
 
 
 if __name__ == "__main__":
-    print("Menguji pengiriman notifikasi Telegram...")
-    sukses = send_telegram_alert(
-        "🔔 *Test Alert HargaWatch*\n"
-        "Integrasi Telegram Bot berhasil terhubung dan berfungsi dengan baik!"
+    import time
+
+    print("\n--- [SIMULASI 1: NOTIFIKASI BERHASIL] ---")
+    pesan_sukses = (
+        "✅ *[HargaWatch Update - BERHASIL]*\n\n"
+        "📅 *Tanggal Target:* 2026-09-20\n"
+        "📊 *Status Pipeline:*\n"
+        "  • Fact Harga Pasar: 180 baris tersimpan\n"
+        "  • Fact Harga Produsen: 45 baris tersimpan\n"
+        "  • Imputasi & Validasi: Lolos\n\n"
+        "✨ Semua data komoditas Surabaya berhasil diperbarui."
     )
-    if sukses:
-        print(">> [OK] Berhasil! Silakan periksa chat Telegram Anda.")
-    else:
-        print(">> [GAGAL] Gagal mengirim pesan. Periksa token dan chat ID Anda.")
+    send_telegram_alert(pesan_sukses)
+
+    print("\nMenunggu 2 detik...")
+    time.sleep(2)
+
+    print("\n--- [SIMULASI 2: NOTIFIKASI GAGAL / ALERT] ---")
+    pesan_gagal = (
+        "🚨 *[HargaWatch Alert - GAGAL SCRAPING]*\n\n"
+        "📅 *Tanggal Target:* 2026-09-20\n"
+        "⚠️ *Detail Masalah:*\n"
+        "  • 2 sumber data gagal dihubungi (Pasar Genteng, Pasar Pabean)\n"
+        "  • Error: `Connection timed out to SISKAPERBAPO`\n\n"
+        "🔄 *Tindakan:* Sistem akan mencoba otomatis (retry) pada jadwal berikutnya."
+    )
+    send_telegram_alert(pesan_gagal)
+
+    print("\n>> [SELESAI] Silakan cek grup Telegram 'HargaWatch' untuk melihat tampilan kedua simulasi!")
