@@ -1,0 +1,13 @@
+# HargaWatch - Machine Learning & Analytics Dependencies
+# Includes pipeline deps as base: pip install -r requirements-pipeline.txt
+pandas>=2.0
+numpy>=1.26
+matplotlib>=3.8
+scikit-learn>=1.3.0
+lightgbm>=4.0.0
+statsmodels>=0.14.0
+seaborn>=0.13.0
+wandb>=0.16.0
+jupyter>=1.0
+nbconvert>=7.0
+pytest>=8.0.0

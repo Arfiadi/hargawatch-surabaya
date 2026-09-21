@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-variant": "#d3e4fe", "surface-container-highest": "#d3e4fe", "surface-container-high": "#dce9ff", "primary-fixed": "#a9f3c5", "status-critical-border": "#FECACA", "on-surface": "#0b1c30", "on-tertiary-fixed": "#002113", "on-tertiary-container": "#49da9f", "on-background": "#0b1c30", "surface-container-low": "#eff4ff", "surface-container": "#e5eeff", "surface-container-lowest": "#ffffff", "surface-card": "#FFFFFF", "border-strong": "#CBD5E1", "inverse-on-surface": "#eaf1ff", "status-critical-bg": "#FEF2F2", "on-primary": "#ffffff", "on-error": "#ffffff", "surface": "#f8f9ff", "outline": "#707971", "text-muted": "#94A3B8", "status-warning-border": "#FDE68A", "status-normal-bg": "#F0FDF4", "tertiary-container": "#005c3e", "on-tertiary": "#ffffff", "status-normal-border": "#BBF7D0", "tertiary-fixed-dim": "#4edea3", "status-critical": "#DC2626", "primary": "#004328", "surface-canvas": "#F8FAFC", "surface-dim": "#cbdbf5", "primary-fixed-dim": "#8ed6aa", "on-primary-fixed": "#002111", "error-container": "#ffdad6", "text-secondary": "#475569", "border-subtle": "#E2E8F0", "tertiary-fixed": "#6ffbbe", "secondary-fixed": "#dae2fd", "secondary-fixed-dim": "#bec6e0", "status-warning-bg": "#FFFBEB", "error": "#ba1a1a", "status-normal": "#16A34A", "tertiary": "#00422b", "inverse-primary": "#8ed6aa", "secondary-container": "#dae2fd", "on-secondary-fixed-variant": "#3f465c", "primary-container": "#0d5c3a", "on-primary-fixed-variant": "#005232", "on-error-container": "#93000a", "on-surface-variant": "#404942", "on-primary-container": "#8ad2a7", "on-secondary-fixed": "#131b2e", "status-warning": "#D97706", "background": "#f8f9ff", "surface-tint": "#226b47", "on-tertiary-fixed-variant": "#005236", "surface-bright": "#f8f9ff", "on-secondary-container": "#5c647a", "outline-variant": "#bfc9c0", "on-secondary": "#ffffff", "inverse-surface": "#213145", "secondary": "#565e74", "surface-subtle": "#F1F5F9", "text-primary": "#0F172A" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-xs": "0.5rem", "space-2xs": "0.25rem", "space-lg": "1.5rem", "space-2xl": "3rem", "gutter-desktop": "1.5rem", "space-xl": "2rem", "container-max": "80rem", "gutter-mobile": "1rem", "space-sm": "0.75rem", "space-md": "1rem" }, "fontFamily": { "headline-sm": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "label-caps": ["JetBrains Mono"], "body-sm": ["Plus Jakarta Sans"], "metric-delta": ["JetBrains Mono"], "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "title-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "metric-display": ["JetBrains Mono"], "metric-value": ["JetBrains Mono"], "headline-xl": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"] }, "fontSize": { "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "metric-delta": ["12px", { "lineHeight": "16px", "fontWeight": "600" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "title-md": ["16px", { "lineHeight": "22px", "fontWeight": "600" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "metric-display": ["28px", { "lineHeight": "32px", "letterSpacing": "-0.03em", "fontWeight": "700" }], "metric-value": ["18px", { "lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface-canvas text-on-surface font-body-md text-body-md antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-card/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-space-md lg:px-gutter-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md min-w-max"><div class="flex items-center gap-space-xs"><img alt="HargaWatch Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WiZ8V1jVXZ1sU1_kf8Rny3lqf6Mezyyzf1ac0WfhnMnfLFShPPO7SDTRhwUVFtq3i37SKWPp4Tzy4I5PaEovQGtiVITOm1K9s7gv9ycCUwbVWmXXcSMrxBTLK7AKh2rU4Qhgmd-ElW41fMDDLA1Zy-hAd6BPDSYqI9a5y1t9EU3e7RkEdfjQWMFrp0NuNAVvXuwUcgfdRLRr4wky2XPBm3Zbvao6IkweWr0HSIR05qEzUkq2Vg-WfLAyA"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">HargaWatch</span><span class="font-label-caps text-label-caps text-text-secondary uppercase">Surabaya Food Intel</span></div></div><div class="hidden 2xl:flex items-center gap-space-xs pl-space-xs"><span class="inline-flex items-center px-space-xs py-space-2xs rounded-full bg-surface-subtle text-text-secondary font-label-caps text-label-caps">Pemantauan Resmi Pemkot</span><span class="inline-flex items-center gap-1.5 px-space-xs py-space-2xs rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps"><span class="w-1.5 h-1.5 rounded-full bg-status-normal animate-pulse"></span>API: Update 10m Lalu</span></div></div><nav class="hidden xl:flex items-center gap-space-2xs" data-active-classes="bg-primary-container text-on-primary font-headline-sm rounded-lg"><a class="px-space-sm py-space-xs font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="dashboard-publik" href="#">Dashboard Publik</a><a class="px-space-sm py-space-xs font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="peta-disparitas-pasar" href="#">Peta &amp; Disparitas Pasar</a><a class="px-space-sm py-space-xs font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="early-warning-risiko" href="#">Early Warning &amp; Risiko</a><a class="px-space-sm py-space-xs font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="forecasting-tren" href="#">Forecasting &amp; Tren</a></nav><div class="flex items-center gap-space-xs sm:gap-space-sm"><div class="hidden md:flex items-center bg-surface-subtle rounded-lg px-space-xs py-space-2xs"><span class="material-symbols-outlined text-text-muted text-body-lg mr-1.5">calendar_today</span><span class="font-label-caps text-label-caps text-text-secondary">Hari Ini</span></div><div class="relative"><select class="appearance-none bg-surface-card text-on-surface font-body-sm text-body-sm pl-space-xs pr-7 py-space-2xs rounded-lg shadow-none focus:outline-none cursor-pointer"><option value="all">Semua Pasar (6)</option><option value="wonokromo">Pasar Wonokromo</option><option value="keputran">Pasar Keputran</option><option value="pucanganom">Pasar Pucang Anom</option><option value="genteng">Pasar Genteng</option><option value="tambahrejo">Pasar Tambahrejo</option><option value="soponyono">Pasar Soponyono</option></select><span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-body-md">expand_more</span></div><div class="flex items-center gap-space-xs pl-space-2xs"><div class="hidden lg:flex flex-col text-right"><span class="font-body-sm text-body-sm font-headline-sm text-on-surface leading-tight">Dinas Perdagangan</span><span class="font-label-caps text-label-caps text-text-muted">Analis Ahli</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF0YukeXinIsrbLWvfBwaqY0-N7hCxTJZv7F1JDLRE4suzyIH3ZoQ5T-eHtDKDO9s5GSxq_kcukIeQrcK-5lGrXHGnnSnbl3CrkMWvWAxUKuLIwi2r0RCd98ImDFjzAGEpWhd2WHoEIek4EYUQcWY9JLC65oEzqYmobfsv4s65bWBtuaUtu2cV5oxLnML7xTZIsgFz3JJn0hIINKtw9uc5BS2RJBD-pkgiZReedC6sAhOKAF5HsA0L"/></div></div></div></header><main class="w-full pt-20 bg-surface-canvas min-h-screen"><div class="flex flex-col w-full">
+<section class="w-full px-space-md lg:px-gutter-desktop py-space-md max-w-[80rem] mx-auto">
+<!-- Header Context & Quick Metrics Strip -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-lg">
+<div>
+<div class="flex items-center gap-space-xs mb-1">
+<span class="inline-flex items-center gap-1.5 px-space-xs py-0.5 rounded-full bg-surface-subtle text-primary font-label-caps text-label-caps uppercase tracking-wider">
+<span class="w-2 h-2 rounded-full bg-status-normal animate-ping"></span>
+            Geointel Pangan SP2KP
+          </span>
+<span class="text-text-muted text-body-sm font-body-sm">•</span>
+<span class="text-text-secondary font-label-caps text-label-caps uppercase">Surabaya Regional Grid</span>
+</div>
+<div class="flex flex-wrap items-baseline gap-space-xs">
+<h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">Peta Disparitas Harga Antar-Pasar</h1>
+<span class="font-body-md text-body-md text-text-secondary">Kota Surabaya (6 Pasar Acuan)</span>
+</div>
+</div>
+<!-- Quick Telemetry Card -->
+<div class="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-xl shadow-sm">
+<div class="flex flex-col pr-space-sm">
+<span class="font-label-caps text-label-caps text-text-muted uppercase">Koefisien Variasi</span>
+<div class="flex items-center gap-1.5">
+<span class="font-metric-display text-metric-display text-status-warning">12.4%</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-warning-bg text-status-warning font-label-caps text-label-caps">Tinggi</span>
+</div>
+</div>
+<div class="w-px h-8 bg-border-subtle"></div>
+<div class="flex flex-col pl-space-xs">
+<span class="font-label-caps text-label-caps text-text-muted uppercase">Anomali Terbuka</span>
+<span class="font-metric-value text-metric-value text-status-critical">Rp 11.500/kg</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Genteng vs Keputran</span>
+</div>
+</div>
+</div>
+<!-- 1. Spatial Control & Analytical Filter Bar -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm mb-space-lg">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-space-md items-center">
+<!-- Commodity Select -->
+<div class="md:col-span-4 flex flex-col gap-1.5">
+<label class="font-label-caps text-label-caps text-text-secondary uppercase flex items-center gap-1" for="commodity-select">
+<span class="material-symbols-outlined text-body-md text-primary">nutrition</span>
+            Komoditas Terpilih
+          </label>
+<div class="relative">
+<select class="w-full h-10 appearance-none bg-surface-subtle text-text-primary font-body-md text-body-md pl-space-sm pr-9 rounded-lg focus:outline-none focus:bg-surface-card transition-all cursor-pointer font-title-md" id="commodity-select">
+<option selected="" value="cabai-rawit">Cabai Rawit Merah (Hortikultura)</option>
+<option value="beras-medium">Beras Medium (Pangan Pokok)</option>
+<option value="minyakita">Minyakita Botol (Minyak Goreng)</option>
+<option value="telur-ayam">Telur Ayam Ras (Protein)</option>
+<option value="daging-ayam">Daging Ayam Broiler</option>
+<option value="bawang-merah">Bawang Merah Brebes Super</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-body-md">expand_more</span>
+</div>
+</div>
+<!-- Zone Selector -->
+<div class="md:col-span-4 flex flex-col gap-1.5">
+<label class="font-label-caps text-label-caps text-text-secondary uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-body-md text-primary">hub</span>
+            Filter Zonasi Pasar
+          </label>
+<div class="flex items-center gap-1 bg-surface-subtle p-1 rounded-lg">
+<button class="px-space-xs py-1.5 rounded-lg bg-primary-container text-on-primary font-label-caps text-label-caps transition-all">Semua</button>
+<button class="px-space-xs py-1.5 rounded-lg text-text-secondary hover:text-text-primary font-label-caps text-label-caps transition-all">Pusat</button>
+<button class="px-space-xs py-1.5 rounded-lg text-text-secondary hover:text-text-primary font-label-caps text-label-caps transition-all">Selatan</button>
+<button class="px-space-xs py-1.5 rounded-lg text-text-secondary hover:text-text-primary font-label-caps text-label-caps transition-all">Timur</button>
+<button class="px-space-xs py-1.5 rounded-lg text-text-secondary hover:text-text-primary font-label-caps text-label-caps transition-all">Utara</button>
+</div>
+</div>
+<!-- Status Disparity Summary Indicator -->
+<div class="md:col-span-4 bg-status-warning-bg rounded-lg p-space-sm flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-status-warning text-headline-sm mt-0.5">warning</span>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-text-primary leading-snug">Disparitas Hortikultura Tinggi</span>
+<span class="font-body-sm text-body-sm text-text-secondary mt-0.5">
+              Selisih harga antarpasar mencapai <strong class="text-status-critical font-label-caps">17.3%</strong>. Direkomendasikan operasi pasokan dari Keputran ke Genteng.
+            </span>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Geospatial Interactive Map Section -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md mb-space-lg">
+<!-- Spatial Viewport Container -->
+<div class="lg:col-span-8 bg-surface-card rounded-xl shadow-sm overflow-hidden flex flex-col relative min-h-[580px]">
+<!-- Map Overlay Action Header -->
+<div class="absolute top-space-md left-space-md right-space-md z-20 flex flex-wrap items-center justify-between gap-space-xs pointer-events-none">
+<div class="pointer-events-auto bg-surface-card/95 backdrop-blur-md px-space-sm py-1.5 rounded-lg shadow-sm flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-body-md">layers</span>
+<span class="font-label-caps text-label-caps text-text-primary uppercase font-bold">Heatmap Layer: Spasial Disparitas</span>
+<span class="text-text-muted text-body-sm">•</span>
+<span class="font-label-caps text-label-caps text-status-normal font-semibold">6 Node Sinkron</span>
+</div>
+<div class="pointer-events-auto flex items-center gap-1.5 bg-surface-card/95 backdrop-blur-md p-1 rounded-lg shadow-sm">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors" title="Zoom In">
+<span class="material-symbols-outlined text-body-lg">add</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors" title="Zoom Out">
+<span class="material-symbols-outlined text-body-lg">remove</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors" title="Reset Map">
+<span class="material-symbols-outlined text-body-lg">my_location</span>
+</button>
+</div>
+</div>
+<!-- Simulated Interactive Map Canvas -->
+<div class="relative w-full h-[580px] bg-[#E8EFF6] overflow-hidden select-none" id="spatial-canvas">
+<!-- Stylized Surabaya Waterways & Coastlines (SVG) -->
+<svg class="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-45" fill="none" viewbox="0 0 900 650" xmlns="http://www.w3.org/2000/svg">
+<!-- Madura Strait Coastline (North/East) -->
+<path d="M 50 20 C 220 70 380 95 520 150 C 660 210 770 340 880 430 L 900 650 L 0 650 Z" fill="#D8E5F3" opacity="0.8"></path>
+<path d="M 680 20 C 720 120 790 220 890 310" stroke="#CBD5E1" stroke-dasharray="6 6" stroke-linecap="round" stroke-width="4"></path>
+<!-- Kali Mas River branching -->
+<path d="M 460 650 C 470 540 440 450 430 380 C 415 290 470 200 480 90" stroke="#93C5FD" stroke-linecap="round" stroke-width="12"></path>
+<path d="M 430 380 C 370 340 310 320 200 310" stroke="#BFDBFE" stroke-linecap="round" stroke-width="6"></path>
+<path d="M 445 420 C 510 420 570 470 650 490" stroke="#BFDBFE" stroke-linecap="round" stroke-width="7"></path>
+<!-- Major Arterials (Jalan Protokol) -->
+<path d="M 400 650 L 400 50" stroke="#CBD5E1" stroke-width="3"></path>
+<path d="M 410 490 L 220 510" stroke="#CBD5E1" stroke-width="2"></path>
+<path d="M 400 370 L 670 410" stroke="#CBD5E1" stroke-width="2.5"></path>
+<path d="M 280 220 L 580 250" stroke="#CBD5E1" stroke-width="2.5"></path>
+<!-- Grid Lines -->
+<circle cx="430" cy="380" fill="none" r="180" stroke="#E2E8F0" stroke-dasharray="4 4" stroke-width="1.5"></circle>
+<circle cx="430" cy="380" fill="none" r="320" stroke="#E2E8F0" stroke-dasharray="4 4" stroke-width="1"></circle>
+</svg>
+<!-- Heatmap Dispersion Overlay (Canvas Effect via SVG Radial Gradients) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none opacity-40 mix-blend-multiply" fill="none" viewbox="0 0 900 650">
+<defs>
+<radialgradient cx="440" cy="240" gradientunits="userSpaceOnUse" id="heat-genteng" r="140">
+<stop offset="0%" stop-color="#DC2626" stop-opacity="0.75"></stop>
+<stop offset="55%" stop-color="#F59E0B" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#F59E0B" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="420" cy="370" gradientunits="userSpaceOnUse" id="heat-keputran" r="150">
+<stop offset="0%" stop-color="#16A34A" stop-opacity="0.8"></stop>
+<stop offset="60%" stop-color="#16A34A" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#16A34A" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="390" cy="490" gradientunits="userSpaceOnUse" id="heat-wonokromo" r="120">
+<stop offset="0%" stop-color="#F59E0B" stop-opacity="0.5"></stop>
+<stop offset="100%" stop-color="#F59E0B" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="640" cy="510" gradientunits="userSpaceOnUse" id="heat-soponyono" r="130">
+<stop offset="0%" stop-color="#DC2626" stop-opacity="0.55"></stop>
+<stop offset="100%" stop-color="#DC2626" stop-opacity="0"></stop>
+</radialgradient>
+</defs>
+<circle cx="440" cy="240" fill="url(#heat-genteng)" r="140"></circle>
+<circle cx="420" cy="370" fill="url(#heat-keputran)" r="150"></circle>
+<circle cx="390" cy="490" fill="url(#heat-wonokromo)" r="120"></circle>
+<circle cx="640" cy="510" fill="url(#heat-soponyono)" r="130"></circle>
+</svg>
+<!-- INTERACTIVE PIN 1: Pasar Keputran (Induk Benchmark) -->
+<div class="absolute left-[44%] top-[56%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-30 transition-transform duration-200 hover:scale-110">
+<div class="flex flex-col items-center">
+<div class="bg-surface-card px-space-xs py-1 rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-status-normal"></span>
+<span class="font-headline-sm text-body-sm text-text-primary">Keputran</span>
+<span class="font-metric-delta text-label-caps text-status-normal">Rp 66.500</span>
+</div>
+<div class="w-6 h-6 rounded-full bg-status-normal text-on-primary flex items-center justify-center -mt-1 shadow-lg shadow-status-normal/40 ring-4 ring-status-normal-bg">
+<span class="material-symbols-outlined text-body-sm font-bold">anchor</span>
+</div>
+<div class="px-space-2xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps mt-1">
+                BENCHMARK
+              </div>
+</div>
+</div>
+<!-- INTERACTIVE PIN 2: Pasar Genteng (Surabaya Pusat - Tertinggi) with EXPANDED Active Tooltip -->
+<div class="absolute left-[47%] top-[34%] -translate-x-1/2 -translate-y-1/2 z-40 group cursor-pointer">
+<div class="flex flex-col items-center relative">
+<!-- Pinned Market Node -->
+<div class="bg-surface-card px-space-xs py-1 rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-status-critical animate-ping"></span>
+<span class="font-headline-sm text-body-sm text-text-primary">Genteng</span>
+<span class="font-metric-delta text-label-caps text-status-critical">Rp 78.000</span>
+</div>
+<div class="w-7 h-7 rounded-full bg-status-critical text-on-primary flex items-center justify-center -mt-1 shadow-lg shadow-status-critical/40 ring-4 ring-status-critical-bg">
+<span class="material-symbols-outlined text-body-md font-bold">priority_high</span>
+</div>
+<!-- ACTIVE TOOLTIP POPUP (Required in Prompt) -->
+<div class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-72 bg-surface-card rounded-xl p-space-sm shadow-xl z-50 pointer-events-auto">
+<div class="flex items-center justify-between pb-space-xs mb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="font-title-md text-title-md text-text-primary">Pasar Genteng</span>
+<span class="px-space-2xs py-0.2 rounded-full bg-surface-subtle text-text-secondary font-label-caps text-label-caps">Pusat</span>
+</div>
+<span class="px-space-xs py-0.5 rounded-full bg-status-critical-bg text-status-critical font-label-caps text-label-caps">
+                    Tertinggi
+                  </span>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between font-body-sm text-body-sm">
+<span class="text-text-secondary">Harga Cabai Rawit:</span>
+<span class="font-metric-value text-body-md text-status-critical font-bold">Rp 78.000/kg</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm">
+<span class="text-text-secondary">Selisih vs Keputran:</span>
+<span class="font-metric-delta text-label-caps text-status-critical font-bold">+Rp 11.500 (+17.3%)</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm">
+<span class="text-text-secondary">Est. Margin Logistik:</span>
+<span class="font-metric-delta text-label-caps text-text-primary">Rp 4.200/kg (Tinggi)</span>
+</div>
+</div>
+<div class="mt-space-xs pt-space-xs bg-surface-subtle p-space-xs rounded-lg flex items-center gap-space-2xs text-text-secondary">
+<span class="material-symbols-outlined text-body-md text-status-warning">info</span>
+<span class="font-body-sm text-body-sm leading-tight">Biaya sewa lapak &amp; rantai pasok lapis ke-3 menaikkan harga eceran.</span>
+</div>
+<!-- Triangle Tip -->
+<div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-surface-card"></div>
+</div>
+</div>
+</div>
+<!-- INTERACTIVE PIN 3: Pasar Wonokromo (Surabaya Selatan) -->
+<div class="absolute left-[39%] top-[72%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-30 transition-transform duration-200 hover:scale-110">
+<div class="flex flex-col items-center">
+<div class="bg-surface-card px-space-xs py-1 rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-status-warning"></span>
+<span class="font-headline-sm text-body-sm text-text-primary">Wonokromo</span>
+<span class="font-metric-delta text-label-caps text-status-warning">Rp 70.000</span>
+</div>
+<div class="w-6 h-6 rounded-full bg-status-warning text-on-primary flex items-center justify-center -mt-1 shadow-md ring-4 ring-status-warning-bg">
+<span class="material-symbols-outlined text-body-sm">storefront</span>
+</div>
+<div class="px-space-2xs py-0.5 rounded-full bg-status-warning-bg text-status-warning font-label-caps text-label-caps mt-1">
+                Waspada Ringan
+              </div>
+</div>
+</div>
+<!-- INTERACTIVE PIN 4: Pasar Pucang Anom (Surabaya Timur) -->
+<div class="absolute left-[58%] top-[54%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-30 transition-transform duration-200 hover:scale-110">
+<div class="flex flex-col items-center">
+<div class="bg-surface-card px-space-xs py-1 rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-headline-sm text-body-sm text-text-primary">Pucang Anom</span>
+<span class="font-metric-delta text-label-caps text-text-secondary">Rp 74.000</span>
+</div>
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center -mt-1 shadow-md ring-4 ring-surface-subtle">
+<span class="material-symbols-outlined text-body-sm">storefront</span>
+</div>
+<div class="px-space-2xs py-0.5 rounded-full bg-surface-subtle text-text-secondary font-label-caps text-label-caps mt-1">
+                Sedang (+11.2%)
+              </div>
+</div>
+</div>
+<!-- INTERACTIVE PIN 5: Pasar Tambahrejo (Surabaya Timur / Utara) -->
+<div class="absolute left-[62%] top-[30%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-30 transition-transform duration-200 hover:scale-110">
+<div class="flex flex-col items-center">
+<div class="bg-surface-card px-space-xs py-1 rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-status-normal"></span>
+<span class="font-headline-sm text-body-sm text-text-primary">Tambahrejo</span>
+<span class="font-metric-delta text-label-caps text-status-normal">Rp 71.500</span>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center -mt-1 shadow-md ring-4 ring-status-normal-bg">
+<span class="material-symbols-outlined text-body-sm">storefront</span>
+</div>
+<div class="px-space-2xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps mt-1">
+                Stabil (+7.5%)
+              </div>
+</div>
+</div>
+<!-- INTERACTIVE PIN 6: Pasar Soponyono (Rungkut / Surabaya Timur) -->
+<div class="absolute left-[73%] top-[74%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-30 transition-transform duration-200 hover:scale-110">
+<div class="flex flex-col items-center">
+<div class="bg-surface-card px-space-xs py-1 rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-status-warning"></span>
+<span class="font-headline-sm text-body-sm text-text-primary">Soponyono</span>
+<span class="font-metric-delta text-label-caps text-status-warning">Rp 75.000</span>
+</div>
+<div class="w-6 h-6 rounded-full bg-status-warning text-on-primary flex items-center justify-center -mt-1 shadow-md ring-4 ring-status-warning-bg">
+<span class="material-symbols-outlined text-body-sm">storefront</span>
+</div>
+<div class="px-space-2xs py-0.5 rounded-full bg-status-warning-bg text-status-warning font-label-caps text-label-caps mt-1">
+                Waspada (+12.7%)
+              </div>
+</div>
+</div>
+<!-- Bottom Floating Map Legend -->
+<div class="absolute bottom-space-md left-space-md bg-surface-card/95 backdrop-blur-md p-space-sm rounded-xl shadow-sm z-20 flex flex-col gap-1.5">
+<span class="font-label-caps text-label-caps text-text-muted uppercase">Spektrum Deviasi Harga</span>
+<div class="flex items-center gap-2 text-label-caps font-label-caps">
+<span class="text-status-normal">Keputran (Termurah)</span>
+<div class="w-28 h-2 rounded-full bg-gradient-to-r from-status-normal via-status-warning to-status-critical"></div>
+<span class="text-status-critical">Genteng (Tertinggi)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Spatial Analytics Breakdown Panel (Beside Map) -->
+<div class="lg:col-span-4 flex flex-col gap-space-md">
+<!-- Regional Inflow Diagnostics -->
+<div class="bg-surface-card p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-headline-sm">route</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Koridor Pasokan</h2>
+</div>
+<span class="font-label-caps text-label-caps text-text-muted">Real-time GPS Satgas</span>
+</div>
+<div class="space-y-space-sm">
+<div class="p-space-xs rounded-lg bg-surface-subtle flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-body-md text-text-primary">Kediri / Blitar → Keputran</span>
+<span class="font-label-caps text-label-caps text-status-normal font-semibold">Lancar (14 Ton)</span>
+</div>
+<div class="w-full bg-border-subtle rounded-full h-1.5 overflow-hidden">
+<div class="bg-status-normal h-full rounded-full w-[85%]"></div>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary">Waktu tempuh rata-rata: 2 jam 40 menit via Tol Sumo.</span>
+</div>
+<div class="p-space-xs rounded-lg bg-surface-subtle flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-body-md text-text-primary">Keputran → Genteng</span>
+<span class="font-label-caps text-label-caps text-status-critical font-semibold">Bottleneck +17%</span>
+</div>
+<div class="w-full bg-border-subtle rounded-full h-1.5 overflow-hidden">
+<div class="bg-status-critical h-full rounded-full w-[35%]"></div>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary">Penetapan harga peritel pasar kelas menengah-atas di pusat kota.</span>
+</div>
+<div class="p-space-xs rounded-lg bg-surface-subtle flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-body-md text-text-primary">Keputran → Soponyono</span>
+<span class="font-label-caps text-label-caps text-status-warning font-semibold">Transit Sub-Hub</span>
+</div>
+<div class="w-full bg-border-subtle rounded-full h-1.5 overflow-hidden">
+<div class="bg-status-warning h-full rounded-full w-[60%]"></div>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary">Konsumsi tinggi klaster perumahan Surabaya Timur &amp; Rungkut.</span>
+</div>
+</div>
+</div>
+<!-- Intervention Suggestion Card -->
+<div class="bg-surface-card p-space-md rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center gap-space-xs text-primary mb-space-xs">
+<span class="material-symbols-outlined text-headline-sm">policy</span>
+<span class="font-title-md text-title-md text-text-primary">Rekomendasi Satgas Pangan</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mb-space-sm leading-relaxed">
+            Disparitas Cabai Rawit sebesar <strong>Rp 11.500/kg</strong> melampaui batas toleransi kewajaran daerah (maks. Rp 7.500/kg). Disarankan subsidi ongkos angkut (SOA) atau drop supply langsung ke pedagang Pasar Genteng &amp; Soponyono.
+          </p>
+<div class="flex items-center gap-space-xs mt-auto">
+<button class="flex-1 py-2.5 px-space-sm bg-primary-container hover:bg-primary text-on-primary rounded-lg font-headline-sm text-body-sm transition-colors text-center flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-body-md">local_shipping</span>
+              Rancang Operasi Pasar
+            </button>
+<button class="p-2.5 bg-surface-subtle hover:bg-surface-variant text-text-secondary rounded-lg transition-colors" title="Cetak Disposisi Kebijakan">
+<span class="material-symbols-outlined text-body-md">print</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Panel Matriks Komparasi Multi-Pasar (Dynamic Table) -->
+<div class="bg-surface-card rounded-xl shadow-sm overflow-hidden mb-space-lg">
+<div class="p-space-md flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div>
+<div class="flex items-center gap-space-xs">
+<h2 class="font-headline-md text-headline-md text-text-primary">Matriks Komparasi 6 Pasar Strategis</h2>
+<span class="px-space-xs py-0.5 rounded-full bg-surface-subtle text-text-secondary font-label-caps text-label-caps">8 Komoditas Pangan Pokok</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Data sinkronisasi harian per pukul 06.00 WIB. Warna hijau menunjukkan pasar terendah; oranye/merah menunjukkan pasar tertinggi.</p>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-body-md">file_download</span>
+            Export CSV
+          </button>
+<button class="px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-body-md">filter_alt</span>
+            Sort Disparitas
+          </button>
+</div>
+</div>
+<!-- Data Table Container with Horizontal Overflow -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm border-collapse min-w-[1000px]">
+<thead>
+<tr class="bg-surface-subtle text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
+<th class="py-3 px-space-md">Komoditas Pokok</th>
+<th class="py-3 px-space-xs">Satuan</th>
+<th class="py-3 px-space-sm bg-primary/5 text-primary">Keputran (Induk)</th>
+<th class="py-3 px-space-sm">Wonokromo</th>
+<th class="py-3 px-space-sm">Pucang Anom</th>
+<th class="py-3 px-space-sm">Genteng</th>
+<th class="py-3 px-space-sm">Tambahrejo</th>
+<th class="py-3 px-space-sm">Soponyono</th>
+<th class="py-3 px-space-sm">Rerata Kota</th>
+<th class="py-3 px-space-md text-right">Disparitas (Max-Min)</th>
+</tr>
+</thead>
+<tbody class="text-text-primary">
+<!-- Row 1: Cabai Rawit Merah (Highlighted Anomaly) -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-critical"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Cabai Rawit Merah</span>
+<span class="text-text-muted font-label-caps text-label-caps">Hortikultura Segar</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 kg</td>
+<!-- Keputran (Lowest / Benchmark) -->
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 66.500 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Min</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 70.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 74.000</td>
+<!-- Genteng (Highest) -->
+<td class="py-3.5 px-space-sm bg-status-critical-bg text-status-critical font-metric-value font-semibold">
+                Rp 78.000 <span class="text-label-caps font-label-caps block font-normal text-status-critical/80">Max</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 71.500</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 75.000</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 72.500</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-critical font-bold">Rp 11.500</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-critical-bg text-status-critical font-label-caps text-label-caps">17.3% (Tinggi)</span>
+</div>
+</td>
+</tr>
+<!-- Row 2: Beras Medium -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-normal"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Beras Medium</span>
+<span class="text-text-muted font-label-caps text-label-caps">Bulog / Setara IR64</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 kg</td>
+<!-- Keputran -->
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 12.500 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Min</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 12.700</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 13.000</td>
+<td class="py-3.5 px-space-sm bg-status-warning-bg text-status-warning font-metric-value font-semibold">
+                Rp 13.200 <span class="text-label-caps font-label-caps block font-normal text-status-warning/80">Max</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 12.800</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 13.000</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 12.860</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-normal font-bold">Rp 700</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">5.6% (Stabil)</span>
+</div>
+</td>
+</tr>
+<!-- Row 3: Gula Pasir Curah -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-normal"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Gula Pasir Curah</span>
+<span class="text-text-muted font-label-caps text-label-caps">Pabrik Gula Jatim</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 kg</td>
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 16.800 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Min</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 17.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 17.500</td>
+<td class="py-3.5 px-space-sm bg-status-warning-bg text-status-warning font-metric-value font-semibold">
+                Rp 17.800 <span class="text-label-caps font-label-caps block font-normal text-status-warning/80">Max</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 17.200</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 17.500</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 17.300</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-normal font-bold">Rp 1.000</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">5.9% (Terkendali)</span>
+</div>
+</td>
+</tr>
+<!-- Row 4: Minyakita Botol -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-warning"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Minyakita (HET Rp 15.700)</span>
+<span class="text-text-muted font-label-caps text-label-caps">Minyak Kelapa Sawit</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 liter</td>
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 15.700 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Sesuai HET</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 16.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 16.500</td>
+<td class="py-3.5 px-space-sm bg-status-critical-bg text-status-critical font-metric-value font-semibold">
+                Rp 17.200 <span class="text-label-caps font-label-caps block font-normal text-status-critical/80">Di Atas HET</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 16.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 16.500</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 16.310</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-warning font-bold">Rp 1.500</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-warning-bg text-status-warning font-label-caps text-label-caps">9.5% (Waspada)</span>
+</div>
+</td>
+</tr>
+<!-- Row 5: Telur Ayam Ras -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-normal"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Telur Ayam Ras</span>
+<span class="text-text-muted font-label-caps text-label-caps">Peternak Blitar / Pare</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 kg</td>
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 27.200 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Min</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 27.500</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 28.000</td>
+<td class="py-3.5 px-space-sm bg-status-warning-bg text-status-warning font-metric-value font-semibold">
+                Rp 29.000 <span class="text-label-caps font-label-caps block font-normal text-status-warning/80">Max</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 27.800</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 28.500</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 28.000</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-normal font-bold">Rp 1.800</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">6.6% (Wajar)</span>
+</div>
+</td>
+</tr>
+<!-- Row 6: Daging Sapi Murni (Paha Belakang) -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-normal"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Daging Sapi Murni</span>
+<span class="text-text-muted font-label-caps text-label-caps">RPH Pegirian Surabaya</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 kg</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 118.000</td>
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 117.000 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Min</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 122.000</td>
+<td class="py-3.5 px-space-sm bg-status-warning-bg text-status-warning font-metric-value font-semibold">
+                Rp 126.000 <span class="text-label-caps font-label-caps block font-normal text-status-warning/80">Max</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 119.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 123.000</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 120.830</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-warning font-bold">Rp 9.000</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-warning-bg text-status-warning font-label-caps text-label-caps">7.7% (Sedang)</span>
+</div>
+</td>
+</tr>
+<!-- Row 7: Bawang Merah Super -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-warning"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Bawang Merah Super</span>
+<span class="text-text-muted font-label-caps text-label-caps">Probolinggo / Nganjuk</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 kg</td>
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 34.000 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Min</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 36.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 37.500</td>
+<td class="py-3.5 px-space-sm bg-status-critical-bg text-status-critical font-metric-value font-semibold">
+                Rp 41.000 <span class="text-label-caps font-label-caps block font-normal text-status-critical/80">Max</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 36.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 38.500</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 37.160</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-critical font-bold">Rp 7.000</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-critical-bg text-status-critical font-label-caps text-label-caps">20.5% (Kritis)</span>
+</div>
+</td>
+</tr>
+<!-- Row 8: Bawang Putih Honan -->
+<tr class="hover:bg-surface-subtle/50 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-status-normal"></span>
+<div class="flex flex-col">
+<span class="font-title-md text-body-md text-text-primary font-semibold">Bawang Putih Honan</span>
+<span class="text-text-muted font-label-caps text-label-caps">Impor Tanjung Perak</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-xs text-text-secondary font-label-caps">1 kg</td>
+<td class="py-3.5 px-space-sm bg-status-normal-bg text-status-normal font-metric-value font-semibold">
+                Rp 36.000 <span class="text-label-caps font-label-caps block font-normal text-status-normal/80">Min</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 37.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 38.000</td>
+<td class="py-3.5 px-space-sm bg-status-warning-bg text-status-warning font-metric-value font-semibold">
+                Rp 39.500 <span class="text-label-caps font-label-caps block font-normal text-status-warning/80">Max</span>
+</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 37.000</td>
+<td class="py-3.5 px-space-sm font-metric-value">Rp 38.500</td>
+<td class="py-3.5 px-space-sm font-metric-value text-text-secondary">Rp 37.660</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-metric-delta text-body-sm text-status-normal font-bold">Rp 3.500</span>
+<span class="px-space-2xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">9.7% (Sedang)</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination / Footer Meta -->
+<div class="p-space-md bg-surface-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-space-xs font-body-sm text-body-sm text-text-secondary">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-body-md text-status-normal">verified_user</span>
+<span>Sampling harga diverifikasi petugas pencatat SP2KP pada 5 pedagang per pasar.</span>
+</div>
+<div class="flex items-center gap-space-xs font-label-caps text-label-caps">
+<span class="w-2.5 h-2.5 rounded-full bg-status-normal-bg border border-status-normal inline-block"></span> Harga Termurah (Acuan)
+          <span class="w-2.5 h-2.5 rounded-full bg-status-critical-bg border border-status-critical inline-block ml-2"></span> Harga Tertinggi (Anomali)
+        </div>
+</div>
+</div>
+<!-- 4. Health Monitor API & Data Ingestion Pipelines -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<!-- Pipeline Overview -->
+<div class="flex flex-col gap-1 max-w-xl">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-headline-sm">monitoring</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Pipeline &amp; Sinkronisasi Node Pasar</h3>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary leading-relaxed">
+            Data feed diintegrasikan langsung dari sistem IoT Timbangan Digital &amp; Input Lapangan Satgas Dinas Koperasi UKM dan Perdagangan Kota Surabaya.
+          </p>
+</div>
+<!-- Metric Grid Telemetry -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm flex-1">
+<div class="p-space-xs bg-surface-subtle rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-text-muted uppercase">Node Pasar</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-status-normal"></span>
+<span class="font-metric-value text-metric-value text-text-primary">6 / 6</span>
+</div>
+<span class="font-body-sm text-body-sm text-status-normal mt-0.5">Sinkron Aktif</span>
+</div>
+<div class="p-space-xs bg-surface-subtle rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-text-muted uppercase">Uptime Server</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-status-normal"></span>
+<span class="font-metric-value text-metric-value text-text-primary">99.8%</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary mt-0.5">Diskominfo Sby</span>
+</div>
+<div class="p-space-xs bg-surface-subtle rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-text-muted uppercase">Latensi Rata-rata</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-metric-value text-metric-value text-text-primary">120 ms</span>
+</div>
+<span class="font-body-sm text-body-sm text-status-normal mt-0.5">Optimal Edge</span>
+</div>
+<div class="p-space-xs bg-surface-subtle rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-text-muted uppercase">Outlier Detection</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-body-md text-status-normal">check_circle</span>
+<span class="font-metric-value text-metric-value text-text-primary">Aktif</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary mt-0.5">Z-Score ±2.5σ</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script>
+  // Simple interactive handling for commodity filter changes
+  document.getElementById('commodity-select')?.addEventListener('change', function(e) {
+    const val = e.target.value;
+    // Visually notifies analytical changes without page reload
+    console.info('[HargaWatch Geointel] Komoditas diubah menjadi:', val);
+  });
+</script></main><footer class="w-full bg-surface-card shadow-[0_-1px_6px_rgba(0,0,0,0.03)] mt-space-2xl"><div class="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop py-space-xl"><div class="grid grid-cols-1 md:grid-cols-4 gap-space-lg mb-space-lg"><div class="md:col-span-2 flex flex-col gap-space-xs"><div class="flex items-center gap-space-xs"><img alt="HargaWatch Logo" class="h-6 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WiZ8V1jVXZ1sU1_kf8Rny3lqf6Mezyyzf1ac0WfhnMnfLFShPPO7SDTRhwUVFtq3i37SKWPp4Tzy4I5PaEovQGtiVITOm1K9s7gv9ycCUwbVWmXXcSMrxBTLK7AKh2rU4Qhgmd-ElW41fMDDLA1Zy-hAd6BPDSYqI9a5y1t9EU3e7RkEdfjQWMFrp0NuNAVvXuwUcgfdRLRr4wky2XPBm3Zbvao6IkweWr0HSIR05qEzUkq2Vg-WfLAyA"/><span class="font-headline-sm text-headline-sm text-primary">HargaWatch Surabaya</span></div><p class="font-body-sm text-body-sm text-text-secondary max-w-xl">Portal keterbukaan data komoditas pangan dan instrumen mitigasi volatilitas inflasi pangan daerah berbasis data harian dari 6 pasar induk dan strategis di Kota Surabaya.</p><div class="flex items-center gap-space-xs text-status-normal font-label-caps text-label-caps"><span class="material-symbols-outlined text-body-md">verified</span>Terverifikasi SP2KP &amp; TPID Kota Surabaya</div></div><div class="flex flex-col gap-space-xs"><span class="font-title-md text-title-md text-on-surface">Aksi Cepat &amp; Partisipasi</span><a class="font-body-sm text-body-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1.5" href="#"><span class="material-symbols-outlined text-body-md">report_problem</span>Lapor Lonjakan Harga</a><a class="font-body-sm text-body-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1.5" href="#"><span class="material-symbols-outlined text-body-md">campaign</span>Program Operasi Pasar</a><a class="font-body-sm text-body-sm text-text-secondary hover:text-primary transition-colors flex items-center gap-1.5" href="#"><span class="material-symbols-outlined text-body-md">download</span>Data Terbuka CSV / API</a></div><div class="flex flex-col gap-space-xs"><span class="font-title-md text-title-md text-on-surface">Kontak Satgas Pangan</span><div class="flex items-center gap-space-xs text-text-secondary font-body-sm text-body-sm"><span class="material-symbols-outlined text-body-md text-primary">call</span>Hotline: 0800-1-987-987</div><div class="flex items-center gap-space-xs text-text-secondary font-body-sm text-body-sm"><span class="material-symbols-outlined text-body-md text-primary">location_on</span>Balaikota Surabaya, Jl. Taman Surya No. 1</div><div class="flex items-center gap-space-xs text-text-secondary font-body-sm text-body-sm"><span class="material-symbols-outlined text-body-md text-primary">mail</span>satgaspangan@surabaya.go.id</div></div></div><div class="pt-space-md flex flex-col sm:flex-row items-center justify-between gap-space-sm text-text-muted font-label-caps text-label-caps"><span>© 2025 Pemerintah Kota Surabaya • Dinas Koperasi, Usaha Kecil dan Menengah dan Perdagangan.</span><span>Pembaruan Server: Setiap Pukul 06.00 &amp; 12.00 WIB</span></div></div></footer></body></html>

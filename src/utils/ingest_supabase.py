@@ -23,7 +23,7 @@ import psycopg2
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 PROCESSED = BASE_DIR / "data" / "processed"
 
 DDL = """

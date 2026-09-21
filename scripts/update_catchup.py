@@ -31,16 +31,17 @@ from zoneinfo import ZoneInfo
 
 from psycopg2.extras import execute_values
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ingest_supabase import DDL, koneksi
-from preprocessing_final import buat_kalender
-from update_harian import (KABKOTA, UPSERT_CUACA, UPSERT_INFLASI, UPSERT_KALENDER,
+from src.utils.ingest_supabase import DDL, koneksi
+from src.pipeline.preprocessing_final import buat_kalender
+from scripts.update_harian import (KABKOTA, UPSERT_CUACA, UPSERT_INFLASI, UPSERT_KALENDER,
                            UPSERT_PASAR, UPSERT_PRODUSEN, ambil_komoditas_valid,
                            scrape_pasar, scrape_produsen, upsert,
                            imputasi_pasar_missing, imputasi_produsen_missing)
-from scrape_data import ambil_daftar_pasar
-from download_cuaca import unduh
+from src.pipeline.scrape_data import ambil_daftar_pasar
+from src.pipeline.download_cuaca import unduh
+from src.utils.utils_alerting import send_telegram_alert
 
 # Jejak mundur maksimum saat mencari bolong (laptop mati ~1 tahun masih tertangkap)
 JEJAK_MAKS_HARI = 400
@@ -199,7 +200,14 @@ def main(argv=None):
     app.add_argument("--maks", type=int, default=40, help="maks hari bolong per run")
     args = app.parse_args(argv)
 
-    conn = koneksi()
+    try:
+        conn = koneksi()
+    except Exception as e:
+        err_msg = f"🚨 *[HargaWatch Catch-up Alert]* Gagal koneksi ke Supabase:\n`{e}`"
+        print(err_msg)
+        send_telegram_alert(err_msg)
+        return 1
+
     try:
         with conn.cursor() as cur:
             cur.execute(DDL)
@@ -289,10 +297,22 @@ def main(argv=None):
             cek_inflasi_bps()
 
         if tanggal_gagal:
+            msg_gagal = (
+                f"🚨 *[HargaWatch Catch-up Alert]*\n"
+                f"Ada {len(tanggal_gagal)} tanggal dengan sumber gagal di-scrape:\n"
+                f"`{', '.join(str(d) for d in tanggal_gagal[:5])}`"
+                + (f" (+{len(tanggal_gagal)-5} lainnya)" if len(tanggal_gagal) > 5 else "")
+            )
             print("\nSELESAI DENGAN GAGAL: ada tanggal yang belum lengkap (exit 1)")
+            send_telegram_alert(msg_gagal)
             return 1
         print("\nSELESAI: OK")
         return 0
+    except Exception as e:
+        err_msg = f"🚨 *[HargaWatch Catch-up Error]* Terjadi error tak terduga:\n`{str(e)[:400]}`"
+        print(err_msg)
+        send_telegram_alert(err_msg)
+        return 1
     finally:
         conn.close()
 

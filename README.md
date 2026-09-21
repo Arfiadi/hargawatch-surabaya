@@ -1,14 +1,11 @@
 # HargaWatch — Surabaya Food Price Intelligence & Early Warning
 
-![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)
-![Data](https://img.shields.io/badge/Dataset-2020--2026%20%C2%B7%20476k%20baris-4479A1)
-![Pipeline](https://img.shields.io/badge/Update-Otomatis%20Harian-success)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![Dataset](https://img.shields.io/badge/Dataset-2020--2026%20%C2%B7%20476k%20baris-4479A1)](https://siskaperbapo.jatimprov.go.id)
+[![Pipeline](https://img.shields.io/badge/Update-Otomatis%20Harian-success)](scripts/update_catchup.py)
 
-Platform intelijen harga pangan dan peringatan dini Kota Surabaya. Pipeline data
-end-to-end yang mengubah data harga pasar tradisional menjadi dataset analitik siap
-pakai: harga harian per pasar, perbandingan antar pasar, tren, volatilitas, margin
-produsen–konsumen, hingga dasar forecasting dan early warning.
+Platform intelijen harga pangan dan peringatan dini Kota Surabaya. Pipeline data end-to-end yang mengubah data harga pasar tradisional menjadi dataset analitik siap pakai: harga harian per pasar, perbandingan antar pasar, tren, volatilitas, margin produsen–konsumen, hingga dasar forecasting dan early warning.
 
 ---
 
@@ -26,6 +23,8 @@ produsen–konsumen, hingga dasar forecasting dan early warning.
 
 ## 🏗 Arsitektur Pipeline
 
+Proyek ini menggunakan arsitektur modular standar **Cookiecutter Data Science (CCDS)** dan **MLOps**:
+
 ```mermaid
 flowchart LR
     subgraph Sumber Data
@@ -33,27 +32,29 @@ flowchart LR
         C[Open-Meteo API]
         E[BPS Inflasi]
     end
-    subgraph Lokal
-        B[Scrapers + Downloader]
-        R[data/raw]
-        G[preprocessing_final.py]
-        P[data/processed]
+    subgraph Pipeline [src/pipeline/]
+        B[Data Fetcher & Scraper]
+        G[Data Cleaner (Imputasi)]
     end
-    subgraph Cloud
+    subgraph ML & Analytics [src/]
+        M1[src/analytics/ (Fitur)]
+        M2[src/models/ (Forecasting)]
+        M3[src/safety/ (Early Warning)]
+    end
+    subgraph Database
         H[(Supabase PostgreSQL)]
     end
-    A --> B --> R --> G --> P --> H
-    C --> D[data/external] --> G
-    E --> F[data/external] --> G
-    H --> K[Dashboard / Analitik / Forecasting / Anggota tim]
+    A --> B
+    C --> B
+    E --> B
+    B --> G
+    G -->|Insert/Upsert| H
+    H --> M1
+    M1 --> M2
+    M1 --> M3
+    M2 -->|Prediksi| H
+    M3 -->|Alert Status| H
 ```
-
-**Prinsip kualitas data** (hasil audit sains data):
-- `harga_asli` — nilai murni lapangan; hari tanpa entri = `NULL` (0 dibuang)
-- `harga_imputasi` — deret kontinu untuk grafik/model; gap ditambal *forward-fill murni*
-  (tanpa interpolasi → **tidak ada lookahead bias**), dibulatkan ke rupiah
-- `is_imputed` — transparansi penuh: setiap nilai estimasi tertanda
-- Foreign key + composite primary key — integritas relasional dijaga database
 
 ## 🗃 Dataset (Silver Layer)
 
@@ -67,30 +68,54 @@ flowchart LR
 | `fact_cuaca` | 2.435 | Cuaca harian Surabaya (Open-Meteo: hujan, suhu, kelembapan, angin) |
 | `fact_inflasi` | 84 | Inflasi M-to-M Surabaya (BPS, unpivot bulanan 2020–2026) |
 
-## 🚀 Menjalankan Pipeline
+## 🚀 Instalasi & Menjalankan Pipeline
 
+Instalasi dependensi dipisah berdasarkan kebutuhan:
 ```bash
-pip install -r requirements.txt
+# 1. Instalasi untuk Pipeline Data & Scraping
+pip install -r requirements-pipeline.txt
 
-# 1. Scrape harga konsumen (6 pasar) & produsen — resume otomatis
-python scripts/scrape_data.py
-python scripts/scrape_produsen.py
+# 2. Instalasi untuk Machine Learning & Analytics
+pip install -r requirements-ml.txt
+```
 
-# 2. Cuaca historis (Open-Meteo, tanpa key)
-python scripts/download_cuaca.py
+Menjalankan script (contoh eksekusi manual):
+```bash
+# 1. Scrape harga konsumen (6 pasar) & produsen
+python -m src.pipeline.scrape_data
+python -m src.pipeline.scrape_produsen
 
-# 2b. Inflasi BPS (WebAPI resmi, butuh BPS_API_KEY gratis di .env)
-python scripts/download_inflasi_bps.py
+# 2. Update cuaca (Open-Meteo) & inflasi (BPS API)
+python -m src.pipeline.download_cuaca
+python -m src.pipeline.download_inflasi_bps
 
-# 3. Raw → silver layer (validasi, dual-price, kalender, trimming)
-python scripts/preprocessing_final.py
+# 3. Raw → Silver Layer (validasi, dual-price, kalender)
+python -m src.pipeline.preprocessing_final
 
-# 4. Muat / sinkron ke Supabase (butuh .env — lihat .env.example)
-python scripts/ingest_supabase.py
+# 4. Sinkronisasi ke Supabase (butuh konfigurasi di .env)
+python -m src.utils.ingest_supabase
 
-# 5. Isi tanggal yang bolong saja (idempotent, aman diulang)
+# 5. Skrip otomatis pengisi tanggal yang bolong
 python scripts/update_catchup.py
 ```
+
+## 📁 Struktur Proyek
+
+Struktur direktori level atas proyek:
+```text
+hargawatch-surabaya/
+├── config/      # Konfigurasi sistem (threshold, DB)
+├── data/        # Penyimpanan lokal (raw, processed, external)
+├── docs/        # Dokumentasi lengkap (Arsitektur, PRD)
+├── models/      # Artefak model ML (.pkl)
+├── notebook/    # Eksplorasi & EDA
+├── scripts/     # Runner & entry points (Cron jobs)
+├── src/         # Kode inti (Pipeline, Analytics, ML, Safety)
+├── tests/       # Pengujian otomatis (Pytest)
+└── web/         # Frontend Next.js Dashboard
+```
+
+👉 **Detail struktur lengkap, diagram data flow, dan skema database dapat dilihat pada [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).**
 
 ## ⏰ Otomatisasi Harian
 
@@ -103,58 +128,11 @@ $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnB
 Register-ScheduledTask -TaskName "HargaWatch Update Harian" -Action $action -Trigger $trigger -Settings $settings -Force
 ```
 
-*(Atau via cmd biasa: `schtasks /Create /TN "HargaWatch Update Harian" /TR "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd" /SC DAILY /ST 07:00 /F`)*
-
-Script `update_catchup.py` akan mendeteksi sendiri tanggal yang bolong (jejak mundur
-s.d. 400 hari, dikerjakan terbaru dulu) lalu mengisinya — laptop mati berapa lama pun,
-begitu nyala data mengejar sendiri. Log harian: `logs/catchup_YYYY-MM-DD.log`
-(rotasi otomatis, disimpan 14 hari), diakhiri baris `===== SUKSES =====` atau
-`===== GAGAL =====`. Exit code: 0 = sukses, 1 = ada sumber yang gagal scrape
-(diretry otomatis run berikutnya) — monitoring/Task Scheduler bisa memberi alert.
-
-> Catatan: cron via GitHub Actions sempat diuji, tetapi Cloudflare memblokir IP
-> datacenter runner (403) — cron dipindah ke Task Scheduler lokal.
-
-## 📁 Struktur Proyek
-
-```
-├── data/
-│   ├── external/           # koordinat pasar, inflasi BPS, cuaca (lokal)
-│   ├── raw/                # hasil scrape mentah (di-gitignore, regenerable)
-│   └── processed/          # silver layer: dim_* & fact_* (di-gitignore)
-├── notebook/
-│   ├── eda_pasar.ipynb             # EDA data mentah pasar
-│   ├── eda_produsen.ipynb          # EDA data mentah produsen
-│   ├── eda_silver.ipynb            # EDA data bersih + margin + efek Ramadan
-│   └── preprocessing_final.ipynb   # pipeline + verifikasi audit
-├── scripts/
-│   ├── scrape_data.py          # scraper harga konsumen (endpoint AJAX internal)
-│   ├── scrape_produsen.py      # scraper harga produsen
-│   ├── download_cuaca.py       # unduh cuaca historis (Open-Meteo)
-│   ├── tambah_kalender.py      # enrich kalender ke CSV pasar
-│   ├── preprocessing_final.py  # raw → silver layer (6 temuan audit terpecahkan)
-│   ├── ingest_supabase.py      # DDL + muat data + verifikasi
-│   ├── update_harian.py        # upsert 1 tanggal (dipakai sebagai library)
-│   ├── update_catchup.py       # isi tanggal bolong (cron harian)
-│   └── update_catchup_task.cmd # wrapper Task Scheduler
-└── .env.example            # template kredensial Supabase
-```
-
-## 🗺 Roadmap
-
-- [x] Scrape → validasi → cleaning → silver layer → database
-- [x] Update otomatis harian + self-healing catch-up
-- [x] EDA lengkap (tren, volatilitas, margin, pola Ramadan)
-- [x] `fact_cuaca` & `fact_inflasi` di database (data sudah ada)
-- [ ] Forecasting 7–14 hari + baseline comparison
-- [ ] Aturan early warning transparan (Normal – Waspada – Tinggi)
-- [ ] Dashboard publik + Government/Analyst View
+Script `update_catchup.py` akan mendeteksi sendiri tanggal yang bolong dan mengisinya — laptop mati berapa lama pun, begitu nyala data mengejar sendiri secara persisten.
 
 ## 🤝 Konsumen Data
 
-Anggota tim mengakses database lewat REST API Supabase (publishable key) — panduan
-lengkap berisi skema, aturan query, dan contoh kode tersedia dari pengelola.
-Kredensial & kunci sensitif tidak pernah masuk repositori (lihat `.gitignore`).
+Anggota tim mengakses database lewat REST API Supabase (publishable key) — panduan lengkap berisi skema, aturan query, dan contoh kode tersedia dari pengelola. Kredensial & kunci sensitif tidak pernah masuk repositori (lihat `.gitignore`).
 
 ## 📌 Sumber Data & Atribusi
 
