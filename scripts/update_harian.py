@@ -291,6 +291,7 @@ def main(argv=None):
             if not rows_pasar and not rows_prod:
                 warn_msg = f"⚠️ *[HargaWatch Info]* Tidak ada data scraped untuk {tgl} (mis. libur). Selesai tanpa perubahan."
                 print(warn_msg)
+                send_telegram_alert(warn_msg)
                 return 0
 
             print("\nVerifikasi penyimpanan database tanggal", tgl)
@@ -312,6 +313,16 @@ def main(argv=None):
             send_telegram_alert(msg_gagal)
             return 1
 
+        sukses_msg = (
+            f"✅ *[HargaWatch Update - BERHASIL]*\n\n"
+            f"📅 *Tanggal Target:* {tgl}\n"
+            f"📊 *Hasil Upsert Supabase:*\n"
+            f"  • fact_harga_pasar: {n1} baris\n"
+            f"  • fact_harga_produsen: {n2} baris\n"
+            f"  • Total tersimpan: {total_saved} baris\n\n"
+            f"✨ Scraping harian sukses dan database telah mutakhir."
+        )
+        send_telegram_alert(sukses_msg)
         print("\nSELESAI: OK")
         return 0
     except Exception as e:
