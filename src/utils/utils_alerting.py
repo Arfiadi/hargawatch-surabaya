@@ -48,3 +48,15 @@ def send_telegram_alert(pesan: str) -> bool:
     except Exception as e:
         print(f"  [Alerting] Exception saat menghubungi Telegram API: {e}")
         return False
+
+
+if __name__ == "__main__":
+    print("Menguji pengiriman notifikasi Telegram...")
+    sukses = send_telegram_alert(
+        "🔔 *Test Alert HargaWatch*\n"
+        "Integrasi Telegram Bot berhasil terhubung dan berfungsi dengan baik!"
+    )
+    if sukses:
+        print(">> [OK] Berhasil! Silakan periksa chat Telegram Anda.")
+    else:
+        print(">> [GAGAL] Gagal mengirim pesan. Periksa token dan chat ID Anda.")
