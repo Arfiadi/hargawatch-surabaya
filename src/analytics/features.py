@@ -5,6 +5,7 @@ All features for forecasting target at t+h are strictly constructed
 from information available at or before forecast origin t (plus known calendar features at t+h).
 """
 
+import warnings
 from pathlib import Path
 from typing import List, Optional, Tuple
 import numpy as np
@@ -15,18 +16,47 @@ DATA_PROCESSED = BASE_DIR / "data" / "processed"
 DATA_EXTERNAL = BASE_DIR / "data" / "external"
 
 
-def load_raw_datasets() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Loads cleaned fact_harga_pasar, dim_kalender, and cuaca_surabaya."""
-    df_harga = pd.read_csv(DATA_PROCESSED / "fact_harga_pasar.csv", parse_dates=["tanggal"])
-    df_kal = pd.read_csv(DATA_PROCESSED / "dim_kalender.csv", parse_dates=["tanggal"])
+def load_raw_datasets(force_db: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Loads cleaned fact_harga_pasar, dim_kalender, and fact_cuaca.
     
-    path_cuaca = DATA_EXTERNAL / "cuaca" / "cuaca_surabaya.csv"
-    if path_cuaca.exists():
-        df_cuaca = pd.read_csv(path_cuaca, parse_dates=["tanggal"])
-    else:
-        df_cuaca = pd.DataFrame(columns=["tanggal", "curah_hujan_mm", "suhu_mean_c"])
+    Prefers local CSVs by default to prevent slow notebook execution.
+    Use force_db=True to pull fresh data from Supabase.
+    """
+    
+    def _load_local_csvs():
+        df_h = pd.read_csv(DATA_PROCESSED / "fact_harga_pasar.csv", parse_dates=["tanggal"])
+        df_k = pd.read_csv(DATA_PROCESSED / "dim_kalender.csv", parse_dates=["tanggal"])
+        path_cuaca = DATA_EXTERNAL / "cuaca" / "cuaca_surabaya.csv"
+        if path_cuaca.exists():
+            df_c = pd.read_csv(path_cuaca, parse_dates=["tanggal"])
+        else:
+            df_c = pd.DataFrame(columns=["tanggal", "curah_hujan_mm", "suhu_mean_c"])
+        return df_h, df_k, df_c
+
+    if not force_db and (DATA_PROCESSED / "fact_harga_pasar.csv").exists():
+        try:
+            return _load_local_csvs()
+        except Exception as e:
+            print(f"[WARN] Failed to load local CSVs: {e}. Falling back to DB...")
+
+    from src.utils.ingest_supabase import koneksi
+    
+    try:
+        conn = koneksi()
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning, message=".*pandas only supports SQLAlchemy.*")
+            df_harga = pd.read_sql("SELECT * FROM fact_harga_pasar", conn)
+            df_kal = pd.read_sql("SELECT * FROM dim_kalender", conn)
+            df_cuaca = pd.read_sql("SELECT * FROM fact_cuaca", conn)
+        conn.close()
         
-    return df_harga, df_kal, df_cuaca
+        df_harga["tanggal"] = pd.to_datetime(df_harga["tanggal"])
+        df_kal["tanggal"] = pd.to_datetime(df_kal["tanggal"])
+        df_cuaca["tanggal"] = pd.to_datetime(df_cuaca["tanggal"])
+        return df_harga, df_kal, df_cuaca
+    except Exception as e:
+        print(f"[ERROR] Gagal menarik data dari Supabase: {e}. Fallback ke CSV lokal...")
+        return _load_local_csvs()
 
 
 def prepare_base_series(
@@ -69,12 +99,15 @@ def build_lag_features(df: pd.DataFrame) -> pd.DataFrame:
     df["price_lag_14"] = grouped.shift(14)
 
     # Rolling statistics (using closed='left' or shifting by 1 to include only past data)
-    past_series = grouped.shift(1)
-    df["rolling_mean_7d"] = grouped.transform(lambda s: s.shift(1).rolling(7, min_periods=3).mean())
-    df["rolling_std_7d"] = grouped.transform(lambda s: s.shift(1).rolling(7, min_periods=3).std())
-    df["rolling_mean_14d"] = grouped.transform(lambda s: s.shift(1).rolling(14, min_periods=5).mean())
-    df["rolling_std_14d"] = grouped.transform(lambda s: s.shift(1).rolling(14, min_periods=5).std())
-    df["rolling_mean_30d"] = grouped.transform(lambda s: s.shift(1).rolling(30, min_periods=10).mean())
+    df["_shifted"] = grouped.shift(1)
+    shifted_grouped = df.groupby(["komoditas_id", "pasar_id"])["_shifted"]
+    
+    df["rolling_mean_7d"] = shifted_grouped.rolling(7, min_periods=3).mean().reset_index(level=[0, 1], drop=True)
+    df["rolling_std_7d"] = shifted_grouped.rolling(7, min_periods=3).std().reset_index(level=[0, 1], drop=True)
+    df["rolling_mean_14d"] = shifted_grouped.rolling(14, min_periods=5).mean().reset_index(level=[0, 1], drop=True)
+    df["rolling_std_14d"] = shifted_grouped.rolling(14, min_periods=5).std().reset_index(level=[0, 1], drop=True)
+    df["rolling_mean_30d"] = shifted_grouped.rolling(30, min_periods=10).mean().reset_index(level=[0, 1], drop=True)
+    df = df.drop(columns=["_shifted"])
 
     # Short-term momentum & volatility ratio
     df["pct_change_1d"] = (df["price_current"] - df["price_lag_1"]) / (df["price_lag_1"] + 1e-5)

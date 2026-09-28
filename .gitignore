@@ -1,16 +1,37 @@
-# Rahasia / kredensial
+# Rahasia / Kredensial
 .env
+.env.local
 
-# Python
+# Environment & Dependencies
+.venv/
+venv/
+env/
+
+# Python & Jupyter
 __pycache__/
 *.pyc
+*.pyo
 .ipynb_checkpoints/
+.pytest_cache/
+htmlcov/
+.coverage
 
-# Data besar hasil scrape & pipeline (tetap lokal, dibuat ulang lewat script)
+# Data (Tetap lokal, di-generate ulang via script)
 data/raw/
 data/processed/
-# Data JSON hasil download/scrape lokal
 data/**/*.json
 
-# Log catch-up lokal
+# ML & Experiment Logs
 logs/
+catboost_info/
+wandb/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Lain-lain
+.agents

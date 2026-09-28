@@ -31,7 +31,7 @@ import pandas as pd
 
 # Root proyek (relatif ke lokasi file ini: scripts/../) agar aman dijalankan
 # dari folder mana pun (root, notebook/, dsb.)
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 RAW_PASAR = str(BASE_DIR / "data/raw/pasar")
 RAW_PRODUSEN = str(BASE_DIR / "data/raw/produsen")
