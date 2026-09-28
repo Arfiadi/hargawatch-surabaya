@@ -37,11 +37,11 @@ flowchart LR
     end
     subgraph ML & Analytics [Machine Learning]
         M1[Feature Engineering]
-        M2[Champion Models (GBDT)]
-        M3[EWS Logic (20-20-20-40)]
+        M2["Champion Models (GBDT)"]
+        M3["EWS Logic (20-20-20-40)"]
     end
     subgraph MLOps
-        W[Weights & Biases\nModel Registry]
+        W["Weights & Biases<br>Model Registry"]
     end
     subgraph Database
         H[(Supabase PostgreSQL)]
