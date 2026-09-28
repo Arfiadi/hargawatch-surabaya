@@ -38,7 +38,7 @@ try:
     from statsforecast import StatsForecast
     from statsforecast.models import AutoARIMA as _SF_AutoARIMA, AutoETS as _SF_AutoETS, Naive as _SF_Naive
     HAS_STATSFORECAST = True
-except ImportError:
+except (ImportError, Exception):
     StatsForecast = None
     _SF_AutoARIMA = None
     _SF_AutoETS = None

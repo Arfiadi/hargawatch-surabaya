@@ -53,6 +53,12 @@ def load_raw_datasets(force_db: bool = False) -> Tuple[pd.DataFrame, pd.DataFram
         df_harga["tanggal"] = pd.to_datetime(df_harga["tanggal"])
         df_kal["tanggal"] = pd.to_datetime(df_kal["tanggal"])
         df_cuaca["tanggal"] = pd.to_datetime(df_cuaca["tanggal"])
+        try:
+            DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
+            df_harga.to_csv(DATA_PROCESSED / "fact_harga_pasar.csv", index=False)
+            df_kal.to_csv(DATA_PROCESSED / "dim_kalender.csv", index=False)
+        except Exception:
+            pass
         return df_harga, df_kal, df_cuaca
     except Exception as e:
         print(f"[ERROR] Gagal menarik data dari Supabase: {e}. Fallback ke CSV lokal...")

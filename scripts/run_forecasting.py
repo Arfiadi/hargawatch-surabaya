@@ -317,7 +317,18 @@ def main():
     else:
         target_ids = PRIORITY_KOMODITAS_IDS
 
-    df_kom = pd.read_csv(DATA_PROCESSED / "dim_komoditas.csv")
+    if (DATA_PROCESSED / "dim_komoditas.csv").exists():
+        df_kom = pd.read_csv(DATA_PROCESSED / "dim_komoditas.csv")
+    else:
+        from src.utils.ingest_supabase import koneksi
+        _conn = koneksi()
+        df_kom = pd.read_sql("SELECT * FROM dim_komoditas", _conn)
+        _conn.close()
+        df_kom.to_csv(DATA_PROCESSED / "dim_komoditas.csv", index=False)
+
+    col_k = "nama_komoditas" if "nama_komoditas" in df_kom.columns else "komoditas"
+    if "komoditas" not in df_kom.columns:
+        df_kom["komoditas"] = df_kom[col_k]
     name_map = dict(zip(df_kom["komoditas_id"], df_kom["komoditas"]))
 
     all_forecast_dfs = []
@@ -372,7 +383,15 @@ def main():
     # Display EWS Sample Table
     print("\n=== SAMPLE EARLY WARNING RISK MATRIX ===")
     df_display = df_final_ews.merge(df_kom[["komoditas_id", "komoditas"]], on="komoditas_id")
-    df_display = df_display.merge(pd.read_csv(DATA_PROCESSED / "dim_pasar.csv")[["pasar_id", "nama_pasar"]], on="pasar_id")
+    if (DATA_PROCESSED / "dim_pasar.csv").exists():
+        df_pasar = pd.read_csv(DATA_PROCESSED / "dim_pasar.csv")
+    else:
+        from src.utils.ingest_supabase import koneksi
+        _conn = koneksi()
+        df_pasar = pd.read_sql("SELECT * FROM dim_pasar", _conn)
+        _conn.close()
+        df_pasar.to_csv(DATA_PROCESSED / "dim_pasar.csv", index=False)
+    df_display = df_display.merge(df_pasar[["pasar_id", "nama_pasar"]], on="pasar_id")
     cols_show = ["nama_pasar", "komoditas", "total_skor", "status_warning", "skor_tren", "skor_volatilitas", "skor_anomali", "skor_prediksi"]
     print(df_display[cols_show].head(15).to_string(index=False))
 
