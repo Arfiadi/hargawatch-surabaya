@@ -1,45 +1,47 @@
-# HargaWatch — Surabaya Food Price Intelligence & Early Warning
+# HargaWatch - Surabaya Food Price Intelligence & Early Warning
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PostgreSQL](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Dataset](https://img.shields.io/badge/Dataset-2020--2026%20%C2%B7%20476k%20baris-4479A1)](https://siskaperbapo.jatimprov.go.id)
-[![Pipeline](https://img.shields.io/badge/Update-Otomatis%20Harian-success)](scripts/update_catchup.py)
+[![Pipeline](https://img.shields.io/badge/Update-Otomatis%20Harian-success)](run_pipeline.bat)
 
-Platform intelijen harga pangan dan peringatan dini Kota Surabaya. Pipeline data end-to-end yang mengubah data harga pasar tradisional menjadi dataset analitik siap pakai: harga harian per pasar, perbandingan antar pasar, tren, volatilitas, margin produsen–konsumen, hingga dasar forecasting dan early warning.
+Platform intelijen harga pangan dan peringatan dini Kota Surabaya. Pipeline data end-to-end yang mengubah data harga pasar tradisional menjadi dataset analitik siap pakai: harga harian per pasar, perbandingan antar pasar, tren, volatilitas, margin produsen-konsumen, hingga dasar forecasting dan early warning.
 
 ---
 
-## ✨ Fitur
+## Fitur Utama
 
 | Fitur | Keterangan |
 |---|---|
-| 🏪 **Harga harian 6 pasar** | Tambahrejo, Wonokromo, Genteng, Pucang Anom, Keputran, Soponyono |
-| 🥬 **37 komoditas pangan** | Beras, gula, minyak, daging, telur, cabai, bawang, sayur, ikan, dst. |
-| 📈 **Sejarah panjang** | Januari 2020 — hari ini (±2.435 hari × 37 komoditas × 6 pasar) |
-| ⚖️ **Dual-price column** | `harga_asli` (murni lapangan) vs `harga_imputasi` (kontinu, transparan via flag) |
-| 📅 **Kalender event** | Libur nasional, cuti bersama, Ramadan & pra-Ramadan, weekend |
-| 🌦 **Variabel eksternal** | Cuaca (Open-Meteo), inflasi (BPS), harga produsen |
-| 🔄 **Update otomatis** | Cron harian — tanpa intervensi manual |
+| **Harga harian 6 pasar** | Tambahrejo, Wonokromo, Genteng, Pucang Anom, Keputran, Soponyono |
+| **37 komoditas pangan** | Beras, gula, minyak, daging, telur, cabai, bawang, sayur, ikan, dst. |
+| **Sejarah panjang** | Januari 2020 - hari ini (~2.435 hari x 37 komoditas x 6 pasar) |
+| **Dual-price column** | `harga_asli` (murni lapangan) vs `harga_imputasi` (kontinu, transparan via flag) |
+| **Kalender event** | Libur nasional, cuti bersama, Ramadan & pra-Ramadan, weekend |
+| **Variabel eksternal** | Cuaca (Open-Meteo), inflasi (BPS), harga produsen |
+| **Update otomatis** | Cron harian (Windows Task Scheduler) tanpa intervensi manual |
 
-## 🏗 Arsitektur Pipeline
+## Arsitektur Pipeline (Cookiecutter Data Science & MLOps)
 
-Proyek ini menggunakan arsitektur modular standar **Cookiecutter Data Science (CCDS)** dan **MLOps**:
+Proyek ini menggunakan arsitektur modular standar dengan pipeline ML otomatis.
 
 ```mermaid
 flowchart LR
     subgraph Sumber Data
-        A[SISKAPERBAPO Jatim]
-        C[Open-Meteo API]
+        A[SISKAPERBAPO]
+        C[Open-Meteo]
         E[BPS Inflasi]
     end
-    subgraph Pipeline [src/pipeline/]
-        B[Data Fetcher & Scraper]
-        G[Data Cleaner (Imputasi)]
+    subgraph Pipeline [Data Engineering]
+        B[Scraper & Cleaner]
     end
-    subgraph ML & Analytics [src/]
-        M1[src/analytics/ (Fitur)]
-        M2[src/models/ (Forecasting)]
-        M3[src/safety/ (Early Warning)]
+    subgraph ML & Analytics [Machine Learning]
+        M1[Feature Engineering]
+        M2[Champion Models (GBDT)]
+        M3[EWS Logic (20-20-20-40)]
+    end
+    subgraph MLOps
+        W[Weights & Biases\nModel Registry]
     end
     subgraph Database
         H[(Supabase PostgreSQL)]
@@ -47,96 +49,47 @@ flowchart LR
     A --> B
     C --> B
     E --> B
-    B --> G
-    G -->|Insert/Upsert| H
+    B -->|Upsert Silver| H
     H --> M1
     M1 --> M2
     M1 --> M3
-    M2 -->|Prediksi| H
-    M3 -->|Alert Status| H
+    M2 <-->|Sync| W
+    M2 -->|Upsert Gold| H
+    M3 -->|Upsert EWS| H
 ```
 
-## 🗃 Dataset (Silver Layer)
+## Dataset
 
-| Tabel | Baris | Isi |
-|---|---:|---|
-| `dim_pasar` | 6 | Master pasar + koordinat (lat/lon) |
-| `dim_komoditas` | 37 | Master komoditas + grup + satuan |
-| `dim_kalender` | 2.439 | Kalender + libur + Ramadan (2020–2026) |
-| `fact_harga_pasar` | 477.097 | ⭐ Harga harian konsumen per pasar × komoditas |
-| `fact_harga_produsen` | 4.872 | Harga produsen (PS Bendul Mrisi, RPH Pegirikan) |
-| `fact_cuaca` | 2.435 | Cuaca harian Surabaya (Open-Meteo: hujan, suhu, kelembapan, angin) |
-| `fact_inflasi` | 84 | Inflasi M-to-M Surabaya (BPS, unpivot bulanan 2020–2026) |
+**Silver Layer (Data Mentah Bersih):**
+| Tabel | Isi |
+|---|---|
+| `dim_pasar` | Master pasar + koordinat (lat/lon) |
+| `dim_komoditas` | Master komoditas + grup + satuan |
+| `dim_kalender` | Kalender + libur + Ramadan (2020–2026) |
+| `fact_harga_pasar` | Harga harian konsumen per pasar × komoditas |
+| `fact_harga_produsen` | Harga produsen (PS Bendul Mrisi, RPH Pegirikan) |
+| `fact_cuaca` | Cuaca harian Surabaya (Open-Meteo) |
 
-## 🚀 Instalasi & Menjalankan Pipeline
+**Gold Layer (Hasil AI/ML):**
+| Tabel | Isi |
+|---|---|
+| `fact_forecast` | Prediksi harga 7-14 hari ke depan (p10, p50, p90) |
+| `fact_early_warning` | Skor matriks risiko & status (NORMAL/WASPADA/TINGGI) |
 
-Instalasi dependensi dipisah berdasarkan kebutuhan:
+## Deployment (Otomatisasi Harian)
+
+Sistem ini didesain untuk berjalan otomatis secara On-Premise via Windows Task Scheduler. (Menghindari *blocker* dari Cloudflare WAF).
+
+1. **Instalasi:**
 ```bash
-# 1. Instalasi untuk Pipeline Data & Scraping
-pip install -r requirements-pipeline.txt
-
-# 2. Instalasi untuk Machine Learning & Analytics
-pip install -r requirements-ml.txt
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+# Jangan lupa isi .env dengan kredensial Supabase & W&B (lihat .env.example)
 ```
 
-Menjalankan script (contoh eksekusi manual):
-```bash
-# 1. Scrape harga konsumen (6 pasar) & produsen
-python -m src.pipeline.scrape_data
-python -m src.pipeline.scrape_produsen
-
-# 2. Update cuaca (Open-Meteo) & inflasi (BPS API)
-python -m src.pipeline.download_cuaca
-python -m src.pipeline.download_inflasi_bps
-
-# 3. Raw → Silver Layer (validasi, dual-price, kalender)
-python -m src.pipeline.preprocessing_final
-
-# 4. Sinkronisasi ke Supabase (butuh konfigurasi di .env)
-python -m src.utils.ingest_supabase
-
-# 5. Skrip otomatis pengisi tanggal yang bolong
-python scripts/update_catchup.py
+2. **Eksekusi Harian:**
+Cukup jalankan file batch berikut, atau atur di Windows Task Scheduler agar berjalan otomatis setiap pagi (misal 06:00 AM):
+```cmd
+run_pipeline.bat
 ```
-
-## 📁 Struktur Proyek
-
-Struktur direktori level atas proyek:
-```text
-hargawatch-surabaya/
-├── config/      # Konfigurasi sistem (threshold, DB)
-├── data/        # Penyimpanan lokal (raw, processed, external)
-├── docs/        # Dokumentasi lengkap (Arsitektur, PRD)
-├── models/      # Artefak model ML (.pkl)
-├── notebook/    # Eksplorasi & EDA
-├── scripts/     # Runner & entry points (Cron jobs)
-├── src/         # Kode inti (Pipeline, Analytics, ML, Safety)
-├── tests/       # Pengujian otomatis (Pytest)
-└── web/         # Frontend Next.js Dashboard
-```
-
-👉 **Detail struktur lengkap, diagram data flow, dan skema database dapat dilihat pada [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).**
-
-## ⏰ Otomatisasi Harian
-
-Jadwal **harian 07:00** di Task Scheduler Windows (dipasang sekali). Disarankan via PowerShell agar tugas otomatis mengejar (*catch-up*) saat laptop baru dinyalakan jika melewatkan jam 07:00:
-
-```powershell
-$action = New-ScheduledTaskAction -Execute "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd"
-$trigger = New-ScheduledTaskTrigger -Daily -At 07:00
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries
-Register-ScheduledTask -TaskName "HargaWatch Update Harian" -Action $action -Trigger $trigger -Settings $settings -Force
-```
-
-Script `update_catchup.py` akan mendeteksi sendiri tanggal yang bolong dan mengisinya — laptop mati berapa lama pun, begitu nyala data mengejar sendiri secara persisten.
-
-## 🤝 Konsumen Data
-
-Anggota tim mengakses database lewat REST API Supabase (publishable key) — panduan lengkap berisi skema, aturan query, dan contoh kode tersedia dari pengelola. Kredensial & kunci sensitif tidak pernah masuk repositori (lihat `.gitignore`).
-
-## 📌 Sumber Data & Atribusi
-
-- **Harga**: [SISKAPERBAPO](https://siskaperbapo.jatimprov.go.id) — Disperindag Jawa Timur
-- **Cuaca**: [Open-Meteo](https://open-meteo.com) (ERA5 reanalysis)
-- **Inflasi**: [BPS](https://www.bps.go.id) — Badan Pusat Statistik
-- **Kalender**: pustaka [`holidays`](https://pypi.org/project/holidays/) + SKB 3 Menteri (Ramadan)
+Script ini akan otomatis mengorkestrasi *scraping* (`scripts/update_harian.py`) lalu *forecasting* (`scripts/run_forecasting.py --from-db`), dan menyimpan log ke folder `logs/`.
