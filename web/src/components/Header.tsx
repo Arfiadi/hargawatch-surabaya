@@ -6,7 +6,6 @@ import { useState } from "react";
 
 export default function Header() {
   const pathname = usePathname();
-  const [selectedMarket, setSelectedMarket] = useState("all");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -61,25 +60,6 @@ export default function Header() {
 
         {/* Right Action Widgets */}
         <div className="flex items-center gap-space-xs sm:gap-space-sm">
-          <div className="relative">
-            <select
-              value={selectedMarket}
-              onChange={(e) => setSelectedMarket(e.target.value)}
-              className="appearance-none bg-surface-card text-on-surface font-body-sm text-body-sm pl-space-xs pr-7 py-space-2xs rounded-lg shadow-none focus:outline-none cursor-pointer border border-border-subtle"
-            >
-              <option value="all">Semua Pasar (6)</option>
-              <option value="wonokromo">Pasar Wonokromo</option>
-              <option value="keputran">Pasar Keputran</option>
-              <option value="pucanganom">Pasar Pucang Anom</option>
-              <option value="genteng">Pasar Genteng</option>
-              <option value="tambahrejo">Pasar Tambahrejo</option>
-              <option value="soponyono">Pasar Soponyono</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-body-md">
-              expand_more
-            </span>
-          </div>
-
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
