@@ -59,11 +59,12 @@ export default function SurabayaMap({
       zoomControl: false,
     });
 
-    // Official OpenStreetMap Tile Layer (100% Free, Open Source, No API Key Required)
+    // Official OpenStreetMap Tile Layer styled with Apple Maps calm pastel palette
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      className: "apple-maps-style-tile",
     }).addTo(map);
 
     const markersGroup = L.layerGroup().addTo(map);
@@ -90,45 +91,49 @@ export default function SurabayaMap({
       const isSelected = m.id === selectedMarketId;
       const inZone = selectedZone === "Semua" || m.zone === selectedZone;
 
-      // Color coding & badge
-      const dotColor = isMin ? "#16A34A" : isMax ? "#DC2626" : "#D97706";
-      const iconBg = isMin
-        ? "background-color: #16A34A; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);"
+      // Nike / Apple Maps Minimalist Marker Pin
+      const pinColor = isSelected
+        ? "#004328" // Brand Deep Pine Green
+        : isMin
+        ? "#059669" // Vibrant Emerald for cheapest
         : isMax
-        ? "background-color: #DC2626; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);"
-        : "background-color: #475569; box-shadow: 0 4px 10px rgba(71, 85, 105, 0.3);";
+        ? "#DC2626" // Ruby for highest
+        : "#0F172A"; // Sleek Rich Black like Nike pins
 
-      const iconSymbol = isMin ? "anchor" : isMax ? "priority_high" : "storefront";
-      const badgeText = isMin ? "TERMURAH" : isMax ? "TERTINGGI" : m.zone;
-      const badgeBg = isMin
-        ? "background: #DCFCE7; color: #16A34A; font-weight: 700;"
-        : isMax
-        ? "background: #FEE2E2; color: #DC2626; font-weight: 700;"
-        : "background: #F1F5F9; color: #475569; font-weight: 600;";
-
-      const ringStyle = isSelected
-        ? "border: 2px solid #004328; box-shadow: 0 0 0 4px rgba(0, 67, 40, 0.25);"
-        : "border: 1px solid #CBD5E1;";
-
+      const iconSymbol = isMin ? "local_mall" : isMax ? "priority_high" : "storefront";
       const opacity = inZone ? "1" : "0.35";
+      const scale = isSelected ? "scale(1.15)" : "scale(1)";
 
       const html = `
-        <div style="opacity: ${opacity}; transition: all 0.2s ease; transform: translate(-50%, -100%); cursor: pointer; display: flex; flex-direction: column; items-center; align-items: center; width: max-content;">
-          <!-- Top Price Pill -->
-          <div style="background: #FFFFFF; padding: 4px 10px; border-radius: 9999px; ${ringStyle} display: flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
-            <span style="width: 7px; height: 7px; border-radius: 9999px; background: ${dotColor};"></span>
-            <span style="font-size: 11px; font-weight: 700; color: #0F172A;">${m.shortName}</span>
-            <span style="font-size: 11px; font-weight: 800; color: ${isMin ? "#16A34A" : isMax ? "#DC2626" : "#0F172A"};">Rp ${m.price.toLocaleString("id-ID")}</span>
+        <div class="nike-pin-item" style="opacity: ${opacity}; transform: translate(-50%, -100%); cursor: pointer; display: flex; flex-direction: column; align-items: center; width: max-content; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+          <!-- Sleek Teardrop Pin -->
+          <div style="position: relative; width: 34px; height: 42px; transform: ${scale}; filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.28)); transition: transform 0.2s ease;">
+            <svg width="34" height="42" viewBox="0 0 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 0C7.611 0 0 7.611 0 17C0 28.5 17 42 17 42C17 42 34 28.5 34 17C34 7.611 26.389 0 17 0Z" fill="${pinColor}"/>
+              <circle cx="17" cy="17" r="13.5" fill="${pinColor}"/>
+            </svg>
+            <div style="position: absolute; top: 0; left: 0; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #FFFFFF;">
+              <span class="material-symbols-outlined" style="font-size: 16px; font-weight: 600;">${iconSymbol}</span>
+            </div>
+            ${
+              isMin
+                ? `<span style="position: absolute; top: -1px; right: -1px; width: 11px; height: 11px; background: #22C55E; border: 2.5px solid #FFFFFF; border-radius: 9999px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span>`
+                : isMax
+                ? `<span style="position: absolute; top: -1px; right: -1px; width: 11px; height: 11px; background: #EF4444; border: 2.5px solid #FFFFFF; border-radius: 9999px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></span>`
+                : ""
+            }
           </div>
 
-          <!-- Center Pin Icon Bubble -->
-          <div style="width: 28px; height: 28px; border-radius: 9999px; ${iconBg} color: #FFFFFF; display: flex; align-items: center; justify-content: center; margin-top: -3px; border: 2.5px solid #FFFFFF;">
-            <span class="material-symbols-outlined" style="font-size: 15px; font-weight: 700;">${iconSymbol}</span>
-          </div>
-
-          <!-- Bottom Status Badge -->
-          <div style="padding: 1px 8px; border-radius: 9999px; font-size: 9px; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; ${badgeBg}">
-            ${badgeText}
+          <!-- Clean Minimal Label below Pin (Apple Maps style) -->
+          <div style="display: flex; flex-direction: column; align-items: center; margin-top: 3px; pointer-events: none;">
+            <span style="font-size: 11px; font-weight: 700; color: #0F172A; text-shadow: 0 1px 3px rgba(255,255,255,0.95), 0 0 5px #FFFFFF; letter-spacing: -0.01em; white-space: nowrap;">
+              ${m.shortName}
+            </span>
+            <span style="font-size: 10px; font-weight: 700; color: ${
+              isMin ? "#059669" : isMax ? "#DC2626" : "#334155"
+            }; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(4px); padding: 1.5px 7px; border-radius: 9999px; border: 1px solid rgba(226, 232, 240, 0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.06); white-space: nowrap; margin-top: 1px;">
+              Rp ${m.price.toLocaleString("id-ID")}
+            </span>
           </div>
         </div>
       `;
@@ -179,7 +184,7 @@ export default function SurabayaMap({
       `;
 
       marker.bindPopup(popupHtml, {
-        offset: [0, -38],
+        offset: [0, -42],
         closeButton: false,
       });
 
@@ -222,53 +227,75 @@ export default function SurabayaMap({
   };
 
   return (
-    <div className="relative w-full h-[580px] overflow-hidden select-none bg-surface-subtle">
+    <div className="relative w-full h-[580px] overflow-hidden select-none bg-surface-subtle rounded-2xl border border-border-subtle shadow-sm">
       {/* Real Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 
-      {/* Floating Map Controller */}
-      <div className="absolute top-space-md right-space-md z-20 flex items-center justify-end gap-space-xs pointer-events-none">
-
-        <div className="pointer-events-auto flex items-center gap-1 bg-surface-card/95 backdrop-blur-md p-1 rounded-lg shadow-sm border border-border-subtle">
+      {/* Floating Apple-Maps Style Zoom & Reset Controls in Bottom Right */}
+      <div className="absolute bottom-5 right-5 z-20 pointer-events-auto">
+        <div className="flex flex-col bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/90 overflow-hidden divide-y divide-slate-100">
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-700 active:scale-90 transition-all cursor-pointer"
             title="Perbesar Peta"
             onClick={handleZoomIn}
           >
-            <span className="material-symbols-outlined text-body-md">add</span>
+            <span className="material-symbols-outlined text-[19px]">add</span>
           </button>
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-700 active:scale-90 transition-all cursor-pointer"
             title="Perkecil Peta"
             onClick={handleZoomOut}
           >
-            <span className="material-symbols-outlined text-body-md">remove</span>
+            <span className="material-symbols-outlined text-[19px]">remove</span>
           </button>
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-700 active:scale-90 transition-all cursor-pointer"
             title="Reset Peta ke 6 Pasar"
             onClick={handleReset}
           >
-            <span className="material-symbols-outlined text-body-md">my_location</span>
+            <span className="material-symbols-outlined text-[18px]">near_me</span>
           </button>
         </div>
       </div>
 
-      {/* Bottom Floating Map Legend */}
-      <div className="absolute bottom-space-md left-space-md bg-surface-card/95 backdrop-blur-md p-space-sm rounded-xl shadow-sm z-20 flex flex-col gap-1.5 border border-border-subtle">
-        <span className="font-label-caps text-label-caps text-text-muted uppercase">
-          Deviasi Harga {selectedCommodityName}
+      {/* Bottom Floating Map Legend (Minimalist Pill) */}
+      <div className="absolute bottom-5 left-5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl shadow-sm z-20 flex flex-col gap-1 border border-slate-200/90">
+        <span className="font-label-caps text-[10px] text-text-muted uppercase tracking-wider font-semibold">
+          Deviasi {selectedCommodityName}
         </span>
-        <div className="flex items-center gap-2 text-label-caps font-label-caps">
+        <div className="flex items-center gap-2 text-[11px] font-medium">
           <span className="text-status-normal font-bold">
-            Termurah (Rp {minPrice.toLocaleString("id-ID")})
+            Rp {minPrice.toLocaleString("id-ID")}
           </span>
-          <div className="w-24 h-2 rounded-full bg-gradient-to-r from-status-normal via-status-warning to-status-critical"></div>
+          <div className="w-16 h-1.5 rounded-full bg-gradient-to-r from-status-normal via-status-warning to-status-critical"></div>
           <span className="text-status-critical font-bold">
-            Tertinggi (Rp {maxPrice.toLocaleString("id-ID")})
+            Rp {maxPrice.toLocaleString("id-ID")}
           </span>
         </div>
       </div>
+
+      {/* Scoped CSS for Apple-Maps look and smooth pin hover */}
+      <style jsx global>{`
+        .apple-maps-style-tile {
+          filter: contrast(0.96) saturate(0.85) brightness(1.02);
+        }
+        .nike-pin-item:hover {
+          transform: translate(-50%, -105%) scale(1.08) !important;
+          z-index: 9999 !important;
+        }
+        .custom-leaflet-market-pin {
+          background: transparent !important;
+          border: none !important;
+        }
+        .leaflet-popup-content-wrapper {
+          border-radius: 16px !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+          border: 1px solid rgba(226, 232, 240, 0.9) !important;
+        }
+        .leaflet-popup-tip {
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+      `}</style>
     </div>
   );
 }
