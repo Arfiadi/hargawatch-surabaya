@@ -24,6 +24,9 @@ export default function Header() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="HargaWatch Logo"
+              width={40}
+              height={40}
+              style={{ width: "40px", height: "40px", minWidth: "40px" }}
               className="h-10 w-10 rounded-xl object-contain shadow-sm border border-primary/10 bg-white p-0.5 transition-transform group-hover:scale-105"
               src="/logo.png"
             />

@@ -274,28 +274,6 @@ export default function SurabayaMap({
         </div>
       </div>
 
-      {/* Scoped CSS for Apple-Maps look and smooth pin hover */}
-      <style jsx global>{`
-        .apple-maps-style-tile {
-          filter: contrast(0.96) saturate(0.85) brightness(1.02);
-        }
-        .nike-pin-item:hover {
-          transform: translate(-50%, -105%) scale(1.08) !important;
-          z-index: 9999 !important;
-        }
-        .custom-leaflet-market-pin {
-          background: transparent !important;
-          border: none !important;
-        }
-        .leaflet-popup-content-wrapper {
-          border-radius: 16px !important;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-          border: 1px solid rgba(226, 232, 240, 0.9) !important;
-        }
-        .leaflet-popup-tip {
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-        }
-      `}</style>
     </div>
   );
 }
