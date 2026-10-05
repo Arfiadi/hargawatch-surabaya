@@ -21,12 +21,12 @@ export default function Header() {
       <div className="h-20 w-full px-space-md lg:px-gutter-desktop flex items-center justify-between gap-space-md">
         {/* Logo & Subtitle */}
         <div className="flex items-center gap-space-md min-w-max">
-          <Link href="/" className="flex items-center gap-space-xs">
+          <Link href="/" className="flex items-center gap-space-sm group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="HargaWatch Logo"
-              className="h-8 w-auto object-contain"
-              src="https://lh3.googleusercontent.com/aida/AEtjO1WiZ8V1jVXZ1sU1_kf8Rny3lqf6Mezyyzf1ac0WfhnMnfLFShPPO7SDTRhwUVFtq3i37SKWPp4Tzy4I5PaEovQGtiVITOm1K9s7gv9ycCUwbVWmXXcSMrxBTLK7AKh2rU4Qhgmd-ElW41fMDDLA1Zy-hAd6BPDSYqI9a5y1t9EU3e7RkEdfjQWMFrp0NuNAVvXuwUcgfdRLRr4wky2XPBm3Zbvao6IkweWr0HSIR05qEzUkq2Vg-WfLAyA"
+              className="h-10 w-10 rounded-xl object-contain shadow-sm border border-primary/10 bg-white p-0.5 transition-transform group-hover:scale-105"
+              src="/logo.png"
             />
             <div className="flex flex-col">
               <span className="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">
@@ -37,16 +37,6 @@ export default function Header() {
               </span>
             </div>
           </Link>
-
-          <div className="hidden 2xl:flex items-center gap-space-xs pl-space-xs">
-            <span className="inline-flex items-center px-space-xs py-space-2xs rounded-full bg-surface-subtle text-text-secondary font-label-caps text-label-caps">
-              Pemantauan Resmi Pemkot
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-space-xs py-space-2xs rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">
-              <span className="w-1.5 h-1.5 rounded-full bg-status-normal animate-pulse"></span>
-              API: Update 10m Lalu
-            </span>
-          </div>
         </div>
 
         {/* Desktop Navigation Links */}
@@ -71,20 +61,11 @@ export default function Header() {
 
         {/* Right Action Widgets */}
         <div className="flex items-center gap-space-xs sm:gap-space-sm">
-          <div className="hidden md:flex items-center bg-surface-subtle rounded-lg px-space-xs py-space-2xs">
-            <span className="material-symbols-outlined text-text-muted text-body-lg mr-1.5">
-              calendar_today
-            </span>
-            <span className="font-label-caps text-label-caps text-text-secondary">
-              Hari Ini
-            </span>
-          </div>
-
           <div className="relative">
             <select
               value={selectedMarket}
               onChange={(e) => setSelectedMarket(e.target.value)}
-              className="appearance-none bg-surface-card text-on-surface font-body-sm text-body-sm pl-space-xs pr-7 py-space-2xs rounded-lg shadow-none focus:outline-none cursor-pointer"
+              className="appearance-none bg-surface-card text-on-surface font-body-sm text-body-sm pl-space-xs pr-7 py-space-2xs rounded-lg shadow-none focus:outline-none cursor-pointer border border-border-subtle"
             >
               <option value="all">Semua Pasar (6)</option>
               <option value="wonokromo">Pasar Wonokromo</option>
@@ -97,23 +78,6 @@ export default function Header() {
             <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-body-md">
               expand_more
             </span>
-          </div>
-
-          <div className="flex items-center gap-space-xs pl-space-2xs">
-            <div className="hidden lg:flex flex-col text-right">
-              <span className="font-body-sm text-body-sm font-headline-sm text-on-surface leading-tight">
-                Dinas Perdagangan
-              </span>
-              <span className="font-label-caps text-label-caps text-text-muted">
-                Analis Ahli
-              </span>
-            </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF0YukeXinIsrbLWvfBwaqY0-N7hCxTJZv7F1JDLRE4suzyIH3ZoQ5T-eHtDKDO9s5GSxq_kcukIeQrcK-5lGrXHGnnSnbl3CrkMWvWAxUKuLIwi2r0RCd98ImDFjzAGEpWhd2WHoEIek4EYUQcWY9JLC65oEzqYmobfsv4s65bWBtuaUtu2cV5oxLnML7xTZIsgFz3JJn0hIINKtw9uc5BS2RJBD-pkgiZReedC6sAhOKAF5HsA0L"
-            />
           </div>
 
           {/* Mobile hamburger */}

@@ -1,14 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { getLiveEarlyWarning, EarlyWarningItem } from "@/lib/dataService";
 
 export default function EarlyWarningPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalCommodity, setModalCommodity] = useState("Cabai Rawit Merah");
   const [modalTarget, setModalTarget] = useState("Pasar Genteng");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [ewsData, setEwsData] = useState<EarlyWarningItem[]>([]);
+  const [ewsStats, setEwsStats] = useState<any>(null);
+
+  useEffect(() => {
+    getLiveEarlyWarning().then((res) => {
+      if (res) {
+        setEwsData(res.items);
+        setEwsStats(res.stats);
+      }
+    });
+  }, []);
 
   const openOperasiModal = (commodity: string, market: string) => {
     setModalCommodity(commodity);
@@ -22,7 +34,7 @@ export default function EarlyWarningPage() {
 
   const confirmDispatch = () => {
     setModalOpen(false);
-    showToast("Armada Operasi Pasar Murah BUMD Surya Kencana telah dimobilisasi.");
+    showToast("Rekomendasi operasi pasar telah dicatat untuk koordinasi satgas.");
   };
 
   const showToast = (msg: string) => {
@@ -40,7 +52,7 @@ export default function EarlyWarningPage() {
         <div className="flex flex-col w-full">
           {/* Content Area Wrapper */}
           <div className="w-full max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop py-space-lg flex flex-col gap-space-xl">
-            {/* Top Breadcrumb & Live Dispatch Meta */}
+            {/* Top Breadcrumb & Live Meta */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs pb-space-xs">
               <div className="flex items-center gap-space-xs text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
                 <span className="inline-flex items-center gap-1 text-primary font-bold">
@@ -48,16 +60,15 @@ export default function EarlyWarningPage() {
                   Satgas Ketahanan Pangan
                 </span>
                 <span>/</span>
-                <span className="text-text-muted">Early Warning Matrix</span>
+                <span className="text-text-muted">Early Warning System</span>
                 <span>/</span>
-                <span className="text-on-surface">Surabaya Real-Time Feed</span>
+                <span className="text-on-surface">Data Pantauan 6 Pasar</span>
               </div>
               <div className="flex items-center gap-space-sm font-label-caps text-label-caps text-text-secondary">
                 <span className="inline-flex items-center gap-1.5 bg-surface-card px-space-xs py-space-2xs rounded-full shadow-sm text-text-secondary">
-                  <span className="w-2 h-2 rounded-full bg-status-critical animate-ping"></span>
-                  Pemindaian SP2KP: Aktif (Interval 15m)
+                  <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
+                  Pembaruan Otomatis: Setiap 06.00 WIB
                 </span>
-                <span className="hidden md:inline text-text-muted">ID Sesi: SBY-EWS-8921-H</span>
               </div>
             </div>
 
@@ -73,17 +84,17 @@ export default function EarlyWarningPage() {
                     <div className="flex flex-wrap items-center gap-space-xs">
                       <span className="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-status-warning text-on-primary font-label-caps text-label-caps font-bold tracking-wide">
                         <span className="material-symbols-outlined text-body-sm">warning</span>
-                        LEVEL PERINGATAN KOTA: WASPADA TINGKAT II
+                        STATUS PERINGATAN DINI: WASPADA
                       </span>
                       <span className="font-label-caps text-label-caps px-space-xs py-space-2xs rounded-full bg-surface-subtle text-text-secondary">
-                        Fokus Sektor: Hortikultura &amp; Dapur
+                        Fokus: Hortikultura (Cabai &amp; Bawang)
                       </span>
                     </div>
                     <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
-                      Anomali Distribusi Hortikultura: Kenaikan Agresif Terdeteksi di Pasar Koridor Timur &amp; Tengah
+                      Sistem Peringatan Dini &amp; Deteksi Gejolak Harga Pangan
                     </h1>
                     <p className="font-body-md text-body-md text-text-secondary max-w-3xl">
-                      Model komputasi TPID Surabaya mengonfirmasi kenaikan di atas ambang 8% pada komoditas Cabai Rawit &amp; Bawang Merah. Protokol pra-stabilisasi otomatis disiapkan untuk koordinasi Dinas Perdagangan dan PD Pasar Surya.
+                      Mendeteksi potensi lonjakan harga pangan melalui 4 pilar analisis (tren 7 hari, volatilitas pasar, disparitas grosir-eceran, dan proyeksi model peramalan) untuk tindakan antisipasi dini.
                     </p>
                   </div>
                 </div>
@@ -100,12 +111,10 @@ export default function EarlyWarningPage() {
                     }
                   >
                     <span className="material-symbols-outlined text-body-lg">local_shipping</span>
-                    <span>Rilis Operasi Pasar Serentak</span>
+                    <span>Rekomendasikan Operasi Pasar</span>
                   </button>
                   <div className="flex items-center justify-between lg:justify-end gap-space-xs text-text-muted font-label-caps text-label-caps">
-                    <span>SK Walikota No. 41/2025</span>
-                    <span>•</span>
-                    <span className="text-status-normal font-semibold">Siap Salur 100%</span>
+                    <span>Koordinasi PD Pasar Surya &amp; DKPP</span>
                   </div>
                 </div>
               </div>
@@ -209,8 +218,8 @@ export default function EarlyWarningPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-1 text-text-secondary font-label-caps text-label-caps">
-                  <span className="material-symbols-outlined text-body-sm text-status-warning">speed</span>
-                  Confidence Score AI: 94.8%
+                  <span className="material-symbols-outlined text-body-sm text-status-normal">verified</span>
+                  Evaluasi Model: WAPE 5.36% (Konsisten)
                 </div>
               </div>
 
@@ -261,7 +270,7 @@ export default function EarlyWarningPage() {
                     </h2>
                   </div>
                   <p className="font-body-sm text-body-sm text-text-secondary">
-                    Pemetaan komprehensif 6 pasar induk &amp; strategis Surabaya. Diperbarui otomatis dari survei harian lapangan &amp; sistem kasir digital.
+                    Pemetaan terpadu di 6 pasar pantauan Surabaya. Diperbarui otomatis setiap pagi dari data historis Siskaperbapo.
                   </p>
                 </div>
                 {/* Risk Legend / Status Guide */}
