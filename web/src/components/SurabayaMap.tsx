@@ -226,20 +226,8 @@ export default function SurabayaMap({
       {/* Real Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 
-      {/* Floating Map Controller Header */}
-      <div className="absolute top-space-md left-space-md right-space-md z-20 flex flex-wrap items-center justify-between gap-space-xs pointer-events-none">
-        <div className="pointer-events-auto bg-surface-card/95 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-space-xs border border-border-subtle">
-          <span className="material-symbols-outlined text-primary text-body-md">
-            map
-          </span>
-          <span className="font-label-caps text-label-caps text-text-primary uppercase font-bold">
-            Peta Geografis Riil: {selectedCommodityName}
-          </span>
-          <span className="text-text-muted text-body-sm">•</span>
-          <span className="font-label-caps text-label-caps text-status-normal font-semibold">
-            6 Titik GPS Supabase
-          </span>
-        </div>
+      {/* Floating Map Controller */}
+      <div className="absolute top-space-md right-space-md z-20 flex items-center justify-end gap-space-xs pointer-events-none">
 
         <div className="pointer-events-auto flex items-center gap-1 bg-surface-card/95 backdrop-blur-md p-1 rounded-lg shadow-sm border border-border-subtle">
           <button
