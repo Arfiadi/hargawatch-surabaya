@@ -377,11 +377,9 @@ export default function SpatialMapPage() {
             {/* Header Context & Dynamic Quick Metrics Strip */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-lg">
               <div>
-                <div className="flex items-center gap-space-xs mb-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary"></span>
-                  <span className="text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-status-normal/15 text-status-normal font-label-caps text-label-caps border border-status-normal/30 mb-1 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
                     Pantauan Spasial 6 Pasar Kota Surabaya
-                  </span>
                 </div>
                 <div className="flex flex-wrap items-baseline gap-space-xs">
                   <h1 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">

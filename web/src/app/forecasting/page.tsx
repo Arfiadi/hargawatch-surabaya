@@ -230,7 +230,8 @@ export default function ForecastingPage() {
                     <span className="material-symbols-outlined text-body-sm text-primary">insights</span>
                     Model Proyeksi Deret Waktu
                   </span>
-                  <span className="inline-flex items-center px-space-xs py-space-2xs rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-status-normal/15 text-status-normal font-label-caps text-label-caps border border-status-normal/30 font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
                     Data Pantauan 6 Pasar Terintegrasi
                   </span>
                 </div>
