@@ -446,10 +446,6 @@ export default function HomePage() {
             <div className="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop py-space-xl relative z-10">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-lg">
                 <div className="flex-1 max-w-2xl">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-status-normal/15 text-status-normal font-label-caps text-label-caps border border-status-normal/30 mb-space-sm font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
-                    Pantauan 6 Pasar Tradisional Surabaya
-                  </div>
                   <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight mb-space-xs">
                     Pantau Harga Pangan Harian &amp; Belanja Lebih Hemat di Surabaya
                   </h1>

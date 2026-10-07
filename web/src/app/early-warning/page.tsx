@@ -63,10 +63,6 @@ export default function EarlyWarningPage() {
                 <span className="text-text-muted">Early Warning System</span>
               </div>
               <div className="flex items-center gap-space-sm font-label-caps text-label-caps text-text-secondary">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-status-normal/15 text-status-normal font-label-caps text-label-caps border border-status-normal/30 font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
-                  Data Pantauan 6 Pasar
-                </span>
                 <span className="inline-flex items-center gap-1.5 bg-surface-card px-space-xs py-space-2xs rounded-full shadow-sm text-text-secondary">
                   <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
                   Pembaruan Otomatis: Setiap 06.00 WIB

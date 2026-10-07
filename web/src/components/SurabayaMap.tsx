@@ -59,11 +59,12 @@ export default function SurabayaMap({
       zoomControl: false,
     });
 
-    // Official OpenStreetMap Tile Layer styled with Apple Maps calm pastel palette
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    // High-performance OpenStreetMap Humanitarian (HOT) Tile Layer (Fast, reliable, free, no API key watermark)
+    L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
+      subdomains: ["a", "b", "c"],
       maxZoom: 19,
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles by <a href="https://www.hotosm.org/" target="_blank">HOT</a>',
       className: "apple-maps-style-tile",
     }).addTo(map);
 
@@ -71,7 +72,22 @@ export default function SurabayaMap({
     markersLayerRef.current = markersGroup;
     mapInstanceRef.current = map;
 
+    // Ensure map tiles recalculate immediately after render to prevent grey/missing tile glitch
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
+    // Also observe container resize
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      clearTimeout(timer);
+      resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
     };

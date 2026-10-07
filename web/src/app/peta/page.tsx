@@ -489,7 +489,7 @@ export default function SpatialMapPage() {
 
                 {/* Status Disparity Summary Indicator */}
                 <div
-                  className={`md:col-span-3 rounded-lg p-space-sm flex items-start gap-space-xs ${
+                  className={`md:col-span-3 rounded-lg px-space-sm py-space-2xs flex items-center gap-space-2xs self-center ${
                     activeCommodity.disparitasPct >= 15
                       ? "bg-status-critical-bg text-status-critical border border-status-critical/30"
                       : activeCommodity.disparitasPct >= 8
@@ -497,19 +497,19 @@ export default function SpatialMapPage() {
                       : "bg-status-normal-bg text-status-normal border border-status-normal/30"
                   }`}
                 >
-                  <span className="material-symbols-outlined text-headline-sm mt-0.5 shrink-0">
+                  <span className="material-symbols-outlined text-body-md shrink-0">
                     {activeCommodity.disparitasPct >= 15 ? "warning" : activeCommodity.disparitasPct >= 8 ? "info" : "check_circle"}
                   </span>
-                  <div className="flex flex-col">
-                    <span className="font-title-md text-title-md text-text-primary leading-snug">
+                  <div className="flex flex-wrap items-baseline gap-x-1.5">
+                    <span className="font-headline-sm text-headline-sm text-text-primary leading-none">
                       {activeCommodity.disparitasPct >= 15
                         ? "Disparitas Tinggi"
                         : activeCommodity.disparitasPct >= 8
                         ? "Disparitas Sedang"
                         : "Disparitas Terkendali"}
                     </span>
-                    <span className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                      Selisih antar-pasar mencapai <strong>Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}</strong> ({activeCommodity.disparitasPct}%).
+                    <span className="font-body-sm text-body-sm text-text-secondary">
+                      Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")} ({activeCommodity.disparitasPct}%).
                     </span>
                   </div>
                 </div>
