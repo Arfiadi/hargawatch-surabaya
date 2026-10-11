@@ -116,6 +116,8 @@ export interface FoodStabilitySummary {
   bannerSubtitle: string;
   bannerMessage: string;
   hasAlert: boolean;
+  latestDate?: string;
+  formattedDate?: string;
 }
 
 // 0. Fetch live Food Stability Summary from fact_early_warning
@@ -123,10 +125,23 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
   if (!supabase) return null;
 
   try {
+    // 1. Ambil tanggal terbaru di fact_early_warning
+    const { data: latestDateRow } = await supabase
+      .from("fact_early_warning")
+      .select("tanggal")
+      .order("tanggal", { ascending: false })
+      .limit(1);
+
+    const latestDate = latestDateRow?.[0]?.tanggal || "2026-10-10";
+
     const [komRes, pasarRes, ewsRes] = await Promise.all([
       supabase.from("dim_komoditas").select("komoditas_id, nama_komoditas"),
       supabase.from("dim_pasar").select("pasar_id, nama_pasar"),
-      supabase.from("fact_early_warning").select("*").order("total_skor", { ascending: false })
+      supabase
+        .from("fact_early_warning")
+        .select("*")
+        .eq("tanggal", latestDate)
+        .order("total_skor", { ascending: false })
     ]);
 
     if (!ewsRes.data || ewsRes.data.length === 0) return null;
@@ -139,6 +154,20 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
     const warningItems = ewsRes.data.filter(r => r.status_warning !== "NORMAL");
     const alertCount = warningItems.length;
     const stabilityPct = ((normalCount / total) * 100).toFixed(1);
+
+    let formattedDate = latestDate;
+    try {
+      const parts = latestDate.split("-");
+      const monthNames: Record<string, string> = {
+        "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mei", "06": "Jun",
+        "07": "Jul", "08": "Agu", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Des"
+      };
+      if (parts.length === 3) {
+        formattedDate = `${parseInt(parts[2], 10)} ${monthNames[parts[1]] || parts[1]} ${parts[0]}`;
+      }
+    } catch {
+      formattedDate = latestDate;
+    }
 
     if (alertCount > 0) {
       const top = warningItems[0];
@@ -153,14 +182,13 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
         alertCount,
         alertNote: komName,
         bannerTitle: "Waspada Fluktuasi Pasar",
-        bannerSubtitle: `Pemantauan EWS Terkini (${top.tanggal || "Hari Ini"})`,
+        bannerSubtitle: `Pemantauan EWS Terkini (${formattedDate})`,
         bannerMessage: `${komName} di ${pasarName} menunjukkan sinyal peningkatan dengan skor risiko ${top.total_skor}/100. Satgas pangan menyarankan pemantauan pasokan di pasar induk.`,
         hasAlert: true,
+        latestDate,
+        formattedDate,
       };
     } else {
-      const highest = ewsRes.data[0];
-      const topKomName = komMap.get(highest.komoditas_id) || "Pangan Pokok";
-      const topPasarName = pasarMap.get(highest.pasar_id) || "Pasar Acuan";
       return {
         stabilityIndex: `${stabilityPct}%`,
         targetText: "Target Kota > 90%",
@@ -170,9 +198,11 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
         alertCount: 0,
         alertNote: "Semua Terkendali",
         bannerTitle: "Stabilitas Harga Pangan Terkendali",
-        bannerSubtitle: `Pantauan 6 Pasar Resmi (${highest.tanggal || "Hari Ini"})`,
+        bannerSubtitle: `Pantauan 6 Pasar Resmi (${formattedDate})`,
         bannerMessage: `Seluruh 6 komoditas bahan pokok di 6 pasar Surabaya terpantau stabil dalam rentang harga wajar tanpa indikasi lonjakan harga ekstrem.`,
         hasAlert: false,
+        latestDate,
+        formattedDate,
       };
     }
   } catch (err) {
@@ -579,6 +609,9 @@ export interface MultiCommodityTrendSeries {
 export interface MultiCommodityTrendResult {
   dates: string[];
   formattedDates: string[];
+  todayIndex: number;
+  todayDate: string;
+  formattedTodayDate: string;
   series: MultiCommodityTrendSeries[];
   latestSyncDate: string;
 }
@@ -595,20 +628,54 @@ export async function getLiveMultiCommodityTrends(pasarId?: number): Promise<Mul
     ];
 
     const cids = configs.map(c => c.komoditas_id);
-    let query = supabase
-      .from("fact_forecast")
-      .select("tanggal, komoditas_id, pasar_id, harga_prediksi")
-      .in("komoditas_id", cids);
+
+    // 1. Dapatkan tanggal observasi riil terbaru dari fact_harga_pasar
+    const { data: latestDateRow } = await supabase
+      .from("fact_harga_pasar")
+      .select("tanggal")
+      .order("tanggal", { ascending: false })
+      .limit(1);
+
+    const latestDate = latestDateRow?.[0]?.tanggal || "2026-10-10";
+
+    // 2. Ambil 7 hari data historis riil (<= latestDate) dari fact_harga_pasar
+    let histQuery = supabase
+      .from("fact_harga_pasar")
+      .select("tanggal, komoditas_id, pasar_id, harga_imputasi")
+      .in("komoditas_id", cids)
+      .lte("tanggal", latestDate);
 
     if (pasarId && pasarId > 0) {
-      query = query.eq("pasar_id", pasarId);
+      histQuery = histQuery.eq("pasar_id", pasarId);
     }
 
-    const { data, error } = await query.order("tanggal", { ascending: true });
+    const { data: rawHist } = await histQuery
+      .order("tanggal", { ascending: false })
+      .limit(200);
 
-    if (error || !data || data.length === 0) return null;
+    const histDates = Array.from(new Set(rawHist?.map(d => d.tanggal) || [])).sort().slice(-7);
 
-    const dates = Array.from(new Set(data.map(d => d.tanggal))).slice(0, 14);
+    // 3. Ambil 7 hari proyeksi ke depan (> latestDate) dari fact_forecast
+    let fcQuery = supabase
+      .from("fact_forecast")
+      .select("tanggal, komoditas_id, pasar_id, harga_prediksi")
+      .in("komoditas_id", cids)
+      .gt("tanggal", latestDate);
+
+    if (pasarId && pasarId > 0) {
+      fcQuery = fcQuery.eq("pasar_id", pasarId);
+    }
+
+    const { data: rawFc } = await fcQuery
+      .order("tanggal", { ascending: true })
+      .limit(200);
+
+    const fcDates = Array.from(new Set(rawFc?.map(d => d.tanggal) || [])).sort().slice(0, 7);
+
+    const dates = [...histDates, ...fcDates];
+    if (dates.length === 0) return null;
+
+    const todayIndex = dates.indexOf(latestDate) >= 0 ? dates.indexOf(latestDate) : Math.max(0, histDates.length - 1);
 
     const monthNames: Record<string, string> = {
       "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mei", "06": "Jun",
@@ -624,34 +691,48 @@ export async function getLiveMultiCommodityTrends(pasarId?: number): Promise<Mul
     });
 
     const series: MultiCommodityTrendSeries[] = configs.map(cfg => {
-      const rows = data.filter(d => d.komoditas_id === cfg.komoditas_id);
-      const byDate: Record<string, number[]> = {};
-      for (const r of rows) {
-        if (!byDate[r.tanggal]) byDate[r.tanggal] = [];
-        byDate[r.tanggal].push(Number(r.harga_prediksi));
-      }
+      const histRows = rawHist?.filter(d => d.komoditas_id === cfg.komoditas_id) || [];
+      const fcRows = rawFc?.filter(d => d.komoditas_id === cfg.komoditas_id) || [];
 
       const points: TrendSeriesPoint[] = dates.map((dt, idx) => {
-        const arr = byDate[dt] || [];
-        const avg = arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+        let price = 0;
+        if (dt <= latestDate) {
+          const matching = histRows.filter(r => r.tanggal === dt);
+          if (matching.length > 0) {
+            price = Math.round(matching.reduce((a, b) => a + Number(b.harga_imputasi), 0) / matching.length);
+          }
+        } else {
+          const matching = fcRows.filter(r => r.tanggal === dt);
+          if (matching.length > 0) {
+            price = Math.round(matching.reduce((a, b) => a + Number(b.harga_prediksi), 0) / matching.length);
+          }
+        }
+
         return {
           tanggal: dt,
           formattedDate: formattedDates[idx],
-          price: avg
+          price: price || 0,
         };
       });
 
       return {
         ...cfg,
-        points
+        points,
       };
     });
+
+    const formattedTodayDate = formattedDates[todayIndex]
+      ? `${formattedDates[todayIndex]} 2026`
+      : "10 Okt 2026";
 
     return {
       dates,
       formattedDates,
+      todayIndex,
+      todayDate: latestDate,
+      formattedTodayDate,
       series,
-      latestSyncDate: dates.includes("2026-10-04") ? "04 Okt 2026" : formattedDates[formattedDates.length - 1]
+      latestSyncDate: formattedTodayDate,
     };
   } catch (err) {
     console.error("Failed to load multi-commodity trends:", err);
@@ -671,6 +752,8 @@ export interface MarketComparisonRow {
   rerata: number;
   disparitasRp: number;
   disparitasPct: number;
+  tanggal?: string;
+  formattedDate?: string;
 }
 
 export async function getLiveMarketComparison(): Promise<MarketComparisonRow[] | null> {
@@ -690,6 +773,13 @@ export async function getLiveMarketComparison(): Promise<MarketComparisonRow[] |
 
     const latestDate = priceRes.data[0].tanggal;
     const latestPrices = priceRes.data.filter(p => p.tanggal === latestDate && !isNaN(Number(p.harga_imputasi)));
+
+    const monthNames: Record<string, string> = {
+      "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mei", "06": "Jun",
+      "07": "Jul", "08": "Agu", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Des"
+    };
+    const parts = latestDate.split("-");
+    const formattedDate = parts.length === 3 ? `${parseInt(parts[2], 10)} ${monthNames[parts[1]] || parts[1]} ${parts[0]}` : latestDate;
 
     const komMap = new Map(komRes.data.map(k => [k.komoditas_id, k]));
     const targetCids = [50, 2, 7, 10, 16, 12, 39, 41]; // Cabai, Beras, Gula, Minyak, Telur, Sapi, Bawang Merah, Bawang Putih
@@ -728,6 +818,8 @@ export async function getLiveMarketComparison(): Promise<MarketComparisonRow[] |
         rerata,
         disparitasRp: dispRp,
         disparitasPct: dispPct,
+        tanggal: latestDate,
+        formattedDate,
       });
     }
 
@@ -833,7 +925,7 @@ export async function getLiveShoppingBasket(basketList: BasketItem[] = DEFAULT_B
       .order("tanggal", { ascending: false })
       .limit(1);
 
-    const latestDate = latestDateRow?.[0]?.tanggal || "2026-10-04";
+    const latestDate = latestDateRow?.[0]?.tanggal || "2026-10-10";
 
     const [pasarRes, priceRes] = await Promise.all([
       supabase.from("dim_pasar").select("pasar_id, nama_pasar"),

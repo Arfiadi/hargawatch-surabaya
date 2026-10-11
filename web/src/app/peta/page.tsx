@@ -197,6 +197,8 @@ export default function SpatialMapPage() {
     146: { lat: -7.3228, lng: 112.7744 }, // Soponyono
   });
 
+  const [latestDateText, setLatestDateText] = useState<string>("10 Okt 2026");
+
   // Fetch coordinates directly from dim_pasar in Supabase
   useEffect(() => {
     getLiveMarketLocations().then((locs) => {
@@ -215,6 +217,9 @@ export default function SpatialMapPage() {
   useEffect(() => {
     getLiveMarketComparison().then((data) => {
       if (data && data.length > 0) {
+        if (data[0]?.formattedDate) {
+          setLatestDateText(data[0].formattedDate);
+        }
         const mapped: ComparisonRowItem[] = data.map((d) => {
           const isHigh = d.disparitasPct >= 15;
           const isMed = d.disparitasPct >= 8 && d.disparitasPct < 15;
@@ -383,7 +388,7 @@ export default function SpatialMapPage() {
                   </h1>
                 </div>
                 <p className="font-body-sm text-body-sm text-text-secondary mt-1">
-                  Pantauan spasial 6 pasar Kota Surabaya untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman.
+                  Pantauan spasial 6 pasar Kota Surabaya per {latestDateText} untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman.
                 </p>
               </div>
 
@@ -794,7 +799,7 @@ export default function SpatialMapPage() {
                   <span className="material-symbols-outlined text-body-md text-status-normal">
                     verified_user
                   </span>
-                  <span>Data perbandingan harga riil 6 pasar pantauan Kota Surabaya terintegrasi dari basis data pantauan harian.</span>
+                  <span>Data perbandingan harga riil 6 pasar pantauan Kota Surabaya per {latestDateText} terintegrasi dari basis data pantauan harian.</span>
                 </div>
                 <div className="flex items-center gap-space-xs font-label-caps text-label-caps">
                   <span className="w-2.5 h-2.5 rounded-full bg-status-normal-bg border border-status-normal inline-block"></span>{" "}

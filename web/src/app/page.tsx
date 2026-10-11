@@ -1134,16 +1134,16 @@ export default function HomePage() {
               {/* Dynamic Multi-Line SVG Chart Canvas */}
               {(() => {
                 const dates = trendsData?.dates || [
-                  "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01",
-                  "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05",
-                  "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09",
-                  "2026-10-10", "2026-10-11"
+                  "2026-10-04", "2026-10-05", "2026-10-06", "2026-10-07",
+                  "2026-10-08", "2026-10-09", "2026-10-10", "2026-10-11",
+                  "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15",
+                  "2026-10-16", "2026-10-17"
                 ];
                 const formattedDates = trendsData?.formattedDates || [
-                  "28 Sep", "29 Sep", "30 Sep", "01 Okt",
-                  "02 Okt", "03 Okt", "04 Okt", "05 Okt",
-                  "06 Okt", "07 Okt", "08 Okt", "09 Okt",
-                  "10 Okt", "11 Okt"
+                  "04 Okt", "05 Okt", "06 Okt", "07 Okt",
+                  "08 Okt", "09 Okt", "10 Okt", "11 Okt",
+                  "12 Okt", "13 Okt", "14 Okt", "15 Okt",
+                  "16 Okt", "17 Okt"
                 ];
 
                 const fallbackSeries = [
@@ -1159,7 +1159,7 @@ export default function HomePage() {
                     color: "#DC2626",
                     points: dates.map((dt, idx) => ({
                       tanggal: dt,
-                      price: [60288, 60295, 59442, 59446, 59664, 58676, 57988, 58401, 58087, 57475, 55918, 53739, 52726, 52305][idx] || 60000,
+                      price: [60500, 61167, 61667, 60833, 61333, 60833, 61500, 61528, 61138, 61140, 61453, 61578, 61326, 61517][idx] || 61500,
                     })),
                   },
                   {
@@ -1168,7 +1168,7 @@ export default function HomePage() {
                     color: "#D97706",
                     points: dates.map((dt, idx) => ({
                       tanggal: dt,
-                      price: [30565, 30540, 30284, 30243, 30447, 30418, 30579, 30603, 30520, 30472, 30586, 30685, 30693, 30714][idx] || 30500,
+                      price: [30579, 30603, 30520, 30472, 30586, 30685, 30693, 30714, 30750, 30800, 30780, 30750, 30700, 30650][idx] || 30700,
                     })),
                   },
                   {
@@ -1178,7 +1178,7 @@ export default function HomePage() {
                     strokeDash: "6 3",
                     points: dates.map((dt, idx) => ({
                       tanggal: dt,
-                      price: [25647, 25654, 25641, 25628, 25655, 25619, 25649, 25655, 25674, 25749, 25656, 25712, 25765, 25778][idx] || 25600,
+                      price: [25649, 25655, 25674, 25749, 25656, 25712, 25765, 25778, 25800, 25820, 25850, 25810, 25790, 25780][idx] || 25750,
                     })),
                   },
                 ];
@@ -1228,7 +1228,9 @@ export default function HomePage() {
                   return `Rp ${val}`;
                 };
 
-                const todayIdx = dates.indexOf("2026-10-04") >= 0 ? dates.indexOf("2026-10-04") : 6;
+                const todayIdx = typeof trendsData?.todayIndex === "number" && trendsData.todayIndex >= 0
+                  ? trendsData.todayIndex
+                  : (dates.indexOf("2026-10-10") >= 0 ? dates.indexOf("2026-10-10") : 6);
                 const todayX = getX(todayIdx);
 
                 const activeHoverPoint = hoveredPointIndex !== null ? {
@@ -1321,7 +1323,7 @@ export default function HomePage() {
                           </g>
                         ))}
 
-                        {/* Vertical Indicator Line for Today (04 Okt) */}
+                        {/* Vertical Indicator Line for Today */}
                         <line
                           stroke="#10B981"
                           strokeDasharray="4 3"
@@ -1337,7 +1339,7 @@ export default function HomePage() {
                           x={todayX}
                           y="14"
                         >
-                          Observasi Terkini (04 Okt)
+                          Observasi Terkini ({formattedDates[todayIdx] || "10 Okt"})
                         </text>
 
                         {/* Trajectory Polyline Paths & Node Markers (Titik Penanda) */}
