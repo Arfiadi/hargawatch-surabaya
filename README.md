@@ -92,4 +92,9 @@ Cukup jalankan file batch berikut, atau atur di Windows Task Scheduler agar berj
 ```cmd
 run_pipeline.bat
 ```
-Script ini akan otomatis mengorkestrasi *scraping* (`scripts/update_harian.py`) lalu *forecasting* (`scripts/run_forecasting.py --from-db`), dan menyimpan log ke folder `logs/`.
+Script ini akan otomatis mengorkestrasi 3 langkah terpadu:
+1. *Scraping* data harian (`scripts/update_harian.py`)
+2. *Forecasting & EWS* (`scripts/run_forecasting.py --from-db`)
+3. *Dispatch Telegram Alert* (`scripts/generate_daily_alerts.py`), serta menyimpan seluruh riwayat ke folder `logs/`.
+
+Panduan lengkap instalasi, otomatisasi Task Scheduler, serta penanganan masalah dapat dibaca di **[`docs/panduan_operasional.md`](docs/panduan_operasional.md)**.
