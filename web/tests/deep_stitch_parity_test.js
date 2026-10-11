@@ -58,8 +58,9 @@ async function run() {
       assert(res.html.includes('Pemantauan Resmi Pemkot'), 'Must have official monitoring badge');
       assert(res.html.includes('API: Update 10m Lalu'), 'Must have API latency indicator');
       assert(res.html.includes('Dinas Perdagangan'), 'Must include Dinas Perdagangan profile');
-      assert(res.html.includes('Terverifikasi SP2KP &amp; TPID Kota Surabaya') || res.html.includes('Terverifikasi SP2KP & TPID Kota Surabaya'), 'Must have footer accreditation');
-      assert(res.html.includes('0800-1-987-987'), 'Must contain Satgas Pangan hotline');
+      assert(!res.html.includes('Terverifikasi SP2KP'), 'Footer must not claim official SP2KP accreditation (student project scope)');
+      assert(res.html.includes('Proyek Kelompok'), 'Must contain student project footer');
+      assert(res.html.includes('/logo.png'), 'Footer must use local logo');
     });
   }
 

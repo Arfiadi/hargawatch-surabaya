@@ -163,14 +163,21 @@ def parse_tabel(html):
 
 
 def baca_tanggal_selesai(path_csv):
-    """Untuk mode resume: set tanggal yang sudah ada di CSV."""
+    """Untuk mode resume: set tanggal + baris data yang sudah ada di CSV.
+
+    Returns (set[str], list[dict]):
+        - set tanggal yang sudah di-scrape (untuk skip)
+        - list baris dict (untuk digabung dengan data baru agar tidak hilang)
+    """
     if not os.path.exists(path_csv) or os.path.getsize(path_csv) == 0:
-        return set()
+        return set(), []
     selesai = set()
+    baris_lama = []
     with open(path_csv, newline="", encoding="utf-8-sig") as f:
         for baris in csv.DictReader(f):
             selesai.add(baris["tanggal"])
-    return selesai
+            baris_lama.append(baris)
+    return selesai, baris_lama
 
 
 def tulis_csv(path_csv, semua_baris):
@@ -215,12 +222,12 @@ def main(argv=None):
     print(f"Pasar    : {pasar_nama} (psr_id={pasar_id})")
     print(f"Periode  : {mulai} s.d. {akhir}  ({ (akhir - mulai).days + 1} hari)")
 
-    done = set() if args.no_resume else baca_tanggal_selesai(args.output)
+    done, baris_lama = (set(), []) if args.no_resume else baca_tanggal_selesai(args.output)
     if done:
         print(f"Resume   : {len(done)} tanggal sudah ada di {args.output}, akan dilewati")
 
     total_hari = (akhir - mulai).days + 1
-    semua_baris = []
+    semua_baris = list(baris_lama)  # mulai dari data lama agar tidak hilang
     kosong = []
     gagal = []
     kunci = threading.Lock()
