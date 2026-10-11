@@ -41,14 +41,68 @@ export interface EarlyWarningItem {
   harga_terakhir?: number;
 }
 
+export interface EarlyWarningStats {
+  latestDate: string;
+  formattedDate: string;
+  totalRecords: number;
+  highCount: number;
+  warningCount: number;
+  normalCount: number;
+  maxScore: number;
+  overallStatus: "SIAGA" | "WASPADA" | "NORMAL";
+  focusText: string;
+  subtitle: string;
+  anomaliesCount: number;
+  criticalCommodities: string[];
+}
+
+export interface ForecastHistoryPoint {
+  tanggal: string;
+  formattedDate: string;
+  harga: number;
+}
+
 export interface ForecastDayItem {
   horizon: number;
   tanggal: string;
+  formattedDate: string;
+  weekday: string;
   harga_prediksi: number;
   batas_bawah: number;
   batas_atas: number;
-  status: string;
+  deltaPct: number;
+  deltaRp: number;
+  status: "Normal" | "Waspada" | "Tinggi";
+  recom: string;
 }
+
+export interface CommodityForecastDetails {
+  komoditas_id: number;
+  nama_komoditas: string;
+  satuan: string;
+  currentPrice: number;
+  latestDate: string;
+  formattedLatestDate: string;
+  history: ForecastHistoryPoint[];
+  forecast: ForecastDayItem[];
+  trendDirection: "naik" | "turun" | "stabil";
+  trendPercentage: number;
+  minForecast: number;
+  maxForecast: number;
+  peakDay?: string;
+  peakPrice?: number;
+}
+
+export const FORECAST_COMMODITIES = [
+  { id: 50, name: "Cabe Rawit Merah", unit: "kg" },
+  { id: 39, name: "Bawang Merah", unit: "kg" },
+  { id: 10, name: "Minyak Goreng Curah", unit: "kg" },
+  { id: 2, name: "Beras Premium", unit: "kg" },
+  { id: 13, name: "Daging Ayam Ras", unit: "kg" },
+  { id: 16, name: "Telur Ayam Ras", unit: "kg" },
+  { id: 7, name: "Gula Kristal Putih", unit: "kg" },
+];
+
 
 export interface FoodStabilitySummary {
   stabilityIndex: string;
@@ -217,23 +271,47 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
 }
 
 // 2. Fetch live Early Warning Risk Matrix
-export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]; stats: any } | null> {
+export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]; stats: EarlyWarningStats } | null> {
   if (!supabase) return null;
 
   try {
-    const [komRes, pasarRes, ewsRes] = await Promise.all([
+    // 1. Dapatkan tanggal terbaru yang tersedia di fact_early_warning
+    const { data: latestDateRows, error: dateErr } = await supabase
+      .from("fact_early_warning")
+      .select("tanggal")
+      .order("tanggal", { ascending: false })
+      .limit(1);
+
+    if (dateErr || !latestDateRows || latestDateRows.length === 0) return null;
+
+    const latestDate = latestDateRows[0].tanggal;
+
+    // 2. Ambil data dimensi dan record EWS untuk tanggal terbaru tersebut
+    const [komRes, pasarRes, ewsRes, hargaRes] = await Promise.all([
       supabase.from("dim_komoditas").select("komoditas_id, nama_komoditas"),
       supabase.from("dim_pasar").select("pasar_id, nama_pasar"),
       supabase
         .from("fact_early_warning")
         .select("*")
-        .order("total_skor", { ascending: false })
+        .eq("tanggal", latestDate)
+        .order("total_skor", { ascending: false }),
+      supabase
+        .from("fact_harga_pasar")
+        .select("komoditas_id, pasar_id, harga_imputasi")
+        .eq("tanggal", latestDate)
     ]);
 
     if (!ewsRes.data || ewsRes.data.length === 0) return null;
 
     const komMap = new Map(komRes.data?.map(k => [k.komoditas_id, k.nama_komoditas]) || []);
     const pasarMap = new Map(pasarRes.data?.map(p => [p.pasar_id, p.nama_pasar]) || []);
+
+    const hargaMap = new Map<string, number>();
+    if (hargaRes.data) {
+      for (const h of hargaRes.data) {
+        hargaMap.set(`${h.komoditas_id}_${h.pasar_id}`, Number(h.harga_imputasi));
+      }
+    }
 
     const items: EarlyWarningItem[] = ewsRes.data.map(e => ({
       komoditas_id: e.komoditas_id,
@@ -246,20 +324,61 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
       skor_volatilitas: e.skor_volatilitas || 0,
       skor_anomali: e.skor_anomali || 0,
       skor_prediksi: e.skor_prediksi || 0,
+      harga_terakhir: hargaMap.get(`${e.komoditas_id}_${e.pasar_id}`),
     }));
 
     const highCount = items.filter(i => i.status_warning === "TINGGI").length;
     const warningCount = items.filter(i => i.status_warning === "WASPADA").length;
     const normalCount = items.filter(i => i.status_warning === "NORMAL").length;
+    const anomaliesCount = items.filter(i => (i.skor_anomali || 0) > 0).length;
+
+    // Nama komoditas yang mengalami alert
+    const alertCommodityNames = Array.from(
+      new Set(items.filter(i => i.status_warning !== "NORMAL").map(i => i.nama_komoditas))
+    );
+
+    // Format tanggal Indonesia: misal "10 Okt 2026"
+    let formattedDate = latestDate;
+    try {
+      const d = new Date(latestDate);
+      formattedDate = d.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    } catch {
+      formattedDate = latestDate;
+    }
+
+    let overallStatus: "SIAGA" | "WASPADA" | "NORMAL" = "NORMAL";
+    let focusText = "Kondisi Terkendali di 6 Pasar";
+    let subtitle = "Seluruh komoditas pokok di 6 pasar pantauan berada dalam rentang harga aman dan terkendali.";
+
+    if (highCount > 0) {
+      overallStatus = "SIAGA";
+      focusText = `Fokus: ${alertCommodityNames.slice(0, 3).join(", ")}`;
+      subtitle = `Terdeteksi lonjakan harga pada ${alertCommodityNames.slice(0, 2).join(" & ")}. Rekomendasi intervensi operasi pasar disiapkan.`;
+    } else if (warningCount > 0) {
+      overallStatus = "WASPADA";
+      focusText = `Fokus: ${alertCommodityNames.slice(0, 3).join(", ")}`;
+      subtitle = `Pantau pergerakan harga dan deviasi pasar untuk komoditas ${alertCommodityNames.slice(0, 2).join(" & ")}.`;
+    }
 
     return {
       items,
       stats: {
+        latestDate,
+        formattedDate,
         totalRecords: items.length,
         highCount,
         warningCount,
         normalCount,
-        maxScore: items.length > 0 ? items[0].total_skor : 0
+        maxScore: items.length > 0 ? items[0].total_skor : 0,
+        overallStatus,
+        focusText,
+        subtitle,
+        anomaliesCount,
+        criticalCommodities: alertCommodityNames,
       }
     };
   } catch (err) {
@@ -268,54 +387,178 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
   }
 }
 
-// 3. Fetch live 14-day Forecasting Trajectory
-export async function getLiveForecast(komoditasId: number = 50): Promise<ForecastDayItem[] | null> {
+// 3. Fetch comprehensive 14-day Forecasting & Historical Trajectory
+export async function getLiveForecastDetails(komoditasId: number = 50): Promise<CommodityForecastDetails | null> {
   if (!supabase) return null;
 
   try {
-    const { data, error } = await supabase
+    // 1. Ambil info komoditas
+    const { data: komData } = await supabase
+      .from("dim_komoditas")
+      .select("komoditas_id, nama_komoditas, satuan")
+      .eq("komoditas_id", komoditasId)
+      .single();
+
+    const matchedPreset = FORECAST_COMMODITIES.find((c) => c.id === komoditasId);
+    const nama_komoditas = komData?.nama_komoditas || matchedPreset?.name || `Komoditas ${komoditasId}`;
+    const satuan = komData?.satuan || matchedPreset?.unit || "kg";
+
+    // 2. Ambil tanggal terbaru dari fact_harga_pasar
+    const { data: latestDateRow } = await supabase
+      .from("fact_harga_pasar")
+      .select("tanggal")
+      .order("tanggal", { ascending: false })
+      .limit(1);
+
+    const latestDate = latestDateRow?.[0]?.tanggal || "2026-10-10";
+
+    // 3. Ambil data historis 14 hari terakhir sebelum/pada latestDate
+    const { data: histData } = await supabase
+      .from("fact_harga_pasar")
+      .select("tanggal, harga_imputasi")
+      .eq("komoditas_id", komoditasId)
+      .lte("tanggal", latestDate)
+      .order("tanggal", { ascending: false })
+      .limit(90);
+
+    const histByDate = new Map<string, number[]>();
+    if (histData) {
+      for (const row of histData) {
+        if (!histByDate.has(row.tanggal)) histByDate.set(row.tanggal, []);
+        histByDate.get(row.tanggal)!.push(Number(row.harga_imputasi));
+      }
+    }
+
+    const sortedHistDates = Array.from(histByDate.keys()).sort().slice(-14);
+    const history: ForecastHistoryPoint[] = sortedHistDates.map((tgl) => {
+      const vals = histByDate.get(tgl)!;
+      const avg = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+      const d = new Date(tgl);
+      return {
+        tanggal: tgl,
+        formattedDate: d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+        harga: avg,
+      };
+    });
+
+    const currentPrice = history.length > 0 ? history[history.length - 1].harga : 60000;
+
+    // 4. Ambil proyeksi masa depan dari fact_forecast (tanggal > latestDate)
+    const { data: fcData, error: fcErr } = await supabase
       .from("fact_forecast")
       .select("tanggal, harga_prediksi, batas_bawah, batas_atas")
       .eq("komoditas_id", komoditasId)
+      .gt("tanggal", latestDate)
       .order("tanggal", { ascending: true });
 
-    if (error || !data || data.length === 0) return null;
+    if (fcErr || !fcData || fcData.length === 0) return null;
 
-    // Aggregate by date (average across markets for city-wide forecast)
-    const byDate = new Map<string, { p: number[]; l: number[]; u: number[] }>();
-    for (const row of data) {
-      if (!byDate.has(row.tanggal)) {
-        byDate.set(row.tanggal, { p: [], l: [], u: [] });
+    const fcByDate = new Map<string, { p: number[]; l: number[]; u: number[] }>();
+    for (const row of fcData) {
+      if (!fcByDate.has(row.tanggal)) {
+        fcByDate.set(row.tanggal, { p: [], l: [], u: [] });
       }
-      const entry = byDate.get(row.tanggal)!;
+      const entry = fcByDate.get(row.tanggal)!;
       entry.p.push(Number(row.harga_prediksi));
       entry.l.push(Number(row.batas_bawah));
       entry.u.push(Number(row.batas_atas));
     }
 
-    const result: ForecastDayItem[] = [];
+    const forecast: ForecastDayItem[] = [];
     let h = 1;
-    for (const [tgl, vals] of byDate.entries()) {
+    let maxForecast = 0;
+    let minForecast = Infinity;
+    let peakDay: string | undefined = undefined;
+    let peakPrice = 0;
+
+    for (const [tgl, vals] of fcByDate.entries()) {
+      if (h > 14) break;
       const avgPred = Math.round(vals.p.reduce((a, b) => a + b, 0) / vals.p.length);
       const avgLow = Math.round(vals.l.reduce((a, b) => a + b, 0) / vals.l.length);
       const avgHigh = Math.round(vals.u.reduce((a, b) => a + b, 0) / vals.u.length);
 
-      result.push({
+      const deltaRp = avgPred - currentPrice;
+      const deltaPct = Number(((deltaRp / currentPrice) * 100).toFixed(1));
+
+      if (avgPred > maxForecast) {
+        maxForecast = avgPred;
+        peakPrice = avgPred;
+        peakDay = `H+${h}`;
+      }
+      if (avgPred < minForecast) {
+        minForecast = avgPred;
+      }
+
+      let status: "Normal" | "Waspada" | "Tinggi" = "Normal";
+      let recom = "Pasokan stabil dalam batas wajar";
+
+      if (deltaPct >= 8) {
+        status = "Tinggi";
+        recom = "Waspada lonjakan harga, koordinasikan pemantauan pasokan";
+      } else if (deltaPct >= 3) {
+        status = "Waspada";
+        recom = "Pantau kelancaran pasokan harian";
+      }
+
+      const d = new Date(tgl);
+      const formattedDate = d.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+      const weekday = d.toLocaleDateString("id-ID", { weekday: "long" });
+
+      forecast.push({
         horizon: h++,
         tanggal: tgl,
+        formattedDate,
+        weekday,
         harga_prediksi: avgPred,
         batas_bawah: avgLow,
         batas_atas: avgHigh,
-        status: avgPred > 65000 ? "Kritis" : avgPred > 55000 ? "Waspada" : "Normal"
+        deltaPct,
+        deltaRp,
+        status,
+        recom,
       });
-      if (h > 14) break;
     }
 
-    return result.length > 0 ? result : null;
+    const lastForecastPrice = forecast.length > 0 ? forecast[forecast.length - 1].harga_prediksi : currentPrice;
+    const trendPercentage = Number((((lastForecastPrice - currentPrice) / currentPrice) * 100).toFixed(1));
+    const trendDirection = trendPercentage >= 2 ? "naik" : trendPercentage <= -2 ? "turun" : "stabil";
+
+    const dLatest = new Date(latestDate);
+    const formattedLatestDate = dLatest.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    return {
+      komoditas_id: komoditasId,
+      nama_komoditas,
+      satuan,
+      currentPrice,
+      latestDate,
+      formattedLatestDate,
+      history,
+      forecast,
+      trendDirection,
+      trendPercentage,
+      minForecast: minForecast === Infinity ? currentPrice : minForecast,
+      maxForecast: maxForecast === 0 ? currentPrice : maxForecast,
+      peakDay,
+      peakPrice,
+    };
   } catch (err) {
-    console.error("Failed to load live forecast data:", err);
+    console.error("Failed to load forecast details:", err);
     return null;
   }
+}
+
+export async function getLiveForecast(komoditasId: number = 50): Promise<ForecastDayItem[] | null> {
+  const details = await getLiveForecastDetails(komoditasId);
+  return details ? details.forecast : null;
 }
 
 export interface TrendSeriesPoint {

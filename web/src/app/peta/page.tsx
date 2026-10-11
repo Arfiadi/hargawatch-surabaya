@@ -377,19 +377,16 @@ export default function SpatialMapPage() {
             {/* Header Context & Dynamic Quick Metrics Strip */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-lg">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-status-normal/15 text-status-normal font-label-caps text-label-caps border border-status-normal/30 mb-1 font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
-                    Pantauan Spasial 6 Pasar Kota Surabaya
-                </div>
                 <div className="flex flex-wrap items-baseline gap-space-xs">
                   <h1 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
                     Peta Disparitas Harga Antar-Pasar
                   </h1>
                 </div>
                 <p className="font-body-sm text-body-sm text-text-secondary mt-1">
-                  Analisis perbandingan harga bahan pokok secara geografis antara pasar induk grosir dan pasar ritel permukiman.
+                  Pantauan spasial 6 pasar Kota Surabaya untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman.
                 </p>
               </div>
+
 
               {/* Dynamic Quick Telemetry Card */}
               <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-xl shadow-sm border border-border-subtle/70">
