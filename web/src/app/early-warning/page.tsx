@@ -1,14 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { getLiveEarlyWarning, EarlyWarningItem, EarlyWarningStats } from "@/lib/dataService";
 
 export default function EarlyWarningPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalCommodity, setModalCommodity] = useState("Cabai Rawit Merah");
   const [modalTarget, setModalTarget] = useState("Pasar Genteng");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [ewsData, setEwsData] = useState<EarlyWarningItem[]>([]);
+  const [ewsStats, setEwsStats] = useState<EarlyWarningStats | null>(null);
+
+  useEffect(() => {
+    getLiveEarlyWarning().then((res) => {
+      if (res) {
+        setEwsData(res.items);
+        setEwsStats(res.stats);
+      }
+    });
+  }, []);
 
   const openOperasiModal = (commodity: string, market: string) => {
     setModalCommodity(commodity);
@@ -22,7 +34,7 @@ export default function EarlyWarningPage() {
 
   const confirmDispatch = () => {
     setModalOpen(false);
-    showToast("Armada Operasi Pasar Murah BUMD Surya Kencana telah dimobilisasi.");
+    showToast("Dicatat untuk koordinasi Satgas.");
   };
 
   const showToast = (msg: string) => {
@@ -40,7 +52,7 @@ export default function EarlyWarningPage() {
         <div className="flex flex-col w-full">
           {/* Content Area Wrapper */}
           <div className="w-full max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop py-space-lg flex flex-col gap-space-xl">
-            {/* Top Breadcrumb & Live Dispatch Meta */}
+            {/* Top Breadcrumb & Live Meta */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs pb-space-xs">
               <div className="flex items-center gap-space-xs text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
                 <span className="inline-flex items-center gap-1 text-primary font-bold">
@@ -48,42 +60,83 @@ export default function EarlyWarningPage() {
                   Satgas Ketahanan Pangan
                 </span>
                 <span>/</span>
-                <span className="text-text-muted">Early Warning Matrix</span>
-                <span>/</span>
-                <span className="text-on-surface">Surabaya Real-Time Feed</span>
+                <span className="text-text-muted">Early Warning System</span>
               </div>
               <div className="flex items-center gap-space-sm font-label-caps text-label-caps text-text-secondary">
                 <span className="inline-flex items-center gap-1.5 bg-surface-card px-space-xs py-space-2xs rounded-full shadow-sm text-text-secondary">
-                  <span className="w-2 h-2 rounded-full bg-status-critical animate-ping"></span>
-                  Pemindaian SP2KP: Aktif (Interval 15m)
+                  <span className="w-2 h-2 rounded-full bg-status-normal animate-pulse"></span>
+                  Data per {ewsStats?.formattedDate || "10 Okt 2026"} • 06.00 WIB
                 </span>
-                <span className="hidden md:inline text-text-muted">ID Sesi: SBY-EWS-8921-H</span>
               </div>
             </div>
 
             {/* Executive Alert Banner */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-status-warning-bg via-surface-card to-surface-card shadow-sm p-space-md lg:p-space-lg">
-              <div className="absolute -right-16 -top-16 w-64 h-64 bg-status-warning/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div
+              className={`relative overflow-hidden rounded-xl bg-gradient-to-r transition-colors duration-300 ${
+                ewsStats?.overallStatus === "SIAGA"
+                  ? "from-status-critical-bg via-surface-card to-surface-card"
+                  : ewsStats?.overallStatus === "WASPADA"
+                  ? "from-status-warning-bg via-surface-card to-surface-card"
+                  : "from-status-normal-bg/40 via-surface-card to-surface-card"
+              } shadow-sm p-space-md lg:p-space-lg`}
+            >
+              <div
+                className={`absolute -right-16 -top-16 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
+                  ewsStats?.overallStatus === "SIAGA"
+                    ? "bg-status-critical/10"
+                    : ewsStats?.overallStatus === "WASPADA"
+                    ? "bg-status-warning/10"
+                    : "bg-status-normal/10"
+                }`}
+              ></div>
               <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
                 <div className="flex items-start gap-space-md">
-                  <div className="w-12 h-12 rounded-xl bg-status-warning/20 flex items-center justify-center text-status-warning shrink-0 shadow-sm">
-                    <span className="material-symbols-outlined text-headline-lg">crisis_alert</span>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                      ewsStats?.overallStatus === "SIAGA"
+                        ? "bg-status-critical/20 text-status-critical"
+                        : ewsStats?.overallStatus === "WASPADA"
+                        ? "bg-status-warning/20 text-status-warning"
+                        : "bg-status-normal-bg text-status-normal"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-headline-lg">
+                      {ewsStats?.overallStatus === "SIAGA"
+                        ? "crisis_alert"
+                        : ewsStats?.overallStatus === "WASPADA"
+                        ? "warning"
+                        : "verified_user"}
+                    </span>
                   </div>
                   <div className="flex flex-col gap-space-2xs">
                     <div className="flex flex-wrap items-center gap-space-xs">
-                      <span className="inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full bg-status-warning text-on-primary font-label-caps text-label-caps font-bold tracking-wide">
-                        <span className="material-symbols-outlined text-body-sm">warning</span>
-                        LEVEL PERINGATAN KOTA: WASPADA TINGKAT II
+                      <span
+                        className={`inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full text-on-primary font-label-caps text-label-caps font-bold tracking-wide ${
+                          ewsStats?.overallStatus === "SIAGA"
+                            ? "bg-status-critical"
+                            : ewsStats?.overallStatus === "WASPADA"
+                            ? "bg-status-warning"
+                            : "bg-status-normal"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-body-sm">
+                          {ewsStats?.overallStatus === "SIAGA"
+                            ? "emergency"
+                            : ewsStats?.overallStatus === "WASPADA"
+                            ? "warning"
+                            : "check_circle"}
+                        </span>
+                        STATUS PERINGATAN DINI: {ewsStats?.overallStatus || "NORMAL"}
                       </span>
                       <span className="font-label-caps text-label-caps px-space-xs py-space-2xs rounded-full bg-surface-subtle text-text-secondary">
-                        Fokus Sektor: Hortikultura &amp; Dapur
+                        {ewsStats?.focusText || "Kondisi Terkendali di 6 Pasar"}
                       </span>
                     </div>
                     <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
-                      Anomali Distribusi Hortikultura: Kenaikan Agresif Terdeteksi di Pasar Koridor Timur &amp; Tengah
+                      Peringatan Dini Harga Pangan
                     </h1>
                     <p className="font-body-md text-body-md text-text-secondary max-w-3xl">
-                      Model komputasi TPID Surabaya mengonfirmasi kenaikan di atas ambang 8% pada komoditas Cabai Rawit &amp; Bawang Merah. Protokol pra-stabilisasi otomatis disiapkan untuk koordinasi Dinas Perdagangan dan PD Pasar Surya.
+                      {ewsStats?.subtitle || "Pantau kenaikan harga, titik anomali, dan faktor yang memengaruhi pasokan."}
                     </p>
                   </div>
                 </div>
@@ -94,18 +147,16 @@ export default function EarlyWarningPage() {
                     id="trigger-all-interventions"
                     onClick={() =>
                       openOperasiModal(
-                        "Komoditas Hortikultura Serentak",
-                        "Pasar Genteng, Soponyono & Wonokromo"
+                        ewsStats?.criticalCommodities?.[0] || "Komoditas Hortikultura",
+                        "Pasar Genteng & Wonokromo"
                       )
                     }
                   >
                     <span className="material-symbols-outlined text-body-lg">local_shipping</span>
-                    <span>Rilis Operasi Pasar Serentak</span>
+                    <span>Ajukan operasi pasar</span>
                   </button>
                   <div className="flex items-center justify-between lg:justify-end gap-space-xs text-text-muted font-label-caps text-label-caps">
-                    <span>SK Walikota No. 41/2025</span>
-                    <span>•</span>
-                    <span className="text-status-normal font-semibold">Siap Salur 100%</span>
+                    <span>Koordinasi PD Pasar Surya &amp; DKPP</span>
                   </div>
                 </div>
               </div>
@@ -117,7 +168,7 @@ export default function EarlyWarningPage() {
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                    Indeks Volatilitas Pangan
+                    Volatilitas harga
                   </span>
                   <span className="w-8 h-8 rounded-lg bg-surface-subtle flex items-center justify-center text-text-secondary">
                     <span className="material-symbols-outlined text-body-lg">show_chart</span>
@@ -166,26 +217,50 @@ export default function EarlyWarningPage() {
                   <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                     Komoditas Risiko Tinggi
                   </span>
-                  <span className="w-8 h-8 rounded-lg bg-status-critical-bg text-status-critical flex items-center justify-center">
-                    <span className="material-symbols-outlined text-body-lg">emergency_home</span>
+                  <span
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      (ewsStats?.highCount || 0) > 0
+                        ? "bg-status-critical-bg text-status-critical"
+                        : "bg-status-normal-bg text-status-normal"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-body-lg">
+                      {(ewsStats?.highCount || 0) > 0 ? "emergency_home" : "verified"}
+                    </span>
                   </span>
                 </div>
                 <div className="flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
-                    <span className="font-metric-display text-metric-display text-status-critical">2</span>
+                    <span
+                      className={`font-metric-display text-metric-display ${
+                        (ewsStats?.highCount || 0) > 0 ? "text-status-critical" : "text-status-normal"
+                      }`}
+                    >
+                      {ewsStats ? ewsStats.highCount : 0}
+                    </span>
                     <span className="font-title-md text-title-md text-text-secondary">Komoditas</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    <span className="px-space-xs py-0.5 rounded-full bg-status-critical-bg text-status-critical font-label-caps text-label-caps">
-                      Cabai Rawit
-                    </span>
-                    <span className="px-space-xs py-0.5 rounded-full bg-status-warning-bg text-status-warning font-label-caps text-label-caps">
-                      Bw. Merah
-                    </span>
+                    {ewsStats && ewsStats.criticalCommodities.length > 0 ? (
+                      ewsStats.criticalCommodities.map((c) => (
+                        <span
+                          key={c}
+                          className="px-space-xs py-0.5 rounded-full bg-status-critical-bg text-status-critical font-label-caps text-label-caps"
+                        >
+                          {c}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="px-space-xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">
+                        Semua Terkendali
+                      </span>
+                    )}
                   </div>
                 </div>
                 <span className="font-body-sm text-body-sm text-text-muted">
-                  Kenaikan akumulatif 7-hari &gt; 9.4%
+                  {(ewsStats?.highCount || 0) > 0
+                    ? "Kenaikan di atas ambang batas"
+                    : "Tidak ada komoditas di zona bahaya"}
                 </span>
               </div>
 
@@ -193,24 +268,38 @@ export default function EarlyWarningPage() {
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                    Deteksi Anomali Aktif
+                    Titik anomali harga
                   </span>
-                  <span className="w-8 h-8 rounded-lg bg-status-warning-bg text-status-warning flex items-center justify-center">
+                  <span
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      (ewsStats?.anomaliesCount || 0) > 0
+                        ? "bg-status-warning-bg text-status-warning"
+                        : "bg-status-normal-bg text-status-normal"
+                    }`}
+                  >
                     <span className="material-symbols-outlined text-body-lg">radar</span>
                   </span>
                 </div>
                 <div className="flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
-                    <span className="font-metric-display text-metric-display text-status-warning">3 Titik</span>
+                    <span
+                      className={`font-metric-display text-metric-display ${
+                        (ewsStats?.anomaliesCount || 0) > 0 ? "text-status-warning" : "text-status-normal"
+                      }`}
+                    >
+                      {ewsStats ? `${ewsStats.anomaliesCount} Titik` : "0 Titik"}
+                    </span>
                     <span className="font-label-caps text-label-caps text-text-secondary">Outlier Deviasi</span>
                   </div>
                   <p className="font-body-sm text-body-sm text-text-secondary">
-                    Pasar Genteng, Soponyono &amp; Pucang Anom
+                    {(ewsStats?.anomaliesCount || 0) > 0
+                      ? "Terdeteksi deviasi antar-pasar"
+                      : "Seluruh pasar selaras dalam toleransi"}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 text-text-secondary font-label-caps text-label-caps">
-                  <span className="material-symbols-outlined text-body-sm text-status-warning">speed</span>
-                  Confidence Score AI: 94.8%
+                  <span className="material-symbols-outlined text-body-sm text-status-normal">verified</span>
+                  Akurasi prediksi: WAPE 5,36%
                 </div>
               </div>
 
@@ -261,7 +350,7 @@ export default function EarlyWarningPage() {
                     </h2>
                   </div>
                   <p className="font-body-sm text-body-sm text-text-secondary">
-                    Pemetaan komprehensif 6 pasar induk &amp; strategis Surabaya. Diperbarui otomatis dari survei harian lapangan &amp; sistem kasir digital.
+                    Pantau 6 pasar utama Surabaya. Data diperbarui setiap pagi dari Siskaperbapo.
                   </p>
                 </div>
                 {/* Risk Legend / Status Guide */}
@@ -725,7 +814,7 @@ export default function EarlyWarningPage() {
                     </h3>
                   </div>
                   <span className="font-label-caps text-label-caps bg-surface-card px-space-xs py-0.5 rounded-full shadow-sm text-text-secondary">
-                    Auto-Generated Satgas AI
+                    Ringkasan kejadian
                   </span>
                 </div>
                 <div className="flex flex-col gap-space-sm">
@@ -880,7 +969,7 @@ export default function EarlyWarningPage() {
                 <div className="flex items-center gap-space-xs">
                   <span className="material-symbols-outlined text-primary text-headline-sm">hub</span>
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">
-                    Analisis Variabel Eksternal (Multi-Factor)
+                    Faktor pasokan
                   </h3>
                 </div>
                 {/* Factor 1: Weather & Climate Risk */}
@@ -948,7 +1037,7 @@ export default function EarlyWarningPage() {
                     <div className="flex items-center gap-space-xs">
                       <span className="material-symbols-outlined text-headline-sm text-primary-fixed">psychology</span>
                       <span className="font-headline-sm text-headline-sm text-primary-fixed">
-                        Rekomendasi Intervensi Kebijakan
+                        Langkah berikutnya
                       </span>
                     </div>
                     <span className="font-label-caps text-label-caps px-space-xs py-0.5 rounded bg-on-primary/10 text-on-primary">

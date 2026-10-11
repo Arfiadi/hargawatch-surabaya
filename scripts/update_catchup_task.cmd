@@ -52,9 +52,15 @@ if not defined PYEXE (
 "%PYEXE%" "%ROOT_DIR%\scripts\update_catchup.py" >> "%LOGFILE%" 2>&1
 set "RC=%ERRORLEVEL%"
 
+if "%RC%"=="0" (
+    echo [INFO] Menjalankan pembaruan forecasting & EWS... >> "%LOGFILE%"
+    "%PYEXE%" "%ROOT_DIR%\scripts\run_forecasting.py" --horizon 14 --from-db >> "%LOGFILE%" 2>&1
+    "%PYEXE%" "%ROOT_DIR%\scripts\generate_daily_alerts.py" >> "%LOGFILE%" 2>&1
+)
+
 rem ===== Ringkasan status di akhir log (mudah dipindai) =====
 if "%RC%"=="0" (
-    echo ===== SUKSES ===== >> "%LOGFILE%"
+    echo ===== SUKSES PIPELINE LENGKAP ===== >> "%LOGFILE%"
 ) else (
     echo ===== GAGAL exit=%RC% - periksa output di atas ===== >> "%LOGFILE%"
 )

@@ -35,3 +35,6 @@ ehthumbs.db
 
 # Lain-lain
 .agents
+.hermes/
+memory/
+skills-lock.json
