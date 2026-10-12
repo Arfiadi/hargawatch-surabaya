@@ -28,7 +28,7 @@ export default function Header() {
               height={40}
               style={{ width: "40px", height: "40px", minWidth: "40px" }}
               className="h-10 w-10 rounded-xl object-contain shadow-sm border border-primary/10 bg-white p-0.5 transition-transform group-hover:scale-105"
-              src="/logo.png"
+              src="/logo-symbol.svg"
             />
             <div className="flex flex-col">
               <span className="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">

@@ -1,0 +1,14 @@
+<svg fill="#000000" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256"><title>HargaWatch Surabaya Symbol</title>
+  
+  <!-- Outer Radar Ring (Aperture / Watch Arc) -->
+  <path fill="#000000" fill-rule="evenodd" d="M 128 20 C 68.35 20 20 68.35 20 128 C 20 187.65 68.35 236 128 236 C 187.65 236 236 187.65 236 128 C 236 68.35 187.65 20 128 20 Z M 128 40 C 176.6 40 216 79.4 216 128 C 216 176.6 176.6 216 128 216 C 79.4 216 40 176.6 40 128 C 40 79.4 79.4 40 128 40 Z" />
+  
+  <!-- Center Food Grain Core (Bulir Komoditas Pangan) -->
+  <path fill="#000000" fill-rule="evenodd" d="M 128 66 C 146 86 158 112 152 136 C 146 160 128 178 128 178 C 128 178 110 160 104 136 C 98 112 110 86 128 66 Z M 128 114 C 132.4 114 136 117.6 136 122 C 136 126.4 132.4 130 128 130 C 123.6 130 120 126.4 120 122 C 120 117.6 123.6 114 128 114 Z" />
+  
+  <!-- Dynamic Trend Pulse (Kurva Tren Harga Pasar Real-time) -->
+  <path fill="#000000" d="M 64 148 C 84 148 94 104 116 104 C 132 104 140 128 152 128 C 164 128 174 88 192 88 C 196.4 88 200 91.6 200 96 C 200 100.4 196.4 104 192 104 C 180 104 172 144 152 144 C 136 144 128 120 116 120 C 98 120 88 164 64 164 C 59.6 164 56 160.4 56 156 C 56 151.6 59.6 148 64 148 Z" />
+
+  <!-- Amber Early-Warning Focus Node (Sensor Intelijen) -->
+  <circle cx="128" cy="122" r="5" fill="#000000" />
+</svg>

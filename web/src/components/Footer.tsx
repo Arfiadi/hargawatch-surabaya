@@ -7,7 +7,7 @@ export default function Footer() {
           <img
             alt="HargaWatch Logo"
             className="h-8 w-8 rounded-lg object-contain"
-            src="/logo.png"
+            src="/logo-symbol.svg"
           />
           <span className="font-headline-sm text-headline-sm text-primary">
             HargaWatch Surabaya
