@@ -203,7 +203,14 @@ def bersihkan(df, tabel):
         # CSV memakai 'komoditas', DDL dim_komoditas memakai 'nama_komoditas'
         rename["komoditas"] = "nama_komoditas"
     df = df.rename(columns=rename).copy()
-    df = df[[c for c in KOLOM[tabel] if c in df.columns]]
+    
+    # Ensure all target columns exist (pad with None if missing)
+    for col in KOLOM[tabel]:
+        if col not in df.columns:
+            df[col] = None
+            
+    # Strictly reorder columns to match the INSERT statement
+    df = df[KOLOM[tabel]]
 
     for c in ("tanggal",):
         if c in df.columns:

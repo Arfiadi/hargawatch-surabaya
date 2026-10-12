@@ -204,9 +204,9 @@ def imputasi_pasar_missing(cur, tgl, rows_scraped):
         SELECT DISTINCT ON (pasar_id, komoditas_id)
             pasar_id, komoditas_id, harga_imputasi
         FROM fact_harga_pasar
-        WHERE tanggal < %s
+        WHERE tanggal < %s AND tanggal >= %s::date - interval '7 days'
         ORDER BY pasar_id, komoditas_id, tanggal DESC
-    """, (tgl,))
+    """, (tgl, tgl))
     rows_imputed = []
     for psr_id, kom_id, prev_harga in cur.fetchall():
         if (psr_id, kom_id) not in tercatat and prev_harga is not None:
@@ -227,9 +227,9 @@ def imputasi_produsen_missing(cur, tgl, rows_scraped):
         SELECT DISTINCT ON (komoditas, titik_pantau)
             komoditas, titik_pantau, kabupaten, satuan, harga_imputasi
         FROM fact_harga_produsen
-        WHERE tanggal < %s
+        WHERE tanggal < %s AND tanggal >= %s::date - interval '7 days'
         ORDER BY komoditas, titik_pantau, tanggal DESC
-    """, (tgl,))
+    """, (tgl, tgl))
     rows_imputed = []
     for kom, titik, kab, sat, prev_harga in cur.fetchall():
         if (kom, titik) not in tercatat and prev_harga is not None:

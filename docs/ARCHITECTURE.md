@@ -2,60 +2,78 @@
 
 Dokumen ini memetakan aliran data (*data flow*) dan batasan tanggung jawab (*separation of concerns*) untuk setiap peran dalam proyek HargaWatch.
 
-## Diagram Arsitektur
+## Diagram Arsitektur (5-Layer Hub-and-Spoke)
 
-`mermaid
+```mermaid
 flowchart TD
-    subgraph Data Sources [Sumber Data Eksternal]
-        S1[SISKAPERBAPO]
-        S2[Open-Meteo API\nCuaca]
-        S3[BPS Jatim\nInflasi]
+    classDef storage fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    subgraph L1 ["1. Data Sources Layer"]
+        direction LR
+        S1(Web Scraping\nSiskaperbapo)
+        S2(Open-Meteo\nCuaca)
+        S3(BPS Jatim\nInflasi)
+        S4(Kalender\nHari Libur)
     end
 
-    subgraph DE [Data Engineering Pipeline\nPython ETL - Cron Job]
-        E1(Scraper & Extractor)
-        E2(Data Cleaner & Imputation)
+    subgraph L2 ["2. Data Pipeline & Storage Layer"]
+        direction LR
+        E1[ETL Pipeline\nExtract-Transform-Load]
+        E2[Data Cleaning\nForward-Fill]
+        DB[(Supabase\nCentral Hub)]:::storage
+        
+        E1 --> E2
+        E2 --> DB
     end
 
-    subgraph DB [Supabase - PostgreSQL]
-        D1[(Silver Layer:\nfact_harga_pasar)]
-        D2[(Gold Layer:\nfact_forecast,\nfact_early_warning)]
+    S1 --> E1
+    S2 --> E1
+    S3 --> E1
+    S4 --> E1
+
+    subgraph L3 ["3. AI & Analytics Engine Layer"]
+        direction LR
+        M1[Feature Engineering]
+        M2[Global Tabular ML\nKandidat GBDT]
+        M3[Quantile Regression]
+        M4[Rule-Based EWS]
+        W[Weights & Biases\nModel Registry]
+        
+        M1 --> M2 --> M3 --> M4
+        M2 <-->|"Track & Load"| W
     end
 
-    subgraph ML [ML Batch Pipeline\nPython - Cron Job]
-        M1(Data Fetcher)
-        M2(LightGBM Forecasting)
-        M3(Composite Scoring EWS)
+    %% Hub-and-Spoke Cycle
+    DB == "Query Data Historis" ===> M1
+    M4 == "Simpan Hasil Prediksi & EWS" ===> DB
+
+    subgraph L4 ["4. Application Layer"]
+        direction TB
+        W1[Next.js 15\nFrontend]
+        W2[Vercel\nHosting]
+        
+        subgraph UI ["Modul Dashboard"]
+            direction LR
+            U_A[Deskriptif]
+            U_B[Diagnostik]
+            U_C[Prediktif]
+        end
+        W1 --> W2 --> UI
     end
 
-    subgraph Web [Frontend Application\nNext.js + Vercel]
-        W1[UI Publik:\nDashboard & Peta]
-        W2[UI Pemerintah:\nAnalitik & Alert]
+    %% Web Fetching directly from Hub
+    DB == "Fetch Data API (@supabase/supabase-js)" ===> W1
+
+    subgraph L5 ["5. End User Layer"]
+        direction LR
+        U1((Masyarakat & UMKM))
+        U2((Instansi Pemerintah))
     end
 
-    U1((Masyarakat))
-    U2((Pemkot / Analis))
-
-    S1 -.->|HTTP POST| E1
-    S2 -.->|REST API| E1
-    S3 -.->|CSV| E1
-    E1 --> E2
-    E2 -->|Insert / Upsert| D1
-
-    D1 ===>|Tarik Harga Historis| M1
-    M1 --> M2
-    M1 --> M3
-    M2 -->|Simpan Prediksi H+14| D2
-    M3 -->|Simpan Status Warning| D2
-
-    D1 -.->|Fetch Real-time Data| W1
-    D1 -.->|Fetch Analitik| W2
-    D2 -.->|Fetch Forecast & Alert| W2
-    D2 -.->|Fetch Forecast| W1
-
-    W1 --- U1
-    W2 --- U2
-`
+    U_A --> U1
+    U_B --> U1
+    U_C --> U2
+```
 
 ## Pembagian Tanggung Jawab (Separation of Concerns)
 
@@ -92,7 +110,7 @@ hargawatch-surabaya/
 │   ├── forecasting/                # Model prediksi time-series
 │   └── anomaly_detection/          # Model deteksi anomali harga
 │
-├── notebook/                       # 🧪 Eksplorasi & prototyping (Jupyter Notebook)
+├── notebook/                       # 🧪 Eksplorasi & eksperimen per komoditas (Jupyter Notebook)
 │
 ├── src/                            # 💻 KODE INTI (Modul Python yang dapat diimpor)
 │   ├── pipeline/                   # Data Pipeline: scraping, download, preprocessing
@@ -106,13 +124,13 @@ hargawatch-surabaya/
 │   │
 │   ├── analytics/                  # Logika Analitik & Feature Engineering
 │   │   ├── features.py             # Feature engineering untuk time-series forecasting
-│   │   ├── metrics.py              # [Placeholder] Kalkulasi WoW, MoM, volatilitas
+│   │   ├── metrics.py              # Error Analysis Toolkit (WAPE, PICP, Residual Diagnostics)
 │   │   └── seasonal.py             # [Placeholder] Analisis pola Ramadan/Nataru
 │   │
 │   ├── models/                     # Logika Pemodelan Machine Learning
-│   │   ├── models.py               # LightGBM Quantile Forecaster + baseline models
+│   │   ├── models.py               # Kumpulan Kandidat Model (GBDT, Ridge, dll)
 │   │   ├── backtest.py             # Walk-forward rolling-origin backtesting engine
-│   │   ├── forecast_engine.py      # [Placeholder] Wrapper training & prediksi
+│   │   ├── forecast_engine.py      # Orkestrator eksperimen komparasi & ablasi di Notebook
 │   │   └── anomaly_detector.py     # [Placeholder] Deteksi lonjakan harga tidak wajar
 │   │
 │   ├── safety/                     # Sistem Peringatan Dini (Early Warning System)
@@ -147,7 +165,7 @@ hargawatch-surabaya/
 │   ├── test_ml_models.py           # Uji model forecasting (baseline & LightGBM)
 │   └── test_pipeline_integration.py # Uji koneksi Supabase & skema tabel
 │
-├── web/                            # 🌐 Frontend Dashboard (Next.js 14 + Tailwind CSS)
+├── web/                            # 🌐 Frontend Dashboard (Next.js 15 + Tailwind CSS v4)
 │   └── src/
 │       ├── app/                    # Halaman: /, /early-warning, /forecasting, /peta
 │       ├── components/             # UI: SmartShoppingBasket, PriceTrendChart, dll
@@ -165,3 +183,6 @@ hargawatch-surabaya/
 ├── requirements-pipeline.txt       # Dependensi khusus data pipeline
 └── requirements-ml.txt             # Dependensi khusus machine learning
 ```
+
+## Strategi Deployment (On-Premise)
+Data pipeline dan ML Pipeline dijalankan melalui **Windows Task Scheduler (On-Premise)** menggunakan skrip batch un_pipeline.bat setiap pagi hari. Keputusan on-premise (laptop/PC) diambil untuk menghindari pemblokiran *Cloudflare Web Application Firewall (WAF)* pada API Siskaperbapo Jatim jika diakses dari IP Data Center (seperti AWS, DigitalOcean, atau GitHub Actions). Dashboard Web tetap di-*hosting* publik (Vercel) dengan menarik data dari Supabase.

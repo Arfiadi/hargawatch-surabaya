@@ -1,55 +1,44 @@
 # HargaWatch — Branch `development`
 
-> **Status: tahap migrasi database.** Branch ini berisi pekerjaan aktif menuju database Supabase.
-> Lihat README utama di branch `main` untuk gambaran proyek.
+> **Status: tahap produksi pipeline harian.** Branch ini berisi pekerjaan aktif yang telah berhasil disinkronisasi dengan Supabase dan Weights & Biases.
 
-## Yang sudah selesai di branch ini
+## Yang Sudah Selesai di Branch Ini
 
-- ✅ **Preprocessing final sesuai audit** (`src/pipeline/preprocessing_final.py` + `notebook/preprocessing_final.ipynb`)
-  - Dual-price column: `harga_asli` (0→NULL) / `harga_imputasi` (ffill murni, NOT NULL) / `is_imputed`
-  - Tanpa lookahead bias (interpolasi dihapus), rupiah bulat
-  - 6 pasar termasuk Genteng; leading NaN dipangkas; `harga_kemarin` statis dihapus
-- ✅ **Silver layer tervalidasi**: `fact_harga_pasar` 477.097 baris, 0 NaN, 0 desimal, PK/FK konsisten
-- ✅ **Migrasi Supabase selesai** (`src/utils/ingest_supabase.py`): 5 tabel terisi, verifikasi 0 NULL / 0 orphan
-- ✅ **Cron harian lokal** — Task Scheduler Windows (`update_catchup.py`, jadwal 07:00, self-healing jendela 30 hari)
-- ⚠️ **GitHub Actions dihentikan** — Cloudflare memblokir IP datacenter runner (403 saat scrape); workflow dihapus dari repo. Alternatif masa depan: Oracle Cloud Always Free VM + Playwright stealth.
+- **Preprocessing final sesuai audit** (`src/pipeline/preprocessing_final.py`)
+  - Dual-price column: `harga_asli` vs `harga_imputasi` (ffill murni, NOT NULL). Tanpa interpolasi (zero lookahead bias).
+- **Silver layer tervalidasi**: `fact_harga_pasar` 477k+ baris bersih dari NaN dan orphan keys.
+- **Migrasi Supabase selesai**: Sinkronisasi ETL dua arah dengan cloud.
+- **MLOps Integrasi Selesai**: Model eksperimen dan Champion Model di-registry ke Weights & Biases (W&B).
+- **Forecasting & Early Warning Selesai**: Algoritma GBDT dan Naive terimplementasi penuh dengan *walk-forward backtesting*. Skor komposit 20-20-20-40 EWS sinkron 100%.
+- **Cron Harian Lokal (Native Windows Deployment)**: Script `run_pipeline.bat` dan orkestrator `run_daily_pipeline.py` sukses menembus blokir Cloudflare dengan berjalan mulus dari laptop lokal.
 
 ## Setup GitHub Actions (ARSIP — dihentikan karena 403 Cloudflare)
 
-~~Cron GitHub Actions~~ **TIDAK DIPAKAI.** Runner GitHub memakai IP datacenter yang
-diblokir Cloudflare milik siskaperbapo. Cron kini berjalan lokal via Task Scheduler:
+~~Cron GitHub Actions~~ **TIDAK DIPAKAI.** Runner GitHub memakai IP datacenter yang diblokir Cloudflare milik Siskaperbapo.
+Cron harian kini dipindahkan ke **Windows Task Scheduler (On-Premise)** melalui file `run_pipeline.bat`. Lihat panduan lengkapnya di `docs/deployment_windows.md`.
 
-```powershell
-$action = New-ScheduledTaskAction -Execute "C:\CODING~1\Project\HARGAW~1\scripts\update_catchup_task.cmd"
-$trigger = New-ScheduledTaskTrigger -Daily -At 07:00
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries
-Register-ScheduledTask -TaskName "HargaWatch Update Harian" -Action $action -Trigger $trigger -Settings $settings -Force
-```
+## Yang Sedang / Berikutnya Dikerjakan
 
-Manual run: `python scripts/update_catchup.py`. Log: `logs/catchup.log`.
-Alternatif cloud yang layak dicoba nanti: Oracle Cloud Always Free VM (IP dedicated)
-dengan Playwright stealth sebagai pengganti `requests`.
+- [x] Sinkronisasi `fact_forecast` & `fact_early_warning` ke Supabase.
+- [x] Eksekusi Batch Forecasting Harian otomatis.
+- [ ] Modul Generator Notifikasi Teks (Telegram Alerting) saat status WASPADA/TINGGI (P1-2).
+- [ ] Implementasi Interpretability SHAP pada Dashboard.
+- [ ] Pembangunan Frontend UI (Next.js) dengan akses data dari Supabase.
 
-## Yang sedang / berikutnya
-
-- [x] Jalankan `ingest_supabase.py` ke project Supabase (butuh `.env`, lihat `.env.example`)
-- [x] Cron harian lokal (Task Scheduler + catch-up self-healing)
-- [ ] Tabel `fact_cuaca` & `fact_inflasi` (data sudah ada di `data/external/`)
-- [ ] Forecasting 7–14 hari + aturan early warning (Normal–Waspada–Tinggi)
-- [ ] Dashboard publik (Public View + Government/Analyst View)
-
-## Setup lokal
+## Setup Lokal & Testing
 
 ```bash
-pip install -r requirements.txt
-cp .env.example .env                   # isi kredensial Supabase Anda (JANGAN commit .env)
-python src/utils/ingest_supabase.py      # buat tabel + muat silver layer
-python src/utils/ingest_supabase.py --verify   # cek ulang
+# Setup Environment
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+copy .env.example .env                   # isi kredensial Supabase & WANDB Anda (JANGAN commit .env)
+
+# Run Master Pipeline Secara Manual
+run_pipeline.bat
+
+# Run Tests
+.\.venv\Scripts\pytest tests/
 ```
 
-## Konvensi commit
-
-`feat:` fitur baru · `fix:` perbaikan · `chore:` pemeliharaan · `docs:` dokumentasi · `refactor:` restrukturisasi
-
-Data besar (`data/raw/`, `data/processed/`, cuaca) **tidak** di-commit — dibuat ulang lewat script.
-File referensi kecil yang dipertahankan: inflasi BPS (unduhan manual) & koordinat pasar.
+## Konvensi Commit
+Silakan gunakan [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) untuk setiap *pull request*.
