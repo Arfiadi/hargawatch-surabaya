@@ -6,8 +6,8 @@ export default function Footer() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt="HargaWatch Logo"
-            className="h-8 w-8 rounded-lg object-contain"
-            src="/logo-symbol.svg"
+            className="h-8 w-8 rounded-lg object-contain shadow-xs border border-primary/10 bg-white p-0.5"
+            src="/logo.svg"
           />
           <span className="font-headline-sm text-headline-sm text-primary">
             HargaWatch Surabaya
