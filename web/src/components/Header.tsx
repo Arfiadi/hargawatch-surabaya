@@ -28,7 +28,7 @@ export default function Header() {
               height={40}
               style={{ width: "40px", height: "40px", minWidth: "40px" }}
               className="h-10 w-10 rounded-xl object-contain shadow-sm border border-primary/10 bg-white p-0.5 transition-transform group-hover:scale-105"
-              src="/logo-symbol.svg"
+              src="/logo.svg"
             />
             <div className="flex flex-col">
               <span className="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">
@@ -51,7 +51,7 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-space-sm py-space-xs rounded-lg transition-[color,background-color,transform,box-shadow] duration-300 ease-out hover:-translate-y-px ${
+                className={`px-space-sm py-space-xs rounded-lg transition-[color,background-color,transform,box-shadow] duration-300 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] ${
                                   isActive
                                     ? "bg-primary-container text-on-primary font-headline-sm"
                                     : "font-body-md text-body-md text-on-surface-variant hover:text-on-surface"
@@ -92,7 +92,7 @@ export default function Header() {
                 href={item.href}
                 tabIndex={mobileMenuOpen ? 0 : -1}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-[color,background-color,transform] duration-200 ease-out ${
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-[color,background-color,transform] duration-200 hover:translate-x-0.5 active:scale-[0.99] ${
                   pathname === item.href
                     ? "bg-primary-container text-on-primary"
                     : "text-text-secondary hover:bg-surface-subtle"

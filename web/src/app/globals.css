@@ -9,6 +9,19 @@
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+
+  .page-enter {
+    animation: page-enter-reduced 120ms ease-out both;
+  }
+}
+
+@keyframes page-enter-reduced {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @theme {
@@ -186,9 +199,103 @@
   scrollbar-width: none;
 }
 
+/* Motion system: smooth scroll + one easing for all interactive feedback */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
+button:not(:disabled),
+a,
+[role="button"] {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:not(:disabled):active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active,
+  a:active,
+  [role="button"]:active {
+    transform: none;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid #0d5c3a;
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #004328;
+  color: #ffffff;
+}
+
+/* Overlay + modal: one authored entrance per surface */
+.overlay-enter {
+  animation: overlay-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes overlay-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-enter {
+  animation: modal-enter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform, filter;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.toast-slide {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+/* Page transition: one authored entrance (route change only) */
+.page-enter {
+  animation: page-enter 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
 /* Apple-Maps look and smooth pin hover */
 .apple-maps-style-tile {
   filter: contrast(0.96) saturate(0.85) brightness(1.02);
+}
+.nike-pin-item {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .nike-pin-item:hover {
   transform: translate(-50%, -105%) scale(1.08) !important;
@@ -206,4 +313,25 @@
 .leaflet-popup-tip {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
 }
+
+/* Micro-animations & Smooth Transitions for SVG Trend Chart */
+.trend-path {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.25s ease;
+}
+.trend-dot {
+  transition: r 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.2s ease, opacity 0.25s ease, stroke-width 0.2s ease;
+}
+
+@keyframes chartPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.6); opacity: 0.15; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+.chart-pulse-ring {
+  animation: chartPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  transform-origin: center;
+}
+
+
 
