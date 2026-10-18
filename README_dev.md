@@ -15,13 +15,13 @@
 ## Setup GitHub Actions (ARSIP — dihentikan karena 403 Cloudflare)
 
 ~~Cron GitHub Actions~~ **TIDAK DIPAKAI.** Runner GitHub memakai IP datacenter yang diblokir Cloudflare milik Siskaperbapo.
-Cron harian kini dipindahkan ke **Windows Task Scheduler (On-Premise)** melalui file `run_pipeline.bat`. Lihat panduan lengkapnya di `docs/deployment_windows.md`.
+Cron harian kini dipindahkan ke **Windows Task Scheduler (On-Premise)** melalui file `run_pipeline.bat`. Lihat panduan lengkapnya di `docs/panduan_operasional.md`.
 
 ## Yang Sedang / Berikutnya Dikerjakan
 
 - [x] Sinkronisasi `fact_forecast` & `fact_early_warning` ke Supabase.
 - [x] Eksekusi Batch Forecasting Harian otomatis.
-- [ ] Modul Generator Notifikasi Teks (Telegram Alerting) saat status WASPADA/TINGGI (P1-2).
+- [x] Modul Generator Notifikasi Teks (Telegram Alerting) saat status WASPADA/TINGGI (`alert_generator.py` & `generate_daily_alerts.py`).
 - [ ] Implementasi Interpretability SHAP pada Dashboard.
 - [ ] Pembangunan Frontend UI (Next.js) dengan akses data dari Supabase.
 
