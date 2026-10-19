@@ -1,20 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { getLiveEarlyWarning, EarlyWarningItem, EarlyWarningStats } from "@/lib/dataService";
-
-interface SimulationScenario {
-  id: string;
-  commodity: string;
-  market: string;
-  volume: string;
-  price: string;
-  timestamp: string;
-  projectedImpact: string;
-}
+import { getLiveEarlyWarning, EarlyWarningItem, EarlyWarningStats, formatCommodityName } from "@/lib/dataService";
 
 const MARKET_CONFIGS = [
   { id: 2, name: "Wonokromo", shortName: "Wonokromo" },
@@ -84,12 +73,6 @@ function getCommodityCategory(nama: string): CommodityCategory {
 }
 
 export default function EarlyWarningPage() {
-  const [mounted, setMounted] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalCommodity, setModalCommodity] = useState("Cabai Rawit Merah");
-  const [modalTarget, setModalTarget] = useState("Pasar Genteng");
-  const [modalVolume, setModalVolume] = useState("1.500 Kg");
-  const [modalPrice, setModalPrice] = useState("Rp 58.000 / kg (HAP Acuan)");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -103,11 +86,6 @@ export default function EarlyWarningPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const ITEMS_PER_PAGE = 10;
-
-  // State: Saved Simulation Scenarios (Decision Support System)
-  const [activeScenarios, setActiveScenarios] = useState<SimulationScenario[]>([]);
-
-  const modalRef = useRef<HTMLDivElement | null>(null);
 
   const loadData = async (showNotification = false) => {
     setIsRefreshing(true);
@@ -136,32 +114,8 @@ export default function EarlyWarningPage() {
   };
 
   useEffect(() => {
-    setMounted(true);
     loadData(false);
   }, []);
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (modalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [modalOpen]);
-
-  // Handle ESC key to close modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && modalOpen) {
-        setModalOpen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [modalOpen]);
 
   // Pivot ewsData by commodity across 6 markets
   const pivotedRows = useMemo(() => {
@@ -187,7 +141,7 @@ export default function EarlyWarningPage() {
         };
         grouped[item.komoditas_id] = {
           komoditas_id: item.komoditas_id,
-          nama_komoditas: item.nama_komoditas,
+          nama_komoditas: formatCommodityName(item.nama_komoditas),
           category: getCommodityCategory(item.nama_komoditas),
           initials: meta.initials,
           hapRef: meta.hapRef,
@@ -299,40 +253,11 @@ export default function EarlyWarningPage() {
     showToast(`Matriks harga (${filteredRows.length} komoditas) berhasil diunduh.`);
   };
 
-  const openOperasiModal = (commodity: string, market: string) => {
-    setModalCommodity(commodity);
-    setModalTarget(market);
-    setModalOpen(true);
-  };
-
-  const closeOperasiModal = () => {
-    setModalOpen(false);
-  };
-
-  const confirmDispatch = () => {
-    const newRecord: SimulationScenario = {
-      id: `DSS-${Date.now().toString().slice(-4)}`,
-      commodity: modalCommodity,
-      market: modalTarget,
-      volume: modalVolume,
-      price: modalPrice,
-      timestamp: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB",
-      projectedImpact: "-14.8% peredaman disparitas dalam 3 hari",
-    };
-    setActiveScenarios((prev) => [newRecord, ...prev]);
-    setModalOpen(false);
-    showToast(`Skenario simulasi untuk ${modalCommodity} di ${modalTarget} (${modalVolume}) berhasil disimpan ke panel DSS.`);
-  };
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
-  };
-
-  const getScenarioForCommodity = (commodityName: string) => {
-    return activeScenarios.find((i) => i.commodity.toLowerCase() === commodityName.toLowerCase());
   };
 
   return (
@@ -443,29 +368,12 @@ export default function EarlyWarningPage() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Quick Action Trigger Header (Decision Support System) */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col gap-space-xs shrink-0 w-full lg:w-auto">
-                    <button
-                      className="w-full inline-flex items-center justify-center gap-space-xs px-space-md py-space-xs rounded-xl bg-primary text-on-primary font-headline-sm text-body-md shadow-md hover:bg-primary-container transition-all cursor-pointer"
-                      id="trigger-all-interventions"
-                      onClick={() =>
-                        openOperasiModal(
-                          ewsStats?.criticalCommodities?.[0] || "Cabai Rawit Merah",
-                          "Pasar Genteng & Wonokromo"
-                        )
-                      }
-                    >
-                      <span className="material-symbols-outlined text-body-lg">tune</span>
-                      <span>Simulasi Intervensi Pasar</span>
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
 
-            {/* 4 Key Executive Analytical KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+            {/* 3 Key Executive Analytical KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
               {/* KPI 1: Indeks Stabilitas */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
@@ -569,33 +477,6 @@ export default function EarlyWarningPage() {
                   <span>Akurasi prediksi: WAPE 5,36%</span>
                 </div>
               </div>
-
-              {/* KPI 4: Cadangan Pangan Pemkot */}
-              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                    Cadangan Pangan Pemkot
-                  </span>
-                  <span className="w-8 h-8 rounded-lg bg-surface-subtle flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined text-body-lg">warehouse</span>
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-metric-value text-metric-value text-on-surface">1.450 Ton</span>
-                    <span className="font-label-caps text-label-caps text-status-normal font-semibold">Beras Aman</span>
-                  </div>
-                  <div className="flex items-baseline justify-between pt-1">
-                    <span className="font-metric-value text-metric-value text-on-surface">22 Ton</span>
-                    <span className="font-label-caps text-label-caps text-status-normal font-semibold">
-                      Minyak Goreng
-                    </span>
-                  </div>
-                </div>
-                <span className="font-body-sm text-body-sm text-text-muted">
-                  Stok Bulog Divre Jatim &amp; BUMD
-                </span>
-              </div>
             </div>
 
             {/* Main Section: Dynamic Commodity Risk Matrix (6 Markets x Commodities) */}
@@ -691,9 +572,6 @@ export default function EarlyWarningPage() {
                             Pasar {m.shortName}
                           </th>
                         ))}
-                        <th className="py-space-sm px-space-md text-right min-w-[190px]">
-                          Simulasi Keputusan
-                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-surface-subtle font-body-sm text-body-sm text-on-surface">
@@ -714,14 +592,11 @@ export default function EarlyWarningPage() {
                                 <div className="w-20 h-6 bg-surface-subtle rounded-md mx-auto"></div>
                               </td>
                             ))}
-                            <td className="py-space-md px-space-md text-right">
-                              <div className="w-36 h-8 bg-surface-subtle rounded-lg ml-auto"></div>
-                            </td>
                           </tr>
                         ))
                       ) : loadError && ewsData.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-12 text-center">
+                          <td colSpan={7} className="py-12 text-center">
                             <div className="max-w-md mx-auto flex flex-col items-center gap-2 text-text-secondary">
                               <span className="material-symbols-outlined text-3xl text-status-warning">cloud_off</span>
                               <span className="font-semibold text-text-primary">Data pemantauan tidak tersedia</span>
@@ -738,14 +613,13 @@ export default function EarlyWarningPage() {
                         </tr>
                       ) : paginatedRows.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-12 text-center text-text-muted">
+                          <td colSpan={7} className="py-12 text-center text-text-muted">
                             <span className="material-symbols-outlined text-title-lg block mb-1">search_off</span>
                             Tidak ada komoditas yang cocok dengan filter atau kategori ini.
                           </td>
                         </tr>
                       ) : (
                         paginatedRows.map((row, rowIndex) => {
-                          const scenario = getScenarioForCommodity(row.nama_komoditas);
                           const isRowCritical = row.worstStatus === "TINGGI";
                           const isRowWarning = row.worstStatus === "WASPADA";
                           const isTopRow = rowIndex < 2;
@@ -905,40 +779,6 @@ export default function EarlyWarningPage() {
                                   </td>
                                 );
                               })}
-
-                              {/* Row Action Column: Decision Support System */}
-                              <td className="py-space-md px-space-md text-right">
-                                {scenario ? (
-                                  <span className="inline-flex items-center gap-1 px-space-xs py-1 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps font-bold">
-                                    <span className="material-symbols-outlined text-body-sm">check_circle</span>
-                                    Simulasi: {scenario.volume}
-                                  </span>
-                                ) : isRowCritical ? (
-                                  <button
-                                    className="inline-flex items-center gap-1 px-space-sm py-space-xs rounded-lg bg-status-critical text-on-primary font-headline-sm text-body-sm shadow hover:opacity-90 transition-opacity cursor-pointer"
-                                    onClick={() => openOperasiModal(row.nama_komoditas, row.highestMarketName)}
-                                  >
-                                    <span className="material-symbols-outlined text-body-md">tune</span>
-                                    <span>Uji Simulasi Pasokan</span>
-                                  </button>
-                                ) : isRowWarning ? (
-                                  <button
-                                    className="inline-flex items-center gap-1 px-space-sm py-space-xs rounded-lg bg-status-warning text-on-primary font-headline-sm text-body-sm shadow hover:opacity-90 transition-opacity cursor-pointer"
-                                    onClick={() => openOperasiModal(row.nama_komoditas, row.highestMarketName)}
-                                  >
-                                    <span className="material-symbols-outlined text-body-md">calculate</span>
-                                    <span>Simulasi Intervensi</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => openOperasiModal(row.nama_komoditas, row.highestMarketName)}
-                                    className="inline-flex items-center gap-1 px-space-xs py-1 rounded-full bg-surface-subtle hover:bg-surface-variant text-text-secondary font-label-caps text-label-caps font-semibold cursor-pointer border border-border-subtle transition-colors"
-                                  >
-                                    <span className="material-symbols-outlined text-body-sm">query_stats</span>
-                                    <span>Simulasi Skenario</span>
-                                  </button>
-                                )}
-                              </td>
                             </tr>
                           );
                         })
@@ -1018,141 +858,7 @@ export default function EarlyWarningPage() {
           </div>
         </div>
 
-        {/* Accessible Modal: Simulasi & Kalkulator Intervensi Pasar (Decision Support System) */}
-        {mounted && modalOpen && createPortal(
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
-            id="operasi-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-            ref={modalRef}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) closeOperasiModal();
-            }}
-          >
-            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-border-subtle my-auto relative modal-enter">
-              <div className="bg-primary text-on-primary px-space-md py-space-sm flex items-center justify-between">
-                <div className="flex items-center gap-space-xs">
-                  <span className="material-symbols-outlined text-headline-sm">tune</span>
-                  <div>
-                    <h4 id="modal-title" className="font-headline-sm text-headline-sm font-bold leading-tight">
-                      Kalkulator &amp; Simulasi Intervensi Pasar
-                    </h4>
-                    <span className="text-[11px] text-white/80 font-label-caps block">DECISION SUPPORT SYSTEM (DSS)</span>
-                  </div>
-                </div>
-                <button
-                  className="text-on-primary/80 hover:text-on-primary cursor-pointer p-1"
-                  onClick={closeOperasiModal}
-                  aria-label="Tutup modal"
-                >
-                  <span className="material-symbols-outlined text-headline-sm">close</span>
-                </button>
-              </div>
-
-              <div className="p-space-md flex flex-col gap-space-md max-h-[85vh] overflow-y-auto">
-                <div className="bg-primary/10 border border-primary/20 p-space-sm rounded-lg text-on-surface font-body-sm text-body-sm flex items-start gap-space-xs">
-                  <span className="material-symbols-outlined text-primary text-headline-sm shrink-0">
-                    analytics
-                  </span>
-                  <div>
-                    <span className="font-semibold text-text-primary block">Mode Simulasi Kebijakan (DSS Prototype)</span>
-                    Kalkulator ini mensimulasikan estimasi kuota pasokan dan proyeksi dampak peredaman disparitas harga jika pemerintah daerah menyalurkan stok stabilisasi.
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-space-sm font-body-sm text-body-sm">
-                  <div className="bg-surface-subtle p-space-xs rounded-lg border border-border-subtle/50">
-                    <span className="text-text-muted font-label-caps text-label-caps block">Komoditas Sasaran</span>
-                    <span className="font-headline-sm text-body-md text-on-surface font-bold" id="modal-commodity">
-                      {modalCommodity}
-                    </span>
-                  </div>
-                  <div className="bg-surface-subtle p-space-xs rounded-lg border border-border-subtle/50">
-                    <span className="text-text-muted font-label-caps text-label-caps block">Pasar Prioritas</span>
-                    <span className="font-headline-sm text-body-md text-on-surface font-bold" id="modal-target">
-                      {modalTarget}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-space-2xs">
-                  <label className="font-label-caps text-label-caps text-text-secondary uppercase font-semibold">
-                    Alokasi Volume Intervensi Simulatif
-                  </label>
-                  <div className="grid grid-cols-3 gap-space-xs">
-                    {["1.500 Kg", "3.000 Kg", "5.000 Kg"].map((vol) => (
-                      <label
-                        key={vol}
-                        className={`flex items-center justify-center gap-1.5 p-2 rounded-lg cursor-pointer text-body-sm font-medium border transition-colors ${
-                          modalVolume === vol
-                            ? "bg-primary text-on-primary border-primary font-bold shadow-xs"
-                            : "bg-surface-subtle text-text-primary hover:bg-surface-variant/30 border-border-subtle"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="volume"
-                          value={vol}
-                          checked={modalVolume === vol}
-                          onChange={(e) => setModalVolume(e.target.value)}
-                          className="sr-only"
-                        />
-                        <span>{vol}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-space-2xs">
-                  <label className="font-label-caps text-label-caps text-text-secondary uppercase font-semibold">
-                    Patokan Harga Jual Subsidi Penyeimbang (HAP Acuan)
-                  </label>
-                  <input
-                    className="w-full bg-surface-subtle text-on-surface px-space-sm py-2 rounded-lg font-metric-value text-metric-value border border-border-subtle focus:outline-none focus:border-primary"
-                    value={modalPrice}
-                    onChange={(e) => setModalPrice(e.target.value)}
-                    type="text"
-                  />
-                </div>
-
-                {/* Proyeksi Dampak Model */}
-                <div className="bg-surface-subtle p-space-sm rounded-lg border border-border-subtle flex items-center justify-between">
-                  <div>
-                    <span className="text-text-muted font-label-caps text-label-caps block">Proyeksi Reduksi Disparitas</span>
-                    <span className="font-metric-value text-body-md text-status-normal font-bold">
-                      -14.8% dalam 3 Hari
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-text-muted font-label-caps text-label-caps block">Status Rekomendasi</span>
-                    <span className="text-primary font-bold text-xs uppercase">Layak Dipertimbangkan</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-space-xs pt-space-xs">
-                  <button
-                    className="px-space-md py-space-xs rounded-lg text-text-secondary hover:bg-surface-subtle font-body-md text-body-md cursor-pointer"
-                    onClick={closeOperasiModal}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    className="px-space-md py-space-xs rounded-lg bg-primary text-on-primary font-headline-sm text-body-md shadow hover:bg-primary-container transition-colors flex items-center gap-1.5 cursor-pointer font-bold"
-                    onClick={confirmDispatch}
-                  >
-                    <span className="material-symbols-outlined text-body-md">save</span>
-                    Simpan Skenario Simulasi
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-        {/* Notification Toast for Simulation Save */}
+        {/* Notification Toast */}
         <div
           className={`fixed bottom-6 right-6 z-50 bg-surface-card text-on-surface p-space-md rounded-xl shadow-xl flex items-center gap-space-sm transform transition-[transform,opacity] duration-300 border border-border-subtle toast-slide ${
             toastMessage
@@ -1165,9 +871,9 @@ export default function EarlyWarningPage() {
             <span className="material-symbols-outlined text-headline-sm">check</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-headline-sm text-body-md font-bold">Skenario Simulasi Tersimpan</span>
+            <span className="font-headline-sm text-body-md font-bold">Pemberitahuan</span>
             <span className="font-body-sm text-body-sm text-text-secondary" id="toast-message">
-              {toastMessage || "Simulasi intervensi berhasil dicatat ke panel telaah kebijakan DSS."}
+              {toastMessage}
             </span>
           </div>
         </div>

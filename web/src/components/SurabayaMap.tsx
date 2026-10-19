@@ -57,6 +57,7 @@ export default function SurabayaMap({
       minZoom: 11,
       maxZoom: 16,
       zoomControl: false,
+      attributionControl: false,
     });
 
     // High-performance OpenStreetMap Humanitarian (HOT) Tile Layer (Fast, reliable, free, no API key watermark)

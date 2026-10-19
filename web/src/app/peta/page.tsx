@@ -11,6 +11,7 @@ import {
   getLiveMarketLocations,
   ALL_CATALOG_COMMODITIES,
   MarketComparisonRow,
+  formatCommodityName,
 } from "@/lib/dataService";
 
 const SurabayaMap = dynamic(() => import("@/components/SurabayaMap"), {
@@ -77,7 +78,7 @@ function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
   const formattedSatuan = rawSatuan.match(/^\d/) ? rawSatuan : `1 ${rawSatuan}`;
   return {
     komoditas_id: d.komoditas_id,
-    komoditas: d.komoditas,
+    komoditas: formatCommodityName(d.komoditas),
     group: catalogGroupOf(d.komoditas_id),
     sub: "Pantauan Harian 6 Pasar",
     satuan: formattedSatuan,
@@ -112,6 +113,8 @@ export default function SpatialMapPage() {
   const [isSortedDesc, setIsSortedDesc] = useState<boolean>(true);
   const [tableSearchQuery, setTableSearchQuery] = useState<string>("");
   const [tableGroupFilter, setTableGroupFilter] = useState<string>("Semua");
+  const [tableCurrentPage, setTableCurrentPage] = useState<number>(1);
+  const TABLE_ITEMS_PER_PAGE = 10;
   const [marketCoords, setMarketCoords] = useState<Record<number, { lat: number; lng: number }>>({
     1: { lat: -7.2472, lng: 112.7631 }, // Tambahrejo
     2: { lat: -7.3005, lng: 112.7388 }, // Wonokromo
@@ -301,6 +304,16 @@ export default function SpatialMapPage() {
     return r.komoditas.toLowerCase().includes(q) || r.sub.toLowerCase().includes(q);
   });
 
+  useEffect(() => {
+    setTableCurrentPage(1);
+  }, [tableGroupFilter, tableSearchQuery]);
+
+  const totalTablePages = Math.max(1, Math.ceil(filteredTableRows.length / TABLE_ITEMS_PER_PAGE));
+  const paginatedTableRows = useMemo(() => {
+    const start = (tableCurrentPage - 1) * TABLE_ITEMS_PER_PAGE;
+    return filteredTableRows.slice(start, start + TABLE_ITEMS_PER_PAGE);
+  }, [filteredTableRows, tableCurrentPage]);
+
   const handleExportCSV = () => {
     const csvContent =
       "Komoditas Pokok,Satuan,Keputran (Induk),Wonokromo,Pucang Anom,Genteng,Tambahrejo,Soponyono,Rerata Kota,Disparitas Rp,Disparitas %\n" +
@@ -341,22 +354,21 @@ export default function SpatialMapPage() {
 
               {/* Dynamic Quick Telemetry Card */}
               {loadingTable || !activeCommodity ? (
-                <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-xl shadow-sm border border-border-subtle/70 animate-pulse">
-                  <div className="flex flex-col pr-space-sm space-y-1.5">
-                    <div className="w-24 h-3 bg-surface-subtle rounded"></div>
+                <div className="flex items-center gap-4 bg-surface-card px-4 py-2.5 rounded-xl shadow-sm border border-border-subtle/70 shrink-0 animate-pulse">
+                  <div className="flex flex-col pr-3 space-y-1.5">
+                    <div className="w-28 h-3 bg-surface-subtle rounded"></div>
                     <div className="w-16 h-6 bg-surface-subtle rounded"></div>
                   </div>
-                  <div className="w-px h-8 bg-border-subtle"></div>
-                  <div className="flex flex-col pl-space-xs space-y-1.5">
-                    <div className="w-32 h-3 bg-surface-subtle rounded"></div>
+                  <div className="w-px h-8 bg-border-subtle shrink-0"></div>
+                  <div className="flex flex-col pl-3 space-y-1.5">
+                    <div className="w-36 h-3 bg-surface-subtle rounded"></div>
                     <div className="w-28 h-5 bg-surface-subtle rounded"></div>
-                    <div className="w-20 h-3 bg-surface-subtle rounded"></div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-xl shadow-sm border border-border-subtle/70">
-                  <div className="flex flex-col pr-space-sm">
-                    <span className="font-label-caps text-label-caps text-text-muted uppercase">
+                <div className="flex items-center gap-4 bg-surface-card px-4 py-2.5 rounded-xl shadow-sm border border-border-subtle/70 shrink-0">
+                  <div className="flex flex-col pr-3">
+                    <span className="font-label-caps text-label-caps text-text-muted uppercase whitespace-nowrap">
                       Disparitas {activeCommodity.komoditas}
                     </span>
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -378,17 +390,19 @@ export default function SpatialMapPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="w-px h-8 bg-border-subtle"></div>
-                  <div className="flex flex-col pl-space-xs">
-                    <span className="font-label-caps text-label-caps text-text-muted uppercase">
-                      Selisih Ekstrem (Max - Min)
+                  <div className="w-px h-8 bg-border-subtle shrink-0"></div>
+                  <div className="flex flex-col pl-3">
+                    <span className="font-label-caps text-label-caps text-text-muted uppercase whitespace-nowrap">
+                      Selisih Ekstrem
                     </span>
-                    <span className="font-metric-value text-metric-value text-text-primary font-bold">
-                      Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}
-                    </span>
-                    <span className="font-body-sm text-body-sm text-text-secondary">
-                      {maxMarket.shortName} vs {minMarket.shortName}
-                    </span>
+                    <div className="flex items-baseline gap-2 mt-0.5">
+                      <span className="font-metric-value text-metric-value text-text-primary font-bold whitespace-nowrap">
+                        Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}
+                      </span>
+                      <span className="text-xs text-text-secondary whitespace-nowrap">
+                        ({maxMarket.shortName} vs {minMarket.shortName})
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -647,10 +661,10 @@ export default function SpatialMapPage() {
                     </h2>
                   </div>
                   <p className="font-body-sm text-body-sm text-text-secondary mt-1">
-                    Warna hijau menunjukkan pasar dengan harga termurah, sedangkan oranye/merah menunjukkan pasar tertinggi.{latestDate ? ` • Pantauan: ${new Date(latestDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}` : ""}
+                    Warna hijau menunjukkan pasar dengan harga terendah, sedangkan merah menunjukkan pasar tertinggi.
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
                   {/* Search Filter for Table */}
                   <div className="relative w-full sm:w-56">
                     <input
@@ -658,7 +672,7 @@ export default function SpatialMapPage() {
                       placeholder="Cari komoditas..."
                       value={tableSearchQuery}
                       onChange={(e) => setTableSearchQuery(e.target.value)}
-                      className="w-full h-9 bg-surface-subtle text-text-primary placeholder-text-muted font-body-sm text-body-sm pl-8 pr-7 rounded-lg border border-border-subtle focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                      className="w-full h-9 bg-surface-subtle text-text-primary placeholder-text-muted text-xs sm:text-sm pl-8 pr-7 rounded-lg border border-border-subtle focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                     />
                     <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[17px] pointer-events-none">
                       search
@@ -674,22 +688,22 @@ export default function SpatialMapPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
-                      className="flex-1 sm:flex-initial px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle"
+                      className="h-9 px-3 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary hover:text-text-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle whitespace-nowrap shrink-0"
                       onClick={handleExportCSV}
                       title="Unduh seluruh data komparasi dalam format CSV"
                     >
-                      <span className="material-symbols-outlined text-body-md">file_download</span>
-                      Export CSV
+                      <span className="material-symbols-outlined text-[17px]">file_download</span>
+                      <span>Export CSV</span>
                     </button>
                     <button
-                      className="flex-1 sm:flex-initial px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle"
+                      className="h-9 px-3 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary hover:text-text-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle whitespace-nowrap shrink-0"
                       onClick={handleSortDisparitas}
                       title="Urutkan data berdasarkan disparitas persentase"
                     >
-                      <span className="material-symbols-outlined text-body-md">sort</span>
-                      Sort {isSortedDesc ? "↓" : "↑"}
+                      <span className="material-symbols-outlined text-[17px]">sort</span>
+                      <span>Sort {isSortedDesc ? "↓" : "↑"}</span>
                     </button>
                   </div>
                 </div>
@@ -752,7 +766,7 @@ export default function SpatialMapPage() {
                       <th className="py-3 px-space-sm">Tambahrejo</th>
                       <th className="py-3 px-space-sm">Soponyono</th>
                       <th className="py-3 px-space-sm">Rerata Kota</th>
-                      <th className="py-3 px-space-md text-right">Disparitas (Max-Min)</th>
+                      <th className="py-3 px-space-md text-right">Disparitas</th>
                     </tr>
                   </thead>
                   <tbody className="text-text-primary">
@@ -809,7 +823,7 @@ export default function SpatialMapPage() {
                         </td>
                       </tr>
                     ) : (
-                      filteredTableRows.map((row, idx) => {
+                      paginatedTableRows.map((row, idx) => {
                       const prices = [
                         row.keputran,
                         row.wonokromo,
@@ -826,23 +840,23 @@ export default function SpatialMapPage() {
                         const isMax = price === rowMax;
                         return (
                           <td
-                            className={`py-3.5 px-space-sm font-metric-value ${
+                            className={`py-3 px-space-sm font-metric-value transition-colors ${
                               isMin
-                                ? "bg-status-normal-bg text-status-normal font-semibold"
+                                ? "bg-emerald-50/70 hover:bg-emerald-100/60 text-emerald-700 font-bold"
                                 : isMax
-                                ? "bg-status-critical-bg text-status-critical font-semibold"
-                                : ""
+                                ? "bg-rose-50/70 hover:bg-rose-100/60 text-rose-700 font-bold"
+                                : "text-text-secondary"
                             }`}
                           >
-                            Rp {price.toLocaleString("id-ID")}
+                            <div>Rp {price.toLocaleString("id-ID")}</div>
                             {isMin && (
-                              <span className="text-label-caps font-label-caps block font-normal text-status-normal/80">
-                                Min
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 leading-tight mt-0.5">
+                                Terendah
                               </span>
                             )}
                             {isMax && (
-                              <span className="text-label-caps font-label-caps block font-normal text-status-critical/80">
-                                Max
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-rose-100/90 text-rose-700 border border-rose-200/80 leading-tight mt-0.5">
+                                Tertinggi
                               </span>
                             )}
                           </td>
@@ -908,8 +922,63 @@ export default function SpatialMapPage() {
                 </table>
               </div>
 
-              {/* Table Footer Meta */}
-              <div className="p-space-md bg-surface-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-space-xs font-body-sm text-body-sm text-text-secondary">
+              {/* Table Footer Actions: Pagination */}
+              <div className="p-space-md bg-surface-subtle/30 flex flex-col sm:flex-row items-center justify-between gap-space-sm border-t border-border-subtle/40">
+                <div className="flex items-center gap-space-xs text-body-sm text-text-secondary text-xs sm:text-sm">
+                  <span>
+                    Menampilkan{" "}
+                    <strong className="text-on-surface font-bold">
+                      {filteredTableRows.length === 0
+                        ? 0
+                        : (tableCurrentPage - 1) * TABLE_ITEMS_PER_PAGE + 1}
+                      –
+                      {Math.min(tableCurrentPage * TABLE_ITEMS_PER_PAGE, filteredTableRows.length)}
+                    </strong>{" "}
+                    dari <strong className="text-on-surface font-bold">{filteredTableRows.length}</strong> komoditas
+                  </span>
+                </div>
+
+                {totalTablePages > 1 && (
+                  <div className="flex items-center gap-1 bg-surface-card p-1 rounded-xl border border-border-subtle shadow-xs">
+                    <button
+                      onClick={() => setTableCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={tableCurrentPage === 1}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                      title="Halaman Sebelumnya"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">chevron_left</span>
+                      <span className="hidden sm:inline">Sebelumnya</span>
+                    </button>
+
+                    {Array.from({ length: totalTablePages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setTableCurrentPage(page)}
+                        className={`w-7.5 h-7.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                          tableCurrentPage === page
+                            ? "bg-primary text-white shadow-xs"
+                            : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setTableCurrentPage((p) => Math.min(totalTablePages, p + 1))}
+                      disabled={tableCurrentPage === totalTablePages}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                      title="Halaman Berikutnya"
+                    >
+                      <span className="hidden sm:inline">Berikutnya</span>
+                      <span className="material-symbols-outlined text-[15px]">chevron_right</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Table Footer Meta & Legend */}
+              <div className="px-space-md py-2.5 bg-surface-subtle/50 border-t border-border-subtle/30 flex flex-col sm:flex-row items-center justify-between gap-space-xs font-body-sm text-xs text-text-secondary">
                 <div className="flex items-center gap-space-xs">
                   <span className="material-symbols-outlined text-body-md text-status-normal">
                     verified_user
@@ -917,9 +986,9 @@ export default function SpatialMapPage() {
                   <span>Data perbandingan harga riil 6 pasar pantauan Kota Surabaya terintegrasi dari basis data pantauan harian.</span>
                 </div>
                 <div className="flex items-center gap-space-xs font-label-caps text-label-caps">
-                  <span className="w-2.5 h-2.5 rounded-full bg-status-normal-bg border border-status-normal inline-block"></span>{" "}
-                  Harga Termurah (Acuan)
-                  <span className="w-2.5 h-2.5 rounded-full bg-status-critical-bg border border-status-critical inline-block ml-2"></span>{" "}
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-100 border border-emerald-500 inline-block"></span>{" "}
+                  Harga Terendah (Acuan)
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-100 border border-rose-500 inline-block ml-2"></span>{" "}
                   Harga Tertinggi (Anomali)
                 </div>
               </div>
