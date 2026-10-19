@@ -39,6 +39,11 @@ def _init_wandb_session(
         print("[WARN] 'wandb' package is not installed. Experiment tracking disabled.")
         return None, False
 
+    env_mode = os.getenv("WANDB_MODE", "").lower()
+    if env_mode == "disabled":
+        print("[INFO] WANDB_MODE is disabled. Skipping experiment tracking.")
+        return None, False
+
     api_key = os.getenv("WANDB_API_KEY")
     project = project_name or os.getenv("WANDB_PROJECT", "hargawatch-surabaya")
     entity = os.getenv("WANDB_ENTITY") or None
@@ -55,7 +60,8 @@ def _init_wandb_session(
             print("[INFO] WANDB_API_KEY is not configured or placeholder. Running W&B in offline mode.")
             is_offline = True
 
-    mode = "offline" if is_offline else "online"
+    mode = env_mode if env_mode else ("offline" if is_offline else "online")
+
 
     try:
         run = wandb.init(

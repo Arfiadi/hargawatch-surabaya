@@ -113,12 +113,14 @@ def build_lag_features(df: pd.DataFrame) -> pd.DataFrame:
     df["rolling_mean_14d"] = shifted_grouped.rolling(14, min_periods=5).mean().reset_index(level=[0, 1], drop=True)
     df["rolling_std_14d"] = shifted_grouped.rolling(14, min_periods=5).std().reset_index(level=[0, 1], drop=True)
     df["rolling_mean_30d"] = shifted_grouped.rolling(30, min_periods=10).mean().reset_index(level=[0, 1], drop=True)
+    df["rolling_std_30d"] = shifted_grouped.rolling(30, min_periods=10).std().reset_index(level=[0, 1], drop=True)
+    df["rolling_max_90d"] = shifted_grouped.rolling(90, min_periods=15).max().reset_index(level=[0, 1], drop=True)
     df = df.drop(columns=["_shifted"])
 
     # Short-term momentum & volatility ratio
     df["pct_change_1d"] = (df["price_current"] - df["price_lag_1"]) / (df["price_lag_1"] + 1e-5)
     df["pct_change_7d"] = (df["price_current"] - df["price_lag_7"]) / (df["price_lag_7"] + 1e-5)
-    df["volatility_ratio_7_30"] = df["rolling_std_7d"] / (df["rolling_std_14d"] + 1e-5)
+    df["volatility_ratio_7_30"] = df["rolling_std_7d"] / (df["rolling_std_30d"] + 1e-5)
 
     return df
 
@@ -130,13 +132,14 @@ def build_weather_features(df_cuaca: pd.DataFrame) -> pd.DataFrame:
         
     df_w = df_cuaca.sort_values("tanggal").copy()
     
-    # Rainfall cumulative and lag features
+    # Rainfall cumulative and lag features (using shift(1) for rolling sum to guarantee causal safety)
+    shifted_rain = df_w["curah_hujan_mm"].shift(1)
     df_w["rain_lag_7d"] = df_w["curah_hujan_mm"].shift(7)
     df_w["rain_lag_14d"] = df_w["curah_hujan_mm"].shift(14)
     df_w["rain_lag_28d"] = df_w["curah_hujan_mm"].shift(28)
-    df_w["rain_sum_7d"] = df_w["curah_hujan_mm"].rolling(7, min_periods=3).sum()
-    df_w["rain_sum_14d"] = df_w["curah_hujan_mm"].rolling(14, min_periods=5).sum()
-    df_w["rain_sum_30d"] = df_w["curah_hujan_mm"].rolling(30, min_periods=10).sum()
+    df_w["rain_sum_7d"] = shifted_rain.rolling(7, min_periods=3).sum()
+    df_w["rain_sum_14d"] = shifted_rain.rolling(14, min_periods=5).sum()
+    df_w["rain_sum_30d"] = shifted_rain.rolling(30, min_periods=10).sum()
     
     cols = [
         "tanggal", "curah_hujan_mm", "suhu_mean_c",
@@ -149,7 +152,8 @@ def build_weather_features(df_cuaca: pd.DataFrame) -> pd.DataFrame:
 def build_supervised_dataset(
     horizon: int = 7,
     komoditas_id: Optional[int] = None,
-    include_weather: bool = True
+    include_weather: bool = True,
+    return_target_delta: bool = False
 ) -> pd.DataFrame:
     """Constructs a direct-forecasting supervised dataset for target at t + horizon.
     
@@ -173,7 +177,7 @@ def build_supervised_dataset(
     
     # Target definition: price at t + horizon
     grouped = df_lags.groupby(["komoditas_id", "pasar_id"])["harga_imputasi"]
-    df_lags["target_date"] = df_lags["tanggal"] + pd.Timedelta(days=horizon)
+    df_lags["target_date"] = pd.to_datetime(df_lags["tanggal"]) + pd.to_timedelta(horizon, unit="D")
     df_lags["target_price"] = grouped.shift(-horizon)
     
     # Target delta: percentage change from origin t to t+h
@@ -204,4 +208,7 @@ def build_supervised_dataset(
     valid_mask = df_merged["target_price"].notna() & df_merged["price_lag_14"].notna()
     df_clean = df_merged[valid_mask].reset_index(drop=True)
     
+    if not return_target_delta and "target_delta_pct" in df_clean.columns:
+        df_clean = df_clean.drop(columns=["target_delta_pct"])
+        
     return df_clean

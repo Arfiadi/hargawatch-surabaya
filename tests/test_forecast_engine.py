@@ -204,8 +204,8 @@ def test_sanity_model_alias():
 
 
 def test_forecast_engine_log_notebook_experiment(monkeypatch):
-    """Tests ForecastEngine.log_notebook_experiment runs without error in offline mode."""
-    monkeypatch.setenv("WANDB_MODE", "offline")
+    """Tests ForecastEngine.log_notebook_experiment runs without error in disabled mode."""
+    monkeypatch.setenv("WANDB_MODE", "disabled")
     monkeypatch.setenv("WANDB_API_KEY", "")
 
     engine = ForecastEngine(
