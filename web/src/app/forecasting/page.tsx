@@ -768,10 +768,10 @@ export default function ForecastingPage() {
                     </span>
                   </div>
                   {chartMetrics?.benchmarkPrice && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-critical/10 border border-status-critical/20">
                       <span className="w-2.5 h-2.5 rounded-full bg-status-critical shrink-0"></span>
-                      <span className="text-status-critical font-bold">
-                        {chartMetrics.benchmarkLabel}
+                      <span className="text-status-critical font-bold text-xs">
+                        {chartMetrics.benchmarkLabel}: Rp {chartMetrics.benchmarkPrice.toLocaleString("id-ID")}/{activeCommodityMeta.unit}
                       </span>
                     </div>
                   )}
@@ -785,6 +785,17 @@ export default function ForecastingPage() {
                 aria-label="Grafik Tren dan Proyeksi Harga Pangan"
                 onMouseLeave={() => setHoveredPoint(null)}
               >
+                {/* Mobile Swipe Affordance */}
+                <div className="sm:hidden flex items-center justify-between text-text-muted text-[11px] font-medium mb-2 pb-2 border-b border-border-subtle/50">
+                  <span className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[15px] text-primary">swipe</span> Geser grafik untuk melihat detail 14 hari proyeksi
+                  </span>
+                  <span className="text-primary font-bold text-xs">&rarr;</span>
+                </div>
+
+                {/* Scrollable Container on Mobile to prevent squishing */}
+                <div className="w-full overflow-x-auto no-scrollbar pb-1">
+                  <div className="min-w-[720px] sm:min-w-full relative">
 
                 {/* Tooltip Hover Display Dinamis Mengikuti Titik */}
                 {hoveredPoint && (
@@ -922,16 +933,29 @@ export default function ForecastingPage() {
 
                         {/* Garis Acuan Regulasi Pemerintah (HAP / HET Bapanas) */}
                         {chartMetrics.benchmarkY !== null && chartMetrics.benchmarkPrice && (
-                          <line
-                            x1={chartMetrics.padX}
-                            x2={chartMetrics.svgWidth - chartMetrics.padX}
-                            y1={chartMetrics.benchmarkY}
-                            y2={chartMetrics.benchmarkY}
-                            stroke="#DC2626"
-                            strokeDasharray="6 4"
-                            strokeWidth="1.6"
-                            opacity="0.85"
-                          />
+                          <g>
+                            <line
+                              x1={chartMetrics.padX}
+                              x2={chartMetrics.svgWidth - chartMetrics.padX}
+                              y1={chartMetrics.benchmarkY}
+                              y2={chartMetrics.benchmarkY}
+                              stroke="#DC2626"
+                              strokeDasharray="6 4"
+                              strokeWidth="1.6"
+                              opacity="0.85"
+                            />
+                            <text
+                              x={chartMetrics.svgWidth - chartMetrics.padX + 5}
+                              y={chartMetrics.benchmarkY + 3.5}
+                              fill="#DC2626"
+                              fontSize="10"
+                              fontWeight="bold"
+                              textAnchor="start"
+                              className="select-none font-sans"
+                            >
+                              {chartMetrics.benchmarkLabel.split(" ")[0]}
+                            </text>
+                          </g>
                         )}
 
                         {/* Shading Rentang Batas Toleransi (hanya jika ada spread variasi) */}
@@ -1048,19 +1072,6 @@ export default function ForecastingPage() {
                         </div>
                       ))}
 
-                      {/* Label Garis Acuan Regulasi Pemerintah (HAP / HET) */}
-                      {chartMetrics.benchmarkY !== null && chartMetrics.benchmarkPrice && (
-                        <div
-                          className="absolute -translate-y-full -mt-1 text-[11px] font-bold text-status-critical pointer-events-none select-none font-sans"
-                          style={{
-                            right: `${(chartMetrics.padX / chartMetrics.svgWidth) * 100}%`,
-                            top: `${(chartMetrics.benchmarkY / chartMetrics.svgHeight) * 100}%`,
-                          }}
-                        >
-                          Garis {chartMetrics.benchmarkLabel}: Rp {chartMetrics.benchmarkPrice.toLocaleString("id-ID")}/{activeCommodityMeta.unit}
-                        </div>
-                      )}
-
                       {/* Callout Badge: Hari Ini */}
                       <div
                         className="absolute -translate-x-1/2 -translate-y-full -mt-2.5 pointer-events-none select-none z-10 transition-all duration-150"
@@ -1128,6 +1139,8 @@ export default function ForecastingPage() {
                       </div>
                     </div>
                 )}
+                  </div>
+                </div>
               </div>
             </div>
 
