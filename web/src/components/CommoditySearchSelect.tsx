@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import CommodityIcon from "@/components/CommodityIcon";
+import { formatCommodityName } from "@/lib/dataService";
 
 export interface CommodityOption {
   id: number;
@@ -78,7 +79,7 @@ export default function CommoditySearchSelect({
         type="button"
         disabled={options.length === 0}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-surface-subtle border border-border-subtle hover:border-primary/40 shadow-xs transition-all cursor-pointer text-left disabled:opacity-60 disabled:cursor-not-allowed"
+        className="h-11 w-full flex items-center justify-between gap-2 px-3 rounded-xl text-xs font-semibold bg-white hover:bg-surface-subtle border border-border-subtle hover:border-primary/40 shadow-xs transition-all cursor-pointer text-left disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <div className="flex items-center gap-2 truncate">
           <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -86,7 +87,7 @@ export default function CommoditySearchSelect({
           </div>
           <div className="truncate">
             <span className="text-text-primary font-bold block truncate leading-tight">
-              {selected ? selected.name : "Tidak ada komoditas"}
+              {selected ? formatCommodityName(selected.name) : "Tidak ada komoditas"}
             </span>
             <span className="text-[10px] text-text-muted font-normal block leading-tight">
               {selected
@@ -165,7 +166,7 @@ export default function CommoditySearchSelect({
                       <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 bg-primary/5 text-primary">
                         <CommodityIcon id={c.id} className="w-3.5 h-3.5" />
                       </div>
-                      <span className="truncate">{c.name}</span>
+                      <span className="truncate">{formatCommodityName(c.name)}</span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 ml-1">
                       <span className="text-[10px] text-text-muted font-normal">

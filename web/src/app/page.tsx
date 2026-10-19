@@ -1187,10 +1187,10 @@ export default function HomePage() {
               </div>
 
               {/* Pola 2: Searchable Dropdown for All 38 Commodities + Strategic Quick Chips */}
-              <div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-between gap-3 bg-surface-subtle/50 p-3 rounded-2xl border border-border-subtle/70">
+              <div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-start gap-8 bg-surface-subtle/50 p-3 rounded-2xl border border-border-subtle/70">
                 {/* Left: Searchable Dropdown for 38 Commodities */}
                 <div className="w-full lg:w-72 shrink-0">
-                  <div className="mb-1">
+                  <div className="mb-1.5">
                     <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
                       Pilih dari 38 Komoditas:
                     </span>
@@ -1209,13 +1209,13 @@ export default function HomePage() {
                 </div>
 
                 {/* Right: Quick Chips (Pangan Pokok Strategis) */}
-                <div className="flex-1 w-full lg:max-w-xl">
-                  <div className="mb-1">
+                <div className="w-full lg:flex-1 min-w-0">
+                  <div className="mb-1.5 pl-1.5">
                     <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
                       Pangan Pokok Strategis:
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar px-1.5 py-1 -mt-1">
                     {AVAILABLE_TREND_COMMODITIES.map((c) => {
                       const isSelected = trendCommodityId === c.id;
                       return (
@@ -1226,13 +1226,13 @@ export default function HomePage() {
                             setTrendCommodityId(c.id);
                             setHighlightedMarketId(null);
                           }}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                          className={`h-11 inline-flex items-center justify-center gap-2 px-3.5 rounded-xl text-xs font-semibold shrink-0 whitespace-nowrap transition-all duration-200 cursor-pointer ${
                             isSelected
                               ? "bg-primary text-white shadow-sm shadow-primary/30 ring-2 ring-primary/40 font-bold"
                               : "bg-white hover:bg-surface-subtle text-text-secondary hover:text-text-primary border border-border-subtle hover:border-primary/20 shadow-xs"
                           }`}
                         >
-                          <CommodityIcon id={c.id} className="w-3.5 h-3.5 shrink-0" />
+                          <CommodityIcon id={c.id} className="w-4 h-4 shrink-0" />
                           <span>{c.shortName}</span>
                         </button>
                       );
