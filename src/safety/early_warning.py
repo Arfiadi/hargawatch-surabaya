@@ -112,13 +112,13 @@ def compute_early_warning_scores(
     if "tanggal" in df.columns:
         group_cols = ["tanggal", "komoditas_id"]
     
-    is_keputran = df["pasar_id"] == KEPUTRAN_ID
-    keputran_price = df.where(is_keputran).groupby(group_cols)["price_current"].transform("first")
-    eceran_price = df.where(~is_keputran).groupby(group_cols)["price_current"].transform("mean")
+    keputran_sub = df[df["pasar_id"] == KEPUTRAN_ID].groupby(group_cols)["price_current"].first().rename("kep_p")
+    eceran_sub = df[df["pasar_id"] != KEPUTRAN_ID].groupby(group_cols)["price_current"].mean().rename("ece_p")
+    m_calc = pd.concat([keputran_sub, eceran_sub], axis=1)
+    m_calc["calc_margin"] = ((m_calc["ece_p"] - m_calc["kep_p"]) / (m_calc["ece_p"] + 1e-5)) * 100
     
-    has_both = keputran_price.notna() & eceran_price.notna()
-    margin_series = pd.Series(15.0, index=df.index)
-    margin_series[has_both] = ((eceran_price[has_both] - keputran_price[has_both]) / (eceran_price[has_both] + 1e-5)) * 100
+    df_temp = df[group_cols].merge(m_calc[["calc_margin"]], on=group_cols, how="left")
+    margin_series = df_temp["calc_margin"].fillna(15.0).values
     
     skor_anomali = np.select(
         [margin_series < 5.0, margin_series <= 10.0],
