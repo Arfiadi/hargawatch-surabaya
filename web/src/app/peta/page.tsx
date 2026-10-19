@@ -38,6 +38,8 @@ const SurabayaMap = dynamic(() => import("@/components/SurabayaMap"), {
 interface ComparisonRowItem {
   komoditas_id: number;
   komoditas: string;
+  icon: string;
+  iconBoxClass: string;
   group: string;
   sub: string;
   satuan: string;
@@ -71,6 +73,49 @@ const catalogGroupOf = (komoditasId: number): string =>
   ALL_CATALOG_COMMODITIES.find((c) => c.id === komoditasId)?.group ||
   "Palawija & Lainnya";
 
+function getCommodityIcon(nama: string): string {
+  const n = (nama || "").toLowerCase();
+  if (n.includes("cabai") || n.includes("cabe")) return "local_fire_department";
+  if (n.includes("bawang")) return "spa";
+  if (n.includes("telur")) return "egg";
+  if (n.includes("minyak")) return "water_drop";
+  if (n.includes("gula")) return "cookie";
+  if (n.includes("garam")) return "grain";
+  if (n.includes("ayam")) return "egg_alt";
+  if (n.includes("sapi") || n.includes("daging")) return "lunch_dining";
+  if (
+    n.includes("ikan") ||
+    n.includes("bandeng") ||
+    n.includes("tongkol") ||
+    n.includes("lele") ||
+    n.includes("kembung")
+  ) {
+    return "set_meal";
+  }
+  if (
+    n.includes("tomat") ||
+    n.includes("kentang") ||
+    n.includes("wortel") ||
+    n.includes("kubis") ||
+    n.includes("sayur")
+  ) {
+    return "eco";
+  }
+  if (n.includes("susu")) return "local_cafe";
+  if (n.includes("mie") || n.includes("indomie")) return "ramen_dining";
+  if (
+    n.includes("beras") ||
+    n.includes("jagung") ||
+    n.includes("terigu") ||
+    n.includes("kedelai") ||
+    n.includes("gandum") ||
+    n.includes("kacang")
+  ) {
+    return "grain";
+  }
+  return "nutrition";
+}
+
 function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
   const isHigh = d.disparitasPct >= 15;
   const isMed = d.disparitasPct >= 8 && d.disparitasPct < 15;
@@ -79,6 +124,12 @@ function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
   return {
     komoditas_id: d.komoditas_id,
     komoditas: formatCommodityName(d.komoditas),
+    icon: getCommodityIcon(d.komoditas),
+    iconBoxClass: isHigh
+      ? "bg-status-critical/10 text-status-critical"
+      : isMed
+      ? "bg-status-warning/10 text-status-warning"
+      : "bg-primary/10 text-primary",
     group: catalogGroupOf(d.komoditas_id),
     sub: "Pantauan Harian 6 Pasar",
     satuan: formattedSatuan,
@@ -354,26 +405,28 @@ export default function SpatialMapPage() {
 
               {/* Dynamic Quick Telemetry Card */}
               {loadingTable || !activeCommodity ? (
-                <div className="flex items-center gap-4 bg-surface-card px-4 py-2.5 rounded-xl shadow-sm border border-border-subtle/70 shrink-0 animate-pulse">
-                  <div className="flex flex-col pr-3 space-y-1.5">
-                    <div className="w-28 h-3 bg-surface-subtle rounded"></div>
-                    <div className="w-16 h-6 bg-surface-subtle rounded"></div>
+                <div className="grid grid-cols-2 divide-x divide-border-subtle bg-surface-card px-3.5 py-2.5 sm:px-4 rounded-xl shadow-sm border border-border-subtle/70 w-full sm:w-auto shrink-0 animate-pulse">
+                  <div className="flex flex-col pr-3 space-y-1.5 min-w-0">
+                    <div className="w-20 sm:w-28 h-3 bg-surface-subtle rounded"></div>
+                    <div className="w-14 sm:w-16 h-6 bg-surface-subtle rounded"></div>
                   </div>
-                  <div className="w-px h-8 bg-border-subtle shrink-0"></div>
-                  <div className="flex flex-col pl-3 space-y-1.5">
-                    <div className="w-36 h-3 bg-surface-subtle rounded"></div>
-                    <div className="w-28 h-5 bg-surface-subtle rounded"></div>
+                  <div className="flex flex-col pl-3 space-y-1.5 min-w-0">
+                    <div className="w-20 sm:w-36 h-3 bg-surface-subtle rounded"></div>
+                    <div className="w-16 sm:w-28 h-5 bg-surface-subtle rounded"></div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-4 bg-surface-card px-4 py-2.5 rounded-xl shadow-sm border border-border-subtle/70 shrink-0">
-                  <div className="flex flex-col pr-3">
-                    <span className="font-label-caps text-label-caps text-text-muted uppercase whitespace-nowrap">
+                <div className="grid grid-cols-2 divide-x divide-border-subtle bg-surface-card px-3.5 py-2.5 sm:px-4 rounded-xl shadow-sm border border-border-subtle/70 w-full sm:w-auto shrink-0">
+                  <div className="flex flex-col pr-3 min-w-0">
+                    <span
+                      className="font-label-caps text-[10px] sm:text-label-caps text-text-muted uppercase truncate"
+                      title={`Disparitas ${activeCommodity.komoditas}`}
+                    >
                       Disparitas {activeCommodity.komoditas}
                     </span>
-                    <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <span
-                        className={`font-metric-display text-metric-display ${
+                        className={`font-metric-display text-2xl sm:text-metric-display font-extrabold ${
                           activeCommodity.disparitasPct >= 15
                             ? "text-status-critical"
                             : activeCommodity.disparitasPct >= 8
@@ -384,22 +437,24 @@ export default function SpatialMapPage() {
                         {activeCommodity.disparitasPct}%
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded-full font-label-caps text-label-caps ${activeCommodity.badgeClass}`}
+                        className={`px-2 py-0.5 rounded-full font-label-caps text-[10px] sm:text-label-caps font-semibold shrink-0 ${activeCommodity.badgeClass}`}
                       >
                         {activeCommodity.disparitasPct >= 15 ? "Tinggi" : activeCommodity.disparitasPct >= 8 ? "Waspada" : "Wajar"}
                       </span>
                     </div>
                   </div>
-                  <div className="w-px h-8 bg-border-subtle shrink-0"></div>
-                  <div className="flex flex-col pl-3">
-                    <span className="font-label-caps text-label-caps text-text-muted uppercase whitespace-nowrap">
+                  <div className="flex flex-col pl-3 min-w-0">
+                    <span className="font-label-caps text-[10px] sm:text-label-caps text-text-muted uppercase">
                       Selisih Ekstrem
                     </span>
-                    <div className="flex items-baseline gap-2 mt-0.5">
-                      <span className="font-metric-value text-metric-value text-text-primary font-bold whitespace-nowrap">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 mt-0.5 min-w-0">
+                      <span className="font-metric-value text-lg sm:text-metric-value text-text-primary font-bold whitespace-nowrap">
                         Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}
                       </span>
-                      <span className="text-xs text-text-secondary whitespace-nowrap">
+                      <span
+                        className="text-[11px] sm:text-xs text-text-secondary truncate mt-0.5 sm:mt-0"
+                        title={`${maxMarket.shortName} vs ${minMarket.shortName}`}
+                      >
                         ({maxMarket.shortName} vs {minMarket.shortName})
                       </span>
                     </div>
@@ -710,7 +765,7 @@ export default function SpatialMapPage() {
               </div>
 
               {/* Group Filter Chips (pola terstruktur & rapi) */}
-              <div className="px-space-md py-3 bg-surface-subtle/30 flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-border-subtle/60">
+              <div className="px-space-md py-3 bg-surface-subtle/30 flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-border-subtle/60 pr-8">
                 {ORDERED_GROUPS.filter((g) => g === "Semua" || comparisonRows.some((r) => r.group === g)).map((g) => {
                   const count =
                     g === "Semua"
@@ -757,28 +812,30 @@ export default function SpatialMapPage() {
                 <table className="w-full text-left font-body-sm text-body-sm border-collapse min-w-[1000px]">
                   <thead>
                     <tr className="bg-surface-subtle text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
-                      <th className="py-3 px-space-md sticky left-0 bg-surface-subtle z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">Komoditas Pokok</th>
-                      <th className="py-3 px-space-xs">Satuan</th>
-                      <th className="py-3 px-space-sm">Keputran (Induk)</th>
-                      <th className="py-3 px-space-sm">Wonokromo</th>
-                      <th className="py-3 px-space-sm">Pucang Anom</th>
-                      <th className="py-3 px-space-sm">Genteng</th>
-                      <th className="py-3 px-space-sm">Tambahrejo</th>
-                      <th className="py-3 px-space-sm">Soponyono</th>
-                      <th className="py-3 px-space-sm">Rerata Kota</th>
-                      <th className="py-3 px-space-md text-right">Disparitas</th>
+                      <th className="py-2.5 sm:py-3 px-2.5 sm:px-space-md sticky left-0 bg-surface-subtle z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[135px] sm:w-[190px] min-w-[135px] sm:min-w-[190px]">
+                        Komoditas Pokok
+                      </th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-xs text-center min-w-[55px] sm:min-w-[70px]">Satuan</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Keputran (Induk)</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Wonokromo</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Pucang Anom</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Genteng</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Tambahrejo</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Soponyono</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Rerata Kota</th>
+                      <th className="py-2.5 sm:py-3 px-2 sm:px-space-md text-right min-w-[105px] sm:min-w-[125px]">Disparitas</th>
                     </tr>
                   </thead>
                   <tbody className="text-text-primary">
                     {loadingTable ? (
                       Array.from({ length: 7 }).map((_, idx) => (
                         <tr key={idx} className="border-b border-surface-subtle/40 animate-pulse">
-                          <td className="py-3.5 px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
-                            <div className="flex items-center gap-space-xs">
-                              <div className="w-2.5 h-2.5 rounded-full bg-surface-subtle shrink-0"></div>
+                          <td className="py-2.5 sm:py-3.5 px-2.5 sm:px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[145px] sm:w-[220px] min-w-[145px] sm:min-w-[220px]">
+                            <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-subtle shrink-0"></div>
                               <div className="space-y-1">
-                                <div className="w-32 h-4 bg-surface-subtle rounded"></div>
-                                <div className="w-20 h-2.5 bg-surface-subtle rounded"></div>
+                                <div className="w-24 sm:w-32 h-3.5 sm:h-4 bg-surface-subtle rounded"></div>
+                                <div className="w-16 sm:w-20 h-2 sm:h-2.5 bg-surface-subtle rounded"></div>
                               </div>
                             </div>
                           </td>
@@ -840,7 +897,7 @@ export default function SpatialMapPage() {
                         const isMax = price === rowMax;
                         return (
                           <td
-                            className={`py-3 px-space-sm font-metric-value transition-colors ${
+                            className={`py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm min-w-[95px] sm:min-w-[110px] transition-colors ${
                               isMin
                                 ? "bg-emerald-50/70 hover:bg-emerald-100/60 text-emerald-700 font-bold"
                                 : isMax
@@ -874,22 +931,27 @@ export default function SpatialMapPage() {
                           }`}
                           title="Klik untuk melihat perbandingan spasial komoditas ini pada peta"
                         >
-                          <td className="py-3.5 px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
-                            <div className="flex items-center gap-space-xs">
-                              <span
-                                className={`w-2.5 h-2.5 rounded-full shrink-0 ${row.dotClass}`}
-                              ></span>
-                              <div className="flex flex-col">
-                                <span className="font-title-md text-body-md text-text-primary font-semibold">
+                          <td className="py-2.5 sm:py-3.5 px-2.5 sm:px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[145px] sm:w-[220px] min-w-[145px] sm:min-w-[220px] max-w-[155px] sm:max-w-none">
+                            <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                              <div
+                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 ${row.iconBoxClass}`}
+                                title={row.komoditas}
+                              >
+                                <span className="material-symbols-outlined text-[15px] sm:text-[18px]">
+                                  {row.icon}
+                                </span>
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-title-md text-xs sm:text-body-md text-text-primary font-semibold truncate sm:whitespace-normal">
                                   {row.komoditas}
                                 </span>
-                                <span className="text-text-muted font-label-caps text-label-caps">
+                                <span className="text-text-muted font-label-caps text-[10px] sm:text-label-caps truncate sm:whitespace-normal">
                                   {row.sub}
                                 </span>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3.5 px-space-xs text-text-secondary font-label-caps">
+                          <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-xs text-text-secondary font-label-caps text-[11px] sm:text-xs text-center whitespace-nowrap min-w-[55px] sm:min-w-[70px]">
                             {row.satuan}
                           </td>
                           {renderCell(row.keputran)}
@@ -898,20 +960,18 @@ export default function SpatialMapPage() {
                           {renderCell(row.genteng)}
                           {renderCell(row.tambahrejo)}
                           {renderCell(row.soponyono)}
-                          <td className="py-3.5 px-space-sm font-metric-value text-text-secondary">
+                          <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm text-text-secondary min-w-[95px] sm:min-w-[110px]">
                             Rp {row.rerata.toLocaleString("id-ID")}
                           </td>
-                          <td className="py-3.5 px-space-md text-right">
+                          <td className="py-2.5 sm:py-3.5 px-2 sm:px-space-md text-right min-w-[105px] sm:min-w-[125px]">
                             <div className="flex flex-col items-end">
                               <span
-                                className={`font-metric-delta text-body-sm font-bold ${row.statusClass}`}
+                                className={`font-metric-delta text-xs sm:text-body-sm font-bold ${row.statusClass}`}
                               >
                                 Rp {row.disparitasRp.toLocaleString("id-ID")}
                               </span>
-                              <span
-                                className={`px-space-2xs py-0.5 rounded-full font-label-caps text-label-caps ${row.badgeClass}`}
-                              >
-                                {row.statusBadge}
+                              <span className="text-text-muted font-label-caps text-[9px] sm:text-[10px] leading-tight">
+                                {row.disparitasPct}%
                               </span>
                             </div>
                           </td>
