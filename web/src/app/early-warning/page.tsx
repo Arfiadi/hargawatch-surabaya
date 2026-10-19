@@ -72,6 +72,49 @@ function getCommodityCategory(nama: string): CommodityCategory {
   return "Sayur & Ikan";
 }
 
+function getCommodityIcon(nama: string): string {
+  const n = (nama || "").toLowerCase();
+  if (n.includes("cabai") || n.includes("cabe")) return "local_fire_department";
+  if (n.includes("bawang")) return "spa";
+  if (n.includes("telur")) return "egg";
+  if (n.includes("minyak")) return "water_drop";
+  if (n.includes("gula")) return "cookie";
+  if (n.includes("garam")) return "grain";
+  if (n.includes("ayam")) return "egg_alt";
+  if (n.includes("sapi") || n.includes("daging")) return "lunch_dining";
+  if (
+    n.includes("ikan") ||
+    n.includes("bandeng") ||
+    n.includes("tongkol") ||
+    n.includes("lele") ||
+    n.includes("kembung")
+  ) {
+    return "set_meal";
+  }
+  if (
+    n.includes("tomat") ||
+    n.includes("kentang") ||
+    n.includes("wortel") ||
+    n.includes("kubis") ||
+    n.includes("sayur")
+  ) {
+    return "eco";
+  }
+  if (n.includes("susu")) return "local_cafe";
+  if (n.includes("mie") || n.includes("indomie")) return "ramen_dining";
+  if (
+    n.includes("beras") ||
+    n.includes("jagung") ||
+    n.includes("terigu") ||
+    n.includes("kedelai") ||
+    n.includes("gandum") ||
+    n.includes("kacang")
+  ) {
+    return "grain";
+  }
+  return "nutrition";
+}
+
 export default function EarlyWarningPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -126,6 +169,7 @@ export default function EarlyWarningPage() {
       nama_komoditas: string;
       category: CommodityCategory;
       initials: string;
+      icon: string;
       hapRef: string;
       markets: Record<number, EarlyWarningItem>;
       maxScore: number;
@@ -144,6 +188,7 @@ export default function EarlyWarningPage() {
           nama_komoditas: formatCommodityName(item.nama_komoditas),
           category: getCommodityCategory(item.nama_komoditas),
           initials: meta.initials,
+          icon: getCommodityIcon(item.nama_komoditas),
           hapRef: meta.hapRef,
           markets: {},
           maxScore: 0,
@@ -499,7 +544,7 @@ export default function EarlyWarningPage() {
                 <div className="p-space-md flex flex-col gap-space-sm border-b border-border-subtle/40 bg-surface-subtle/30">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm">
                     {/* Category Filter Pills (Semua, Beras, Bumbu/Cabai, Daging & Telur, Minyak & Gula, Sayur & Ikan) */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none pr-8">
                       {CATEGORIES.map((cat) => {
                         const count = categoryCounts[cat] || 0;
                         const isSelected = selectedCategory === cat;
@@ -564,11 +609,11 @@ export default function EarlyWarningPage() {
                   <table className="w-full text-left border-collapse min-w-[900px]">
                     <thead>
                       <tr className="bg-surface-subtle text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
-                        <th className="py-space-sm px-space-md min-w-[220px] sticky left-0 bg-surface-subtle z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
+                        <th className="py-2.5 sm:py-space-sm px-2.5 sm:px-space-md w-[135px] sm:w-[220px] min-w-[135px] sm:min-w-[220px] sticky left-0 bg-surface-subtle z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
                           Komoditas Pantau
                         </th>
                         {MARKET_CONFIGS.map((m) => (
-                          <th key={m.id} className="py-space-sm px-space-sm text-center min-w-[110px]">
+                          <th key={m.id} className="py-2.5 sm:py-space-sm px-1.5 sm:px-space-sm text-center min-w-[95px] sm:min-w-[110px]">
                             Pasar {m.shortName}
                           </th>
                         ))}
@@ -578,18 +623,18 @@ export default function EarlyWarningPage() {
                       {isRefreshing && ewsData.length === 0 ? (
                         Array.from({ length: 8 }).map((_, idx) => (
                           <tr key={idx} className="border-b border-surface-subtle/40 animate-pulse">
-                            <td className="py-space-md px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
-                              <div className="flex items-center gap-space-xs">
-                                <div className="w-9 h-9 rounded-lg bg-surface-subtle shrink-0"></div>
+                            <td className="py-2.5 sm:py-space-md px-2.5 sm:px-space-md w-[135px] sm:w-[220px] min-w-[135px] sm:min-w-[220px] sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
+                              <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-surface-subtle shrink-0"></div>
                                 <div className="space-y-1">
-                                  <div className="w-32 h-4 bg-surface-subtle rounded"></div>
-                                  <div className="w-20 h-2.5 bg-surface-subtle rounded"></div>
+                                  <div className="w-20 sm:w-32 h-3.5 sm:h-4 bg-surface-subtle rounded"></div>
+                                  <div className="w-14 sm:w-20 h-2 sm:h-2.5 bg-surface-subtle rounded"></div>
                                 </div>
                               </div>
                             </td>
                             {Array.from({ length: 6 }).map((_, cIdx) => (
-                              <td key={cIdx} className="py-space-md px-space-sm text-center">
-                                <div className="w-20 h-6 bg-surface-subtle rounded-md mx-auto"></div>
+                              <td key={cIdx} className="py-2.5 sm:py-space-md px-1 sm:px-space-sm text-center min-w-[95px] sm:min-w-[110px]">
+                                <div className="w-16 sm:w-20 h-5 sm:h-6 bg-surface-subtle rounded-md mx-auto"></div>
                               </td>
                             ))}
                           </tr>
@@ -643,24 +688,27 @@ export default function EarlyWarningPage() {
                               }`}
                             >
                               {/* Sticky Column: Commodity Info */}
-                              <td className="py-space-md px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
-                                <div className="flex items-center gap-space-xs">
+                              <td className="py-2.5 sm:py-space-md px-2.5 sm:px-space-md w-[135px] sm:w-[220px] min-w-[135px] sm:min-w-[220px] max-w-[145px] sm:max-w-none sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
+                                <div className="flex items-center gap-1.5 sm:gap-space-xs">
                                   <div
-                                    className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold shrink-0 ${
+                                    className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 ${
                                       isRowCritical
                                         ? "bg-status-critical/10 text-status-critical"
                                         : isRowWarning
                                         ? "bg-status-warning/10 text-status-warning"
-                                        : "bg-surface-subtle text-text-secondary"
+                                        : "bg-primary/10 text-primary"
                                     }`}
+                                    title={row.nama_komoditas}
                                   >
-                                    {row.initials}
+                                    <span className="material-symbols-outlined text-[16px] sm:text-[20px]">
+                                      {row.icon}
+                                    </span>
                                   </div>
                                   <div className="flex flex-col min-w-0">
-                                    <span className="font-headline-sm text-body-md text-on-surface font-semibold truncate">
+                                    <span className="font-headline-sm text-xs sm:text-body-md text-on-surface font-semibold truncate sm:whitespace-normal">
                                       {row.nama_komoditas}
                                     </span>
-                                    <span className="font-label-caps text-label-caps text-text-muted truncate">
+                                    <span className="font-label-caps text-[10px] sm:text-label-caps text-text-muted truncate sm:whitespace-normal">
                                       {row.hapRef}
                                     </span>
                                   </div>
@@ -672,7 +720,7 @@ export default function EarlyWarningPage() {
                                 const marketItem = row.markets[m.id];
                                 if (!marketItem) {
                                   return (
-                                    <td key={m.id} className="py-space-md px-space-sm text-center text-text-muted text-xs">
+                                    <td key={m.id} className="py-2.5 sm:py-space-md px-1 sm:px-space-sm text-center text-text-muted text-xs min-w-[95px] sm:min-w-[110px]">
                                       -
                                     </td>
                                   );
@@ -712,16 +760,16 @@ export default function EarlyWarningPage() {
                                 return (
                                   <td
                                     key={m.id}
-                                    className={`py-space-md px-space-sm text-center relative transition-colors ${cellBgClass}`}
+                                    className={`py-2.5 sm:py-space-md px-1 sm:px-space-sm text-center relative transition-colors min-w-[95px] sm:min-w-[110px] ${cellBgClass}`}
                                     onMouseEnter={() => setActiveTooltip(`${row.komoditas_id}-${m.id}`)}
                                     onMouseLeave={() => setActiveTooltip(null)}
                                   >
                                     <div className="flex flex-col items-center">
-                                      <span className={`font-metric-value text-body-md ${priceTextClass}`}>
+                                      <span className={`font-metric-value text-xs sm:text-body-md ${priceTextClass}`}>
                                         Rp {(price || 0).toLocaleString("id-ID")}
                                       </span>
                                       <span
-                                        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full font-label-caps text-[10px] mt-1 ${badgeClass}`}
+                                        className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded-full font-label-caps text-[9px] sm:text-[10px] mt-0.5 sm:mt-1 ${badgeClass}`}
                                       >
                                         {badgeLabel}
                                       </span>

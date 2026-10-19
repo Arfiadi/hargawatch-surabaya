@@ -585,7 +585,7 @@ export default function HomePage() {
                               ? `${stabilitySummary.alertCount} Titik`
                               : "0 Titik"}
                           </span>
-                          <span className="font-label-caps text-label-caps text-text-muted truncate max-w-[110px]">
+                          <span className="font-label-caps text-[11px] sm:text-label-caps text-text-muted whitespace-nowrap">
                             {stabilitySummary.alertNote}
                           </span>
                         </div>
@@ -1215,7 +1215,7 @@ export default function HomePage() {
                       Pangan Pokok Strategis:
                     </span>
                   </div>
-                  <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar px-1.5 py-1 -mt-1">
+                  <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar px-1.5 py-1 -mt-1 pr-8">
                     {AVAILABLE_TREND_COMMODITIES.map((c) => {
                       const isSelected = trendCommodityId === c.id;
                       return (
@@ -1510,16 +1510,40 @@ export default function HomePage() {
                     </div>
 
                     {/* Interactive Focus Toolbar: Market Chips */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 bg-surface-canvas/60 rounded-xl border border-border-subtle/80 mb-3">
-                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span className="text-xs font-semibold text-text-secondary mr-1">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 py-2.5 px-3 bg-surface-canvas/60 rounded-xl border border-border-subtle/80 mb-3">
+                      {/* Mobile Header: Label & Action */}
+                      <div className="flex items-center justify-between md:hidden">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-text-secondary">
+                            Fokus Pasar:
+                          </span>
+                          {highlightedMarketId && (
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold animate-pulse">
+                              Fokus Aktif
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const allVisible = TREND_MARKET_CONFIGS.reduce((acc, m) => ({ ...acc, [m.id]: true }), {});
+                            setActiveMarkets(allVisible);
+                            setHighlightedMarketId(null);
+                          }}
+                          className="text-[11px] text-primary hover:text-primary-dark hover:underline font-semibold cursor-pointer shrink-0"
+                        >
+                          Tampilkan Semua
+                        </button>
+                      </div>
+
+                      {/* Market Chips: 2-Col Grid on Mobile, Flex on Desktop */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span className="text-xs font-semibold text-text-secondary mr-1 hidden md:inline">
                           Fokus Pasar:
                         </span>
                         {TREND_MARKET_CONFIGS.map((m) => {
                           const isVisible = !!activeMarkets[m.id];
                           const isHovered = highlightedMarketId === m.id;
-                          const marketPrice = todayMarketStats.find((s) => s.id === m.id)?.price;
-                          const isCheapest = cheapestToday?.id === m.id;
 
                           return (
                             <button
@@ -1528,11 +1552,11 @@ export default function HomePage() {
                               onMouseEnter={() => setHighlightedMarketId(m.id)}
                               onMouseLeave={() => setHighlightedMarketId(null)}
                               onClick={() => setActiveMarkets((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                              className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer select-none border ${
+                              className={`group inline-flex items-center justify-center md:justify-start gap-1.5 px-2.5 py-1.5 md:py-1 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer select-none border ${
                                 !isVisible
                                   ? "opacity-35 bg-surface-subtle/50 text-text-muted line-through border-transparent"
                                   : isHovered
-                                  ? "bg-surface-card text-text-primary shadow-sm scale-105 border-primary/50 ring-2 ring-primary/20"
+                                  ? "bg-surface-card text-text-primary shadow-sm scale-[1.02] md:scale-105 border-primary/50 ring-2 ring-primary/20"
                                   : "bg-surface-card hover:bg-surface-card/90 text-text-secondary hover:text-text-primary border-border-subtle shadow-xs"
                               }`}
                               title={`Klik untuk on/off. Sorot kursor untuk isolasi grafik ${m.name}`}
@@ -1547,7 +1571,8 @@ export default function HomePage() {
                         })}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* Desktop Right Actions */}
+                      <div className="hidden md:flex items-center gap-2">
                         {highlightedMarketId && (
                           <span className="text-[11px] text-primary font-semibold hidden sm:inline animate-pulse">
                             Mode Fokus Aktif
@@ -1569,80 +1594,91 @@ export default function HomePage() {
 
                     {/* Chart Container Canvas */}
                     <div className="w-full relative bg-surface-card rounded-2xl p-space-md mb-space-md select-none border border-border-subtle/60">
-                      {/* Floating Ranking Leaderboard Tooltip */}
-                      {activeHoverPoint && (
-                        <div
-                          className="absolute z-30 pointer-events-none bg-surface-card/95 backdrop-blur-md border border-border-subtle p-3.5 rounded-xl shadow-xl text-xs min-w-[240px] transition-all duration-75"
-                          style={{
-                            left: `${Math.min(70, Math.max(8, (activeHoverPoint.x / 820) * 100))}%`,
-                            top: "16px",
-                          }}
-                        >
-                          <div className="font-semibold text-text-primary flex items-center justify-between gap-1.5 mb-2 pb-1.5 border-b border-border-subtle">
-                            <span className="font-bold">{activeHoverPoint.dateStr}</span>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                activeHoverPoint.isForecast
-                                  ? "bg-primary-container text-on-primary"
-                                  : "bg-status-normal-bg text-status-normal"
-                              }`}
-                            >
-                              {activeHoverPoint.isForecast ? "Proyeksi model" : "Observasi"}
-                            </span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {activeHoverPoint.prices.map((p, rankIdx) => {
-                              const diffVsCheapest = p.price - baseCheapestPrice;
-                              const isFocus = highlightedMarketId === p.id;
-                              return (
-                                <div
-                                  key={p.id}
-                                  className={`flex items-center justify-between gap-2 px-1.5 py-0.5 rounded ${
-                                    isFocus ? "bg-primary/10 font-bold" : "text-text-secondary"
-                                  } text-[11px]`}
-                                >
-                                  <span className="flex items-center gap-1.5 truncate">
-                                    <span className="text-[9px] font-mono text-text-muted font-bold w-3 text-center">
-                                      #{rankIdx + 1}
-                                    </span>
-                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }}></span>
-                                    <span className={`truncate ${isFocus ? "text-primary font-bold" : "text-text-primary"}`}>
-                                      {p.name}
-                                    </span>
-                                  </span>
-                                  <div className="text-right shrink-0">
-                                    <span className="font-bold text-text-primary font-metric-value">
-                                      Rp {p.price.toLocaleString("id-ID")}
-                                    </span>
-                                    {rankIdx > 0 && diffVsCheapest > 0 && (
-                                      <span className="block text-[9px] text-text-muted font-mono leading-none">
-                                        +{diffVsCheapest.toLocaleString("id-ID")}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+                      {/* Mobile Swipe Affordance */}
+                      <div className="sm:hidden flex items-center justify-between text-text-muted text-[11px] font-medium mb-2.5 pb-2 border-b border-border-subtle/50">
+                        <span className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[15px] text-primary">swipe</span> Geser grafik untuk melihat pergerakan 14 hari
+                        </span>
+                        <span className="text-primary font-bold text-xs">&rarr;</span>
+                      </div>
 
-                      {/* SVG Canvas */}
-                      <div
-                        className="w-full h-72 sm:h-84 cursor-crosshair"
-                        onMouseMove={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const mouseX = e.clientX - rect.left;
-                          const svgX = (mouseX / rect.width) * 820;
-                          if (svgX >= chartLeft - 15 && svgX <= chartRight + 15) {
-                            const idx = Math.round(((svgX - chartLeft) / chartWidth) * (totalPoints - 1));
-                            const clamped = Math.max(0, Math.min(totalPoints - 1, idx));
-                            setHoveredPointIndex(clamped);
-                          }
-                        }}
-                        onMouseLeave={() => setHoveredPointIndex(null)}
-                      >
-                        <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 820 250">
+                      {/* Scrollable Container on Mobile with ample min-width */}
+                      <div className="w-full overflow-x-auto no-scrollbar">
+                        <div className="min-w-[680px] sm:min-w-full relative">
+                          {/* Floating Ranking Leaderboard Tooltip */}
+                          {activeHoverPoint && (
+                            <div
+                              className="absolute z-30 pointer-events-none bg-surface-card/95 backdrop-blur-md border border-border-subtle p-3.5 rounded-xl shadow-xl text-xs min-w-[240px] transition-all duration-75"
+                              style={{
+                                left: `${Math.min(70, Math.max(8, (activeHoverPoint.x / 820) * 100))}%`,
+                                top: "16px",
+                              }}
+                            >
+                              <div className="font-semibold text-text-primary flex items-center justify-between gap-1.5 mb-2 pb-1.5 border-b border-border-subtle">
+                                <span className="font-bold">{activeHoverPoint.dateStr}</span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    activeHoverPoint.isForecast
+                                      ? "bg-primary-container text-on-primary"
+                                      : "bg-status-normal-bg text-status-normal"
+                                  }`}
+                                >
+                                  {activeHoverPoint.isForecast ? "Proyeksi model" : "Observasi"}
+                                </span>
+                              </div>
+                              <div className="space-y-1.5">
+                                {activeHoverPoint.prices.map((p, rankIdx) => {
+                                  const diffVsCheapest = p.price - baseCheapestPrice;
+                                  const isFocus = highlightedMarketId === p.id;
+                                  return (
+                                    <div
+                                      key={p.id}
+                                      className={`flex items-center justify-between gap-2 px-1.5 py-0.5 rounded ${
+                                        isFocus ? "bg-primary/10 font-bold" : "text-text-secondary"
+                                      } text-[11px]`}
+                                    >
+                                      <span className="flex items-center gap-1.5 truncate">
+                                        <span className="text-[9px] font-mono text-text-muted font-bold w-3 text-center">
+                                          #{rankIdx + 1}
+                                        </span>
+                                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }}></span>
+                                        <span className={`truncate ${isFocus ? "text-primary font-bold" : "text-text-primary"}`}>
+                                          {p.name}
+                                        </span>
+                                      </span>
+                                      <div className="text-right shrink-0">
+                                        <span className="font-bold text-text-primary font-metric-value">
+                                          Rp {p.price.toLocaleString("id-ID")}
+                                        </span>
+                                        {rankIdx > 0 && diffVsCheapest > 0 && (
+                                          <span className="block text-[9px] text-text-muted font-mono leading-none">
+                                            +{diffVsCheapest.toLocaleString("id-ID")}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* SVG Canvas */}
+                          <div
+                            className="w-full h-64 sm:h-84 cursor-crosshair relative"
+                            onMouseMove={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const mouseX = e.clientX - rect.left;
+                              const svgX = (mouseX / rect.width) * 820;
+                              if (svgX >= chartLeft - 15 && svgX <= chartRight + 15) {
+                                const idx = Math.round(((svgX - chartLeft) / chartWidth) * (totalPoints - 1));
+                                const clamped = Math.max(0, Math.min(totalPoints - 1, idx));
+                                setHoveredPointIndex(clamped);
+                              }
+                            }}
+                            onMouseLeave={() => setHoveredPointIndex(null)}
+                          >
+                            <svg className="w-full h-full" viewBox="0 0 820 250">
                           <defs>
                             <linearGradient id="forecastAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                               <stop offset="0%" stopColor="#004328" stopOpacity="0.05" />
@@ -1876,7 +1912,9 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                );
+                </div>
+              </div>
+            );
               })()}
 
               {/* Clean Footer Metadata & Source Integrity */}
