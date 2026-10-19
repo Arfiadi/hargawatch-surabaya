@@ -751,27 +751,29 @@ export default function ForecastingPage() {
                   </p>
                 </div>
 
-                {/* Legenda Grafik */}
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-label-caps font-label-caps">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0"></span>
-                    <span className="text-text-primary">Rata-rata Pasar Harian</span>
+                {/* Legenda Grafik + Label Acuan Regulasi (rata kanan) */}
+                <div className="flex flex-col items-start sm:items-end gap-1.5">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-label-caps font-label-caps">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0"></span>
+                      <span className="text-text-primary">Rata-rata Pasar Harian</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-status-warning shrink-0"></span>
+                      <span className="text-status-warning font-semibold">Proyeksi Model</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-status-warning/25 border border-status-warning/50 shrink-0"></span>
+                      <span className="text-text-secondary">
+                        {chartMetrics?.hasSpread ? "Rentang Batas Toleransi" : "Varians Proyeksi Stabil"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-status-warning shrink-0"></span>
-                    <span className="text-status-warning font-semibold">Proyeksi Model</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400/80 border border-amber-500/50 shrink-0"></span>
-                    <span className="text-text-secondary">
-                      {chartMetrics?.hasSpread ? "Rentang Batas Toleransi" : "Varians Proyeksi Stabil"}
-                    </span>
-                  </div>
-                  {chartMetrics?.benchmarkPrice && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-critical/10 border border-status-critical/20">
+                  {chartMetrics?.benchmarkLabel && (
+                    <div className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-status-critical shrink-0"></span>
-                      <span className="text-status-critical font-bold text-xs">
-                        {chartMetrics.benchmarkLabel}: Rp {chartMetrics.benchmarkPrice.toLocaleString("id-ID")}/{activeCommodityMeta.unit}
+                      <span className="text-status-critical font-bold text-xs font-label-caps">
+                        {chartMetrics.benchmarkLabel}
                       </span>
                     </div>
                   )}
@@ -894,7 +896,7 @@ export default function ForecastingPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative w-full h-[240px] sm:h-[260px]">
+                  <div className="relative w-full aspect-[920/270]">
                     {/* 1. Vector Graph Canvas */}
                     <svg
                       className="w-full h-full overflow-visible"
@@ -1100,8 +1102,11 @@ export default function ForecastingPage() {
                         </div>
                       )}
 
-                      {/* Label Sumbu X Dinamis */}
-                      <div className="absolute left-0 right-0 bottom-1 pointer-events-none select-none">
+                      {/* Label Sumbu X Dinamis — dikurung di dalam pita padBottom supaya tidak terpotong overflow-x-auto */}
+                      <div
+                        className="absolute left-0 right-0 bottom-0 pointer-events-none select-none"
+                        style={{ top: `${((chartMetrics.svgHeight - chartMetrics.padBottom) / chartMetrics.svgHeight) * 100}%` }}
+                      >
                         {chartMetrics.xLabels.map((lbl, idx) => (
                           <div
                             key={`xlbl-${idx}`}
