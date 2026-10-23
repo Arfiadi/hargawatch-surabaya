@@ -2,78 +2,133 @@
 
 Dokumen ini memetakan aliran data (*data flow*) dan batasan tanggung jawab (*separation of concerns*) untuk setiap peran dalam proyek HargaWatch.
 
-## Diagram Arsitektur (5-Layer Hub-and-Spoke)
+## Diagram Arsitektur Terpadu (6-Layer Hub-and-Spoke & Pipeline Engine)
 
 ```mermaid
-flowchart TD
-    classDef storage fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+flowchart TB
+    %% Styling Classes
+    classDef source fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,color:#0D47A1;
+    classDef pipeline fill:#FFF8E1,stroke:#F57F17,stroke-width:2px,color:#E65100;
+    classDef storage fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:#1B5E20;
+    classDef ai fill:#EDE7F6,stroke:#512DA8,stroke-width:2px,color:#311B92;
+    classDef safety fill:#FFEBEE,stroke:#C62828,stroke-width:2px,color:#B71C1C;
+    classDef app fill:#E0F7FA,stroke:#00838F,stroke-width:2px,color:#006064;
+    classDef user fill:#ECEFF1,stroke:#455A64,stroke-width:2px,color:#263238;
 
-    subgraph L1 ["1. Data Sources Layer"]
+    %% 1. DATA SOURCES
+    subgraph L1 ["1. LAYER SUMBER DATA EKSTERNAL (DATA INGESTION)"]
         direction LR
-        S1(Web Scraping\nSiskaperbapo)
-        S2(Open-Meteo\nCuaca)
-        S3(BPS Jatim\nInflasi)
-        S4(Kalender\nHari Libur)
+        S1["SISKAPERBAPO Jatim<br/>(Scraping 6 Pasar Harian)"]:::source
+        S2["Open-Meteo ERA5 API<br/>(Curah Hujan & Suhu Surabaya)"]:::source
+        S3["BPS Jatim / Surabaya<br/>(IHK & Inflasi Bulanan)"]:::source
+        S4["Data Hulu Produsen<br/>(RPH Pegirikan & PS Bendul Mrisi)"]:::source
+        S5["Dimensi Kalender & Agama<br/>(Pra-Ramadan, Idulfitri, Libur)"]:::source
     end
 
-    subgraph L2 ["2. Data Pipeline & Storage Layer"]
-        direction LR
-        E1[ETL Pipeline\nExtract-Transform-Load]
-        E2[Data Cleaning\nForward-Fill]
-        DB[(Supabase\nCentral Hub)]:::storage
-        
-        E1 --> E2
-        E2 --> DB
-    end
-
-    S1 --> E1
-    S2 --> E1
-    S3 --> E1
-    S4 --> E1
-
-    subgraph L3 ["3. AI & Analytics Engine Layer"]
-        direction LR
-        M1[Feature Engineering]
-        M2[Global Tabular ML\nKandidat GBDT]
-        M3[Quantile Regression]
-        M4[Rule-Based EWS]
-        W[Weights & Biases\nModel Registry]
-        
-        M1 --> M2 --> M3 --> M4
-        M2 <-->|"Track & Load"| W
-    end
-
-    %% Hub-and-Spoke Cycle
-    DB == "Query Data Historis" ===> M1
-    M4 == "Simpan Hasil Prediksi & EWS" ===> DB
-
-    subgraph L4 ["4. Application Layer"]
+    %% 2. DATA PIPELINE & SILVER STORAGE
+    subgraph L2 ["2. LAYER PIPELINE DATA & REKAYASA FITUR (SILVER LAYER)"]
         direction TB
-        W1[Next.js 15\nFrontend]
-        W2[Vercel\nHosting]
-        
-        subgraph UI ["Modul Dashboard"]
-            direction LR
-            U_A[Deskriptif]
-            U_B[Diagnostik]
-            U_C[Prediktif]
+        subgraph ETL ["Ingestion & Preprocessing Engine"]
+            P1["Daily Cron Scraper<br/>(scripts/update_harian.py)"]:::pipeline
+            P2["Catch-up Auto Recovery<br/>(scripts/update_catchup.py)"]:::pipeline
+            P3["Data Cleaning Pipeline<br/>(ffill limit=7, Zero Lookahead)"]:::pipeline
         end
-        W1 --> W2 --> UI
+        
+        subgraph DB_SILVER ["Supabase PostgreSQL (Silver Tables)"]
+            T1[("dim_pasar & dim_komoditas<br/>(6 Pasar & 37 Komoditas)")]:::storage
+            T2[("fact_harga_pasar<br/>(482k+ Baris Transaksi)")]:::storage
+            T3[("fact_harga_produsen, cuaca, inflasi")]:::storage
+        end
+        
+        FE["Feature Engineering Engine (src/analytics/features.py)<br/>• Lag Prices (1, 2, 3, 7, 14d) • Rolling Stats (7, 14, 30, 90d)<br/>• Transmisi Keputran (Lag 1-3d) • Kalender Islam (Pra-Ramadan)"]:::pipeline
     end
 
-    %% Web Fetching directly from Hub
-    DB == "Fetch Data API (@supabase/supabase-js)" ===> W1
+    S1 --> P1
+    S2 --> P1
+    S3 --> P1
+    S4 --> P1
+    S5 --> P1
+    P1 --> P3
+    P2 --> P3
+    P3 --> DB_SILVER
+    DB_SILVER --> FE
 
-    subgraph L5 ["5. End User Layer"]
+    %% 3. AI & MLOPS ENGINE
+    subgraph L3 ["3. LAYER PERAMALAN AI & MLOPS ENGINE (GOLD LAYER)"]
+        direction TB
+        subgraph TIERED ["Arsitektur Peramalan Berjenjang (Tiered Forecasting)"]
+            M1["TIER 1: Deep GBDT Kuantil<br/>(LightGBM / CatBoost p10, p50, p90)<br/>Cabai Rawit, Bawang, Telur"]:::ai
+            M2["TIER 2: Regulated & Seasonal<br/>(Naive Last Value / Step Baseline)<br/>Beras, Minyak Goreng, Gula, Daging"]:::ai
+            M3["TIER 3: Ultra-Sticky & FMCG<br/>(Deterministic Constant Benchmark)<br/>Indomie, Garam, Susu SKM"]:::ai
+        end
+
+        subgraph VALIDATION ["Validasi & Model Registry"]
+            V1["Walk-Forward Backtesting<br/>(45 Rolling Windows, Causal Cutoff)"]:::ai
+            V2["Model Registry & Export<br/>(models/forecasting/*.pkl & registry.json)"]:::ai
+            V3["Weights & Biases (W&B)<br/>(Eksperimen & Tracking MLOps)"]:::ai
+        end
+    end
+
+    FE --> M1
+    FE --> M2
+    FE --> M3
+    M1 <--> V1
+    M2 <--> V1
+    V1 --> V2
+    V2 <--> V3
+
+    %% 4. SAFETY & EARLY WARNING SYSTEM
+    subgraph L4 ["4. LAYER SISTEM PERINGATAN DINI & OBSERVABILITAS (EWS)"]
+        direction TB
+        EWS["Mesin Skor Komposit EWS 100-Poin (src/safety/early_warning.py)<br/>┌───────────────────────────────────────────────┐<br/>│ • Pilar 1: Tren Historis 7-Hari     (20 Poin) │<br/>│ • Pilar 2: Rasio Volatilitas 7d/30d (20 Poin) │<br/>│ • Pilar 3: Disparitas Keputran      (20 Poin) │<br/>│ • Pilar 4: Proyeksi Bahaya ML       (40 Poin) │<br/>└───────────────────────────────────────────────┘"]:::safety
+        
+        STATUS["Klasifikasi Status Risiko<br/>🟢 NORMAL (<40) | 🟡 WASPADA (40-69) | 🔴 SIAGA TINGGI (>=70)"]:::safety
+        
+        subgraph DISPATCH ["Distribusi Peringatan"]
+            TG["Telegram Alert Dispatcher<br/>(src/safety/alert_generator.py)"]:::safety
+            DB_GOLD[("Supabase Gold Tables<br/>• fact_prediksi_harga<br/>• fact_early_warning")]:::storage
+        end
+    end
+
+    M1 --> EWS
+    M2 --> EWS
+    M3 --> EWS
+    EWS --> STATUS
+    STATUS --> TG
+    STATUS --> DB_GOLD
+    M1 --> DB_GOLD
+    M2 --> DB_GOLD
+
+    %% 5. APPLICATION LAYER
+    subgraph L5 ["5. LAYER APLIKASI WEB & DASHBOARD (FRONTEND)"]
+        direction TB
+        NEXT["Web Application (Next.js 15 + Tailwind CSS + Leaflet Maps)<br/>Hosted on Vercel Serverless Edge Network"]:::app
+        
+        subgraph MODULES ["Modul Antarmuka Pengguna"]
+            U1["Peta Interaktif 6 Pasar<br/>(Sebaran Spasial & Komoditas)"]:::app
+            U2["Forecasting Dashboard<br/>(Pita Interval Kuantil p10-p50-p90)"]:::app
+            U3["Early Warning Center<br/>(Status Krisis & Rekomendasi Aksi)"]:::app
+        end
+        NEXT --> MODULES
+    end
+
+    DB_GOLD -- "Query Real-time API (@supabase/supabase-js)" --> NEXT
+    DB_SILVER -- "Query Master Data" --> NEXT
+
+    %% 6. END USERS
+    subgraph L6 ["6. LAYER PENGGUNA AKHIR (STAKEHOLDERS)"]
         direction LR
-        U1((Masyarakat & UMKM))
-        U2((Instansi Pemerintah))
+        USR1["Masyarakat Umum & Konsumen"]:::user
+        USR2["Pedagang Pasar & UMKM Kuliner"]:::user
+        USR3["Satgas Pangan & TPID Pemkot Surabaya<br/>(Intervensi Operasi Pasar Murah)"]:::user
     end
 
-    U_A --> U1
-    U_B --> U1
-    U_C --> U2
+    MODULES --> USR1
+    MODULES --> USR2
+    MODULES --> USR3
+    TG -- "Notifikasi Darurat Pangan" --> USR3
 ```
+
 
 ## Pembagian Tanggung Jawab (Separation of Concerns)
 
@@ -185,4 +240,4 @@ hargawatch-surabaya/
 ```
 
 ## Strategi Deployment (On-Premise)
-Data pipeline dan ML Pipeline dijalankan melalui **Windows Task Scheduler (On-Premise)** menggunakan skrip batch un_pipeline.bat setiap pagi hari. Keputusan on-premise (laptop/PC) diambil untuk menghindari pemblokiran *Cloudflare Web Application Firewall (WAF)* pada API Siskaperbapo Jatim jika diakses dari IP Data Center (seperti AWS, DigitalOcean, atau GitHub Actions). Dashboard Web tetap di-*hosting* publik (Vercel) dengan menarik data dari Supabase.
+Data pipeline dan ML Pipeline dijalankan melalui **Windows Task Scheduler (On-Premise)** menggunakan skrip batch `run_pipeline.bat` setiap pagi hari. Keputusan on-premise (laptop/PC) diambil untuk menghindari pemblokiran *Cloudflare Web Application Firewall (WAF)* pada API Siskaperbapo Jatim jika diakses dari IP Data Center (seperti AWS, DigitalOcean, atau GitHub Actions). Dashboard Web tetap di-*hosting* publik (Vercel) dengan menarik data dari Supabase.

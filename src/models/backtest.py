@@ -136,12 +136,15 @@ def run_walk_forward_backtest(
         "price_lag_7", "price_lag_14", "rolling_mean_7d", "rolling_std_7d",
         "rolling_mean_14d", "rolling_std_14d", "pct_change_1d", "pct_change_7d"
     ]
+    keputran_cols = ["keputran_price_lag_1", "keputran_price_lag_2", "keputran_price_lag_3"]
+    feature_cols += [c for c in keputran_cols if c in df.columns]
     
-    # Calendar feature toggle
+    # Calendar feature toggle (ablasi weekend D4, sertakan idulfitri D7)
     if include_calendar:
         calendar_cols = [
-            "target_bulan", "target_is_weekend", "target_is_libur_nasional",
-            "target_is_ramadan", "target_is_pra_ramadan"
+            "target_bulan", "target_is_libur_nasional",
+            "target_is_ramadan", "target_is_pra_ramadan",
+            "target_hari_ke_idulfitri"
         ]
         feature_cols += [c for c in calendar_cols if c in df.columns]
 

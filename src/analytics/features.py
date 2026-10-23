@@ -125,6 +125,60 @@ def build_lag_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+IDULFITRI_DATES = [
+    pd.Timestamp("2020-05-24"),
+    pd.Timestamp("2021-05-13"),
+    pd.Timestamp("2022-05-02"),
+    pd.Timestamp("2023-04-22"),
+    pd.Timestamp("2024-04-10"),
+    pd.Timestamp("2025-03-31"),
+    pd.Timestamp("2026-03-20")
+]
+
+
+def calculate_days_to_idulfitri(date_series: pd.Series) -> pd.Series:
+    """Calculates signed distance in days to nearest Idulfitri (1 Syawal) (Decision D7)."""
+    dt = pd.to_datetime(date_series)
+    deltas = []
+    for d in dt:
+        diffs = [(d - if_date).days for if_date in IDULFITRI_DATES]
+        min_idx = int(np.argmin([abs(x) for x in diffs]))
+        deltas.append(diffs[min_idx])
+    return pd.Series(deltas, index=date_series.index, dtype=int)
+
+
+def build_keputran_lead_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Constructs wholesale lead price features from Pasar Induk Keputran (pasar_id = 5)
+    for all commodities and retail markets (Decision D15).
+    """
+    df = df.copy()
+    KEPUTRAN_ID = 5
+    
+    kep = df[df["pasar_id"] == KEPUTRAN_ID].sort_values("tanggal").copy()
+    if kep.empty:
+        df["keputran_price_lag_1"] = df["price_current"]
+        df["keputran_price_lag_2"] = df["price_lag_1"]
+        df["keputran_price_lag_3"] = df["price_lag_2"]
+        return df
+
+    kep_grouped = kep.groupby("komoditas_id")
+    kep["keputran_price_lag_1"] = kep["price_current"]
+    kep["keputran_price_lag_2"] = kep_grouped["price_current"].shift(1)
+    kep["keputran_price_lag_3"] = kep_grouped["price_current"].shift(2)
+
+    kep_cols = ["tanggal", "komoditas_id", "keputran_price_lag_1", "keputran_price_lag_2", "keputran_price_lag_3"]
+    kep_lookup = kep[kep_cols].drop_duplicates(subset=["tanggal", "komoditas_id"])
+    
+    df = df.merge(kep_lookup, on=["tanggal", "komoditas_id"], how="left")
+    
+    # Fill missing Keputran lags with current market's own lags as fallback
+    df["keputran_price_lag_1"] = df["keputran_price_lag_1"].fillna(df["price_current"])
+    df["keputran_price_lag_2"] = df["keputran_price_lag_2"].fillna(df["keputran_price_lag_1"])
+    df["keputran_price_lag_3"] = df["keputran_price_lag_3"].fillna(df["keputran_price_lag_2"])
+    
+    return df
+
+
 def build_weather_features(df_cuaca: pd.DataFrame) -> pd.DataFrame:
     """Constructs lagged rainfall and weather features."""
     if df_cuaca.empty:
@@ -152,7 +206,8 @@ def build_weather_features(df_cuaca: pd.DataFrame) -> pd.DataFrame:
 def build_supervised_dataset(
     horizon: int = 7,
     komoditas_id: Optional[int] = None,
-    include_weather: bool = True,
+    include_weather: bool = False,
+    include_keputran: bool = True,
     return_target_delta: bool = False
 ) -> pd.DataFrame:
     """Constructs a direct-forecasting supervised dataset for target at t + horizon.
@@ -175,6 +230,10 @@ def build_supervised_dataset(
     df_base = prepare_base_series(df_harga, komoditas_id=komoditas_id)
     df_lags = build_lag_features(df_base)
     
+    # Merge wholesale lead features from Pasar Induk Keputran (Decision D15)
+    if include_keputran:
+        df_lags = build_keputran_lead_features(df_lags)
+    
     # Target definition: price at t + horizon
     grouped = df_lags.groupby(["komoditas_id", "pasar_id"])["harga_imputasi"]
     df_lags["target_date"] = pd.to_datetime(df_lags["tanggal"]) + pd.to_timedelta(horizon, unit="D")
@@ -196,6 +255,8 @@ def build_supervised_dataset(
         "is_ramadan": "target_is_ramadan",
         "is_pra_ramadan": "target_is_pra_ramadan"
     })
+    # Idulfitri proximity feature (Decision D7)
+    df_kal_target["target_hari_ke_idulfitri"] = calculate_days_to_idulfitri(df_kal_target["target_date"])
     
     df_merged = df_lags.merge(df_kal_target, on="target_date", how="left")
     

@@ -3,9 +3,9 @@
     "komoditas_id": 50,
     "commodity": "Cabe Rawit Merah",
     "horizon": 7,
-    "model_name": "LightGBM p50",
-    "wape_pct": 13.79,
-    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\lightgbm_50_h7.pkl",
+    "model_name": "XGBoost p50",
+    "wape_pct": 14.97,
+    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\xgboost_50_h7.pkl",
     "features": [
       "pasar_id",
       "price_current",
@@ -20,20 +20,23 @@
       "rolling_std_14d",
       "pct_change_1d",
       "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3",
       "target_bulan",
-      "target_is_weekend",
       "target_is_libur_nasional",
       "target_is_ramadan",
-      "target_is_pra_ramadan"
+      "target_is_pra_ramadan",
+      "target_hari_ke_idulfitri"
     ],
-    "updated_at": "2026-10-11T19:22:51.434332"
+    "updated_at": "2026-10-19T15:39:01.373303"
   },
   "39_h7": {
     "komoditas_id": 39,
     "commodity": "Bawang Merah",
     "horizon": 7,
     "model_name": "CatBoost p50",
-    "wape_pct": 6.97,
+    "wape_pct": 8.02,
     "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\catboost_39_h7.pkl",
     "features": [
       "pasar_id",
@@ -48,9 +51,12 @@
       "rolling_mean_14d",
       "rolling_std_14d",
       "pct_change_1d",
-      "pct_change_7d"
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
     ],
-    "updated_at": "2026-10-11T19:22:59.470979"
+    "updated_at": "2026-10-19T15:41:16.236396"
   },
   "16_h7": {
     "komoditas_id": 16,

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>HargaWatch Surabaya - Slide Arsitektur Sistem (16:9)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .header-bar {
+      color: #F8FAFC;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1280px;
+    }
+    .toggle-group {
+      display: flex;
+      gap: 8px;
+      background: #1E293B;
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .toggle-btn {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .toggle-btn.active {
+      background: #004328;
+      color: #FFFFFF;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .slide-wrapper {
+      width: 100%;
+      max-width: 1280px;
+      aspect-ratio: 16 / 9;
+      background: #FFFFFF;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    object {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .instructions {
+      margin-top: 16px;
+      color: #94A3B8;
+      font-size: 13px;
+      text-align: center;
+      max-width: 900px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <div>
+      <strong style="color: #4ADE80; font-size: 16px;">HargaWatch Surabaya</strong> &bull; Slide Arsitektur Sistem (16:9 Widescreen)
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="btnClean" onclick="switchView('clean')">✨ Versi Bersih &amp; Lega (Sangat Cocok utk PPT)</button>
+      <button class="toggle-btn" id="btnDetailed" onclick="switchView('detailed')">📋 Versi Detail Lengkap (Infografis)</button>
+    </div>
+  </div>
+
+  <div class="slide-wrapper">
+    <object id="slideObj" data="hargawatch_architecture_clean.svg" type="image/svg+xml"></object>
+  </div>
+
+  <div class="instructions">
+    💡 <strong>Cara Memasukkan ke PowerPoint:</strong> Drag &amp; drop file <code>docs/hargawatch_architecture_clean.svg</code> ke slide PPT Anda. Klik kanan gambar &rarr; pilih <strong>"Convert to Shape"</strong> jika ingin mengedit teks, warna, atau ukuran elemen secara bebas di PowerPoint.
+  </div>
+
+  <script>
+    function switchView(type) {
+      const obj = document.getElementById('slideObj');
+      const btnClean = document.getElementById('btnClean');
+      const btnDetailed = document.getElementById('btnDetailed');
+
+      if (type === 'clean') {
+        obj.data = 'hargawatch_architecture_clean.svg';
+        btnClean.classList.add('active');
+        btnDetailed.classList.remove('active');
+      } else {
+        obj.data = 'hargawatch_architecture_slide_16x9.svg';
+        btnDetailed.classList.add('active');
+        btnClean.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
