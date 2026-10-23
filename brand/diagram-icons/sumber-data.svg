@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Clean External Data Feed Icon -->
+  <rect width="64" height="64" rx="14" fill="#0284C7" fill-opacity="0.08"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" stroke="#0284C7" stroke-width="1.5" stroke-opacity="0.3"/>
+  <path d="M 22 26 C 22 20.48 26.48 16 32 16 C 36.6 16 40.4 19.1 41.6 23.3 C 42.4 23.1 43.2 23 44 23 C 48.4 23 52 26.6 52 31 C 52 35.4 48.4 39 44 39 L 22 39 C 17.6 39 14 35.4 14 31 C 14 26.8 17.2 23.3 21.4 23 C 21.6 24 21.8 25 22 26 Z" stroke="#0284C7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 26 45 L 32 51 L 38 45" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="32" y1="39" x2="32" y2="50" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

@@ -128,7 +128,16 @@ export default function EarlyWarningPage() {
   const [tableSearch, setTableSearch] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const [expandedCardIds, setExpandedCardIds] = useState<Record<number, boolean>>({});
   const ITEMS_PER_PAGE = 10;
+
+  const toggleCardExpanded = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedCardIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const loadData = async (showNotification = false) => {
     setIsRefreshing(true);
@@ -401,14 +410,11 @@ export default function EarlyWarningPage() {
                           </span>
                           STATUS PERINGATAN DINI: {ewsStats?.overallStatus || "NORMAL"}
                         </span>
-                        <span className="font-label-caps text-label-caps px-space-xs py-space-2xs rounded-full bg-surface-subtle text-text-secondary">
-                          {ewsStats?.focusText || "Kondisi Terkendali di 6 Pasar"}
-                        </span>
                       </div>
                       <h2 className="font-headline-md text-headline-md text-on-surface tracking-tight">
                         Status Peringatan &amp; Indeks Risiko Pasar
                       </h2>
-                      <p className="font-body-md text-body-md text-text-secondary max-w-3xl">
+                      <p className="font-body-md text-body-md text-text-secondary max-w-3xl text-justify">
                         {ewsStats?.subtitle || "Pantau kenaikan harga, titik anomali, dan faktor yang memengaruhi pasokan secara real-time."}
                       </p>
                     </div>
@@ -571,41 +577,46 @@ export default function EarlyWarningPage() {
                       })}
                     </div>
 
-                    {/* Search Filter for Table */}
-                    <div className="relative w-full lg:w-64 shrink-0">
-                      <input
-                        type="text"
-                        placeholder="Cari komoditas..."
-                        value={tableSearch}
-                        onChange={(e) => setTableSearch(e.target.value)}
-                        className="w-full h-9 bg-surface-card text-text-primary placeholder-text-muted font-body-sm text-body-sm pl-8 pr-7 rounded-lg border border-border-subtle focus:outline-none focus:border-primary transition-colors"
-                      />
-                      <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[17px] pointer-events-none">
-                        search
-                      </span>
-                      {tableSearch && (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+                      {/* Search Filter for Table */}
+                      <div className="relative w-full sm:w-56">
+                        <input
+                          type="text"
+                          placeholder="Cari komoditas..."
+                          value={tableSearch}
+                          onChange={(e) => setTableSearch(e.target.value)}
+                          className="w-full h-9 bg-surface-card text-text-primary placeholder-text-muted text-xs sm:text-sm pl-8 pr-7 rounded-lg border border-border-subtle focus:outline-none focus:border-primary transition-colors"
+                        />
+                        <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[17px] pointer-events-none">
+                          search
+                        </span>
+                        {tableSearch && (
+                          <button
+                            onClick={() => setTableSearch("")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-[13px] w-4 h-4 rounded-full flex items-center justify-center cursor-pointer"
+                            title="Hapus pencarian"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
                         <button
-                          onClick={() => setTableSearch("")}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-[13px] w-4 h-4 rounded-full flex items-center justify-center cursor-pointer"
-                          title="Hapus pencarian"
+                          className="h-9 px-3 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary hover:text-text-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle whitespace-nowrap shrink-0"
+                          onClick={exportMatrixCSV}
+                          title="Unduh matriks perbandingan harga komoditas dalam format CSV"
                         >
-                          ✕
+                          <span className="material-symbols-outlined text-[17px]">file_download</span>
+                          <span>Export CSV</span>
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Mobile Swipe Affordance Banner */}
-                <div className="sm:hidden px-space-md py-2 bg-surface-subtle/80 text-text-secondary text-[11px] font-medium flex items-center justify-between border-b border-border-subtle/60">
-                  <span className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[15px] text-primary">swipe</span> Geser tabel untuk melihat 6 pasar
-                  </span>
-                  <span className="text-primary font-bold text-xs">&rarr;</span>
-                </div>
-
-                {/* Data Table Container with Sticky Commodity Column */}
-                <div className="overflow-x-auto relative">
+                {/* 1. Tampilan Desktop & Tablet: Data Table Container with Sticky Commodity Column (≥ 768px) */}
+                <div className="hidden md:block overflow-x-auto relative">
                   <table className="w-full text-left border-collapse min-w-[900px]">
                     <thead>
                       <tr className="bg-surface-subtle text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
@@ -835,9 +846,246 @@ export default function EarlyWarningPage() {
                   </table>
                 </div>
 
-                {/* Table Footer Actions: Pagination & Export */}
+                {/* 2. Tampilan HP (< md / < 768px): Card View List sesuai Desain Referensi Mobile */}
+                <div className="block md:hidden p-3.5 space-y-3.5">
+                  {isRefreshing && ewsData.length === 0 ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl bg-surface-card border border-border-subtle/80 shadow-xs animate-pulse space-y-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-surface-subtle shrink-0"></div>
+                          <div className="flex-1 space-y-1.5">
+                            <div className="w-32 h-4 bg-surface-subtle rounded"></div>
+                            <div className="w-20 h-3 bg-surface-subtle rounded"></div>
+                          </div>
+                          <div className="w-16 h-5 bg-surface-subtle rounded-full"></div>
+                        </div>
+                        <div className="h-14 bg-surface-subtle rounded-lg"></div>
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          {Array.from({ length: 6 }).map((_, cIdx) => (
+                            <div key={cIdx} className="h-12 bg-surface-subtle rounded-lg"></div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : loadError && ewsData.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-surface-card border border-border-subtle text-center flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-3xl text-status-warning">cloud_off</span>
+                      <span className="font-semibold text-text-primary text-sm">Data pemantauan tidak tersedia</span>
+                      <p className="text-xs text-text-secondary">Gagal memuat data sistem peringatan dini.</p>
+                      <button
+                        onClick={() => loadData(true)}
+                        className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded-lg hover:bg-primary-container transition shadow-xs cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-sm">refresh</span>
+                        Coba Lagi
+                      </button>
+                    </div>
+                  ) : paginatedRows.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-surface-card border border-border-subtle text-center text-text-muted text-sm">
+                      <span className="material-symbols-outlined text-3xl block mb-1">search_off</span>
+                      Tidak ada komoditas yang cocok dengan filter atau kategori ini.
+                    </div>
+                  ) : (
+                    paginatedRows.map((row) => {
+                      const isRowCritical = row.worstStatus === "TINGGI";
+                      const isRowWarning = row.worstStatus === "WASPADA";
+                      const isExpanded = !!expandedCardIds[row.komoditas_id];
+
+                      const rowPrices = MARKET_CONFIGS.map((m) => row.markets[m.id]?.harga_terakhir || 0).filter((p) => p > 0);
+                      const minPrice = rowPrices.length > 0 ? Math.min(...rowPrices) : 0;
+                      const maxPrice = rowPrices.length > 0 ? Math.max(...rowPrices) : 0;
+                      const hasSpread = minPrice < maxPrice;
+                      const spreadRp = maxPrice - minPrice;
+                      const spreadPct = minPrice > 0 ? Math.round(((maxPrice - minPrice) / minPrice) * 100) : 0;
+
+                      const minMarkets = MARKET_CONFIGS.filter((m) => row.markets[m.id]?.harga_terakhir === minPrice);
+                      const maxMarkets = MARKET_CONFIGS.filter((m) => row.markets[m.id]?.harga_terakhir === maxPrice);
+
+                      return (
+                        <div
+                          key={row.komoditas_id}
+                          className={`p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs hover:shadow-xs transition-[box-shadow,border-color,background-color] duration-150 flex flex-col gap-2.5 ${
+                            isRowCritical
+                              ? "border-l-4 border-l-rose-600 bg-rose-50/10"
+                              : isRowWarning
+                              ? "border-l-4 border-l-amber-500 bg-amber-50/10"
+                              : "border-l-4 border-l-emerald-600"
+                          }`}
+                        >
+                          {/* Header: Icon, Nama Lengkap, HAP Ref, dan Disparitas Badge */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-2xs ${
+                                  isRowCritical
+                                    ? "bg-rose-100 text-rose-700"
+                                    : isRowWarning
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-emerald-100 text-emerald-800"
+                                }`}
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  {row.icon}
+                                </span>
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <h3 className="font-headline-sm text-xs sm:text-sm text-slate-900 font-bold leading-tight truncate">
+                                  {row.nama_komoditas}
+                                </h3>
+                                <span className="font-label-caps text-[10.5px] text-slate-500 font-medium truncate">
+                                  {row.hapRef}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end shrink-0">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full font-label-caps text-[10.5px] font-bold tracking-wide shrink-0 ${
+                                  isRowCritical
+                                    ? "bg-rose-100 text-rose-800 border border-rose-300"
+                                    : isRowWarning
+                                    ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                    : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                }`}
+                              >
+                                {hasSpread ? `Δ Rp ${spreadRp.toLocaleString("id-ID")}` : row.worstStatus || "NORMAL"}
+                              </span>
+                              {hasSpread && (
+                                <span className="text-slate-500 font-mono text-[9.5px] mt-0.5">
+                                  Disparitas {spreadPct}%
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Quick Insight Bar: Termurah vs Tertinggi (Compact Single Strip) */}
+                          {hasSpread ? (
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* Termurah */}
+                              <div className="bg-emerald-50/90 border border-emerald-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                                <div className="min-w-0">
+                                  <span className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                    <span className="material-symbols-outlined text-[13px] text-emerald-700">arrow_downward</span> Termurah
+                                  </span>
+                                  <span className="text-[11px] text-emerald-950 font-medium truncate block">
+                                    {minMarkets.map((m) => m.shortName).join(", ")}
+                                  </span>
+                                </div>
+                                <span className="text-xs sm:text-sm font-extrabold text-emerald-700 shrink-0 ml-1">
+                                  Rp {minPrice.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+
+                              {/* Tertinggi */}
+                              <div className="bg-rose-50/90 border border-rose-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                                <div className="min-w-0">
+                                  <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                    <span className="material-symbols-outlined text-[13px] text-rose-700">arrow_upward</span> Tertinggi
+                                  </span>
+                                  <span className="text-[11px] text-rose-950 font-medium truncate block">
+                                    {maxMarkets.map((m) => m.shortName).join(", ")}
+                                  </span>
+                                </div>
+                                <span className="text-xs sm:text-sm font-extrabold text-rose-700 shrink-0 ml-1">
+                                  Rp {maxPrice.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                            </div>
+                          ) : minPrice > 0 ? (
+                            <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs flex justify-between items-center">
+                              <span className="text-slate-600 font-medium text-[11px]">Harga Seragam:</span>
+                              <span className="font-bold text-slate-900 text-xs">Rp {minPrice.toLocaleString("id-ID")}</span>
+                            </div>
+                          ) : null}
+
+                          {/* Accordion Toggle Bar */}
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+                            <span className="text-slate-500 font-medium text-[10.5px]">
+                              {row.category}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => toggleCardExpanded(row.komoditas_id, e)}
+                              className="px-2.5 py-1 rounded-lg bg-surface-subtle hover:bg-slate-200 text-slate-700 font-semibold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                            >
+                              <span>{isExpanded ? "Tutup 6 Pasar" : "Lihat 6 Pasar"}</span>
+                              <span
+                                className={`material-symbols-outlined text-sm transition-transform duration-200 ${
+                                  isExpanded ? "rotate-180" : ""
+                                }`}
+                              >
+                                expand_more
+                              </span>
+                            </button>
+                          </div>
+
+                          {/* Expandable 6 Markets Breakdown List */}
+                          {isExpanded && (
+                            <div className="pt-2 border-t border-dashed border-slate-200 flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between text-[10.5px] text-slate-500 font-medium mb-0.5">
+                                <span className="font-bold text-slate-700 uppercase tracking-wider font-label-caps">
+                                  Rincian 6 Pasar Pantauan:
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {MARKET_CONFIGS.map((m) => {
+                                  const marketItem = row.markets[m.id];
+                                  const price = marketItem?.harga_terakhir || 0;
+                                  const isMin = hasSpread && price === minPrice;
+                                  const isMax = hasSpread && price === maxPrice;
+
+                                  return (
+                                    <div
+                                      key={m.id}
+                                      className={`px-2 py-1.5 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                                        isMin
+                                          ? "bg-emerald-50/80 border-emerald-300 text-emerald-950 font-semibold"
+                                          : isMax
+                                          ? "bg-rose-50/80 border-rose-300 text-rose-950 font-semibold"
+                                          : "bg-slate-50/70 border-slate-200 text-slate-800"
+                                      }`}
+                                    >
+                                      <div className="min-w-0 pr-1 flex items-center gap-1">
+                                        <span className="truncate text-[11px] font-medium" title={m.name}>
+                                          {m.shortName}
+                                        </span>
+                                        {isMin && (
+                                          <span className="text-[8.5px] font-extrabold text-emerald-800 bg-emerald-100 px-1 py-0.2 rounded">
+                                            Min
+                                          </span>
+                                        )}
+                                        {isMax && (
+                                          <span className="text-[8.5px] font-extrabold text-rose-800 bg-rose-100 px-1 py-0.2 rounded">
+                                            Max
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span
+                                        className={`text-[11px] shrink-0 font-bold ${
+                                          isMin ? "text-emerald-700" : isMax ? "text-rose-700" : "text-slate-900"
+                                        }`}
+                                      >
+                                        Rp {price > 0 ? price.toLocaleString("id-ID") : "-"}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Table Footer Actions: Pagination */}
                 <div className="p-space-md bg-surface-subtle/30 flex flex-col sm:flex-row items-center justify-between gap-space-sm border-t border-border-subtle/40">
-                  <div className="flex items-center gap-space-xs text-body-sm text-text-secondary">
+                  <div className="flex items-center gap-space-xs text-body-sm text-text-secondary text-xs sm:text-sm">
                     <span>
                       Menampilkan{" "}
                       <strong className="text-on-surface font-bold">
@@ -851,56 +1099,46 @@ export default function EarlyWarningPage() {
                     </span>
                   </div>
 
-                  {/* Pagination Controls & Green Export Button */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {totalPages > 1 && (
-                      <div className="flex items-center gap-1 bg-surface-card p-1 rounded-xl border border-border-subtle shadow-xs">
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-1 bg-surface-card p-1 rounded-xl border border-border-subtle shadow-xs">
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                        title="Halaman Sebelumnya"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">chevron_left</span>
+                        <span className="hidden sm:inline">Sebelumnya</span>
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <button
-                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                          disabled={currentPage === 1}
-                          className="px-2.5 py-1 rounded-lg text-body-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary"
-                          title="Halaman Sebelumnya"
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-7.5 h-7.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                            currentPage === page
+                              ? "bg-primary text-white shadow-xs"
+                              : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
+                          }`}
                         >
-                          <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-                          <span className="hidden sm:inline">Sebelumnya</span>
+                          {page}
                         </button>
+                      ))}
 
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`w-8 h-8 rounded-lg font-headline-sm text-body-sm font-bold transition-all cursor-pointer ${
-                              currentPage === page
-                                ? "bg-primary text-on-primary shadow-xs"
-                                : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-
-                        <button
-                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                          disabled={currentPage === totalPages}
-                          className="px-2.5 py-1 rounded-lg text-body-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary"
-                          title="Halaman Berikutnya"
-                        >
-                          <span className="hidden sm:inline">Berikutnya</span>
-                          <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                        </button>
-                      </div>
-                    )}
-
-                    <button
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.98] text-white font-headline-sm text-body-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
-                      onClick={exportMatrixCSV}
-                      title="Unduh matriks perbandingan harga komoditas dalam format CSV"
-                    >
-                      <span className="material-symbols-outlined text-body-md">download</span>
-                      <span>Ekspor Matrix (.CSV)</span>
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                        title="Halaman Berikutnya"
+                      >
+                        <span className="hidden sm:inline">Berikutnya</span>
+                        <span className="material-symbols-outlined text-[15px]">chevron_right</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+
               </div>
             </div>
           </div>

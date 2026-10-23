@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Clean ETL Ingestion & Preprocessing Pipeline -->
+  <rect width="64" height="64" rx="14" fill="#D97706" fill-opacity="0.08"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" stroke="#D97706" stroke-width="1.5" stroke-opacity="0.3"/>
+  <path d="M 18 18 L 46 18 L 38 34 L 38 46 L 26 46 L 26 34 Z" stroke="#D97706" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="26" r="3" fill="#D97706"/>
+  <path d="M 28 52 L 32 56 L 36 52" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>HargaWatch — Concept C: The Market Balance Monogram HW</title>
+  <!-- Architectural 'H' Pillars (Pilar Pasar Surabaya) -->
+  <rect x="44" y="48" width="24" height="160" rx="8" fill="#004328" />
+  <rect x="188" y="48" width="24" height="160" rx="8" fill="#004328" />
+  
+  <!-- 'W' Dynamic Market Wave & Balance Fulcrum -->
+  <path fill="#059669" fill-rule="evenodd" d="M 68 120 L 98 120 L 114 168 L 128 128 L 142 168 L 158 120 L 188 120 L 162 192 C 160 198 154 202 148 202 C 142 202 136 198 134 192 L 128 174 L 122 192 C 120 198 114 202 108 202 C 102 202 96 198 94 192 Z" />
+  
+  <!-- Horizontal Stabilization Bar (Neraca Keseimbangan Harga) -->
+  <rect x="68" y="86" width="120" height="14" rx="7" fill="#004328" />
+  
+  <!-- Early Warning Focus Signal Core -->
+  <circle cx="128" cy="86" r="6" fill="#D97706" />
+</svg>

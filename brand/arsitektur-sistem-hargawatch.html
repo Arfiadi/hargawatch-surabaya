@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Arsitektur Sistem HargaWatch Surabaya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background-color: #FFFFFF;
+      background-image: radial-gradient(#E2E8F0 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: #0F172A;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      width: 1920px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 20;
+    }
+    .header-logo {
+      width: 44px;
+      height: 44px;
+      filter: drop-shadow(0 4px 10px rgba(13, 148, 136, 0.25));
+    }
+    .header-title {
+      font-size: 34px;
+      font-weight: 800;
+      color: #0B2B48;
+      letter-spacing: -0.5px;
+    }
+
+    /* Common Card Styles */
+    .card {
+      position: absolute;
+      border-radius: 12px;
+      background: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      overflow: hidden;
+    }
+    .card-title {
+      padding: 13px 14px;
+      font-size: 15.5px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+
+    /* 1. Sumber Data Eksternal */
+    .box-sources {
+      left: 45px;
+      top: 110px;
+      width: 230px;
+      height: 490px;
+      border: 1.5px solid #BAE6FD;
+      background: #F0F9FF;
+    }
+    .box-sources .card-title {
+      background: #E0F2FE;
+      color: #0369A1;
+      border-bottom: 1.5px solid #BAE6FD;
+      padding: 15px 12px;
+      font-size: 15px;
+    }
+    .sources-list {
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+      justify-content: space-around;
+    }
+    .source-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #FFFFFF;
+      border: 1px solid #BAE6FD;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 5px rgba(2, 132, 199, 0.05);
+    }
+    .source-icon {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    .source-text h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0F172A;
+      line-height: 1.3;
+    }
+    .source-text p {
+      font-size: 11px;
+      color: #0284C7;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* 2. Pipeline ETL */
+    .box-etl {
+      left: 335px;
+      top: 140px;
+      width: 240px;
+      height: 430px;
+      border: 2px solid #F59E0B;
+      background: #FFFBEB;
+    }
+    .box-etl .card-title {
+      background: #F59E0B;
+      color: #FFFFFF;
+      padding: 14px;
+      font-size: 16px;
+    }
+    .etl-content {
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .etl-step {
+      width: 100%;
+      background: #FBBF24;
+      border-radius: 10px;
+      padding: 13px 8px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(245, 158, 11, 0.25);
+    }
+    .etl-step h4 {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #78350F;
+    }
+    .etl-step p {
+      font-size: 10.5px;
+      color: #92400E;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+    .etl-arrow {
+      color: #D97706;
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* Task Scheduler Lokal */
+    .box-scheduler {
+      position: absolute;
+      left: 345px;
+      top: 630px;
+      width: 220px;
+      height: 85px;
+      border: 2px dashed #0284C7;
+      border-radius: 12px;
+      background: #F0F9FF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px;
+      z-index: 10;
+    }
+    .box-scheduler h4 {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0369A1;
+    }
+    .box-scheduler p {
+      font-size: 11px;
+      color: #0284C7;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Developer/Admin */
+    .actor-dev-card {
+      position: absolute;
+      left: 418px;
+      top: 770px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+    }
+    .actor-char-img {
+      height: 76px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.08));
+    }
+    .actor-dev-card .actor-label {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+
+    /* 3. Supabase Database */
+    .box-db {
+      left: 665px;
+      top: 110px;
+      width: 290px;
+      height: 650px;
+      border: 2px solid #0D9488;
+      background: #F0FDFA;
+    }
+    .box-db .card-title {
+      background: #0D9488;
+      color: #FFFFFF;
+      padding: 14px;
+      font-size: 16px;
+    }
+    .db-content {
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .db-section {
+      background: #FFFFFF;
+      border-radius: 10px;
+      border: 1px solid #CCFBF1;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(13, 148, 136, 0.05);
+    }
+    .db-pill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .db-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      background: #F0FDFA;
+      border: 1px solid #99F6E4;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #115E59;
+    }
+    .db-pill.dashed {
+      border: 1.5px dashed #0D9488;
+      background: #FFFFFF;
+      color: #0F766E;
+    }
+    .db-cyl-icon {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: #0D9488;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* 4. Mesin Analitik */
+    .box-analytics {
+      left: 1060px;
+      top: 150px;
+      width: 220px;
+      height: 510px;
+      border: 2px dashed #F59E0B;
+      background: #FFFDF5;
+    }
+    .box-analytics .card-title {
+      background: #FEF3C7;
+      color: #92400E;
+      border-bottom: 2px dashed #F59E0B;
+      padding: 14px;
+      font-size: 15px;
+    }
+    .analytics-content {
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .engine-box {
+      width: 100%;
+      background: #FBBF24;
+      border-radius: 10px;
+      padding: 16px 10px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);
+    }
+    .engine-box h4 {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #78350F;
+    }
+    .engine-box p {
+      font-size: 10.5px;
+      color: #92400E;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .engine-artifacts {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1.5px dashed #F59E0B;
+      border-radius: 8px;
+      padding: 10px 8px;
+      background: #FFFBEB;
+    }
+
+    /* 5. Dashboard Next.js */
+    .box-dashboard {
+      left: 1350px;
+      top: 150px;
+      width: 220px;
+      height: 440px;
+      border: 2px dashed #D97706;
+      background: #FFFBEB;
+    }
+    .box-dashboard .card-title {
+      background: #FDE68A;
+      color: #92400E;
+      border-bottom: 2px dashed #D97706;
+      padding: 14px;
+      font-size: 15px;
+    }
+    .dash-content {
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .dash-icon-wrap {
+      width: 56px;
+      height: 56px;
+    }
+    .dash-features {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .dash-feat-item {
+      background: #FFFFFF;
+      border: 1.5px solid #FCD34D;
+      border-radius: 8px;
+      padding: 10px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #78350F;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(217, 119, 6, 0.08);
+    }
+
+    /* Right Side Actors */
+    .actor-right-box {
+      position: absolute;
+      left: 1710px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+      z-index: 10;
+    }
+    .actor-right-box .actor-label {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0F172A;
+      line-height: 1.25;
+    }
+
+    /* Legenda */
+    .legend-box {
+      position: absolute;
+      left: 45px;
+      top: 790px;
+      width: 290px;
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+    .legend-title {
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #334155;
+    }
+    .leg-badge {
+      width: 24px;
+      height: 15px;
+      border-radius: 4px;
+    }
+    .leg-badge.orange { background: #FBBF24; border: 1px solid #D97706; }
+    .leg-badge.teal { background: #14B8A6; border: 1px solid #0D9488; }
+    .leg-badge.dashed { border: 1.5px dashed #0D9488; background: #F0FDFA; }
+
+    /* SVG Connectors Canvas: 1:1 Pixel Mapping */
+    .svg-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* SVG Text Styling */
+    .svg-text {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      paint-order: stroke fill;
+      stroke: #FFFFFF;
+      stroke-width: 6px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .svg-text.blue { fill: #0284C7; }
+    .svg-text.teal { fill: #0D9488; }
+    .svg-text.orange { fill: #D97706; }
+    .svg-text.slate { fill: #475569; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header-bar">
+    <img src="concepts/concept-a-sentinel.svg" alt="HargaWatch Logo" class="header-logo">
+    <h1 class="header-title">Arsitektur Sistem HargaWatch Surabaya</h1>
+  </div>
+
+  <!-- SVG Connectors & Text (1:1 Exact Pixel Overlay) -->
+  <svg class="svg-canvas" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <defs>
+      <!-- Dedicated markers to prevent glitching -->
+      <marker id="m-blue-right" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="#0284C7" />
+      </marker>
+      <marker id="m-blue-left" markerWidth="9" markerHeight="9" refX="1" refY="4.5" orient="auto">
+        <path d="M 9 0 L 0 4.5 L 9 9 Z" fill="#0284C7" />
+      </marker>
+
+      <marker id="m-teal-right" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="#0D9488" />
+      </marker>
+      <marker id="m-teal-left" markerWidth="9" markerHeight="9" refX="1" refY="4.5" orient="auto">
+        <path d="M 9 0 L 0 4.5 L 9 9 Z" fill="#0D9488" />
+      </marker>
+
+      <marker id="m-orange-right" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="#D97706" />
+      </marker>
+      <marker id="m-orange-left" markerWidth="9" markerHeight="9" refX="1" refY="4.5" orient="auto">
+        <path d="M 9 0 L 0 4.5 L 9 9 Z" fill="#D97706" />
+      </marker>
+
+      <marker id="m-blue-up" markerWidth="9" markerHeight="9" refX="4.5" refY="1" orient="auto">
+        <path d="M 0 9 L 4.5 0 L 9 9 Z" fill="#0284C7" />
+      </marker>
+      <marker id="m-teal-up" markerWidth="9" markerHeight="9" refX="4.5" refY="1" orient="auto">
+        <path d="M 0 9 L 4.5 0 L 9 9 Z" fill="#0D9488" />
+      </marker>
+      <marker id="m-slate-up" markerWidth="9" markerHeight="9" refX="4.5" refY="1" orient="auto">
+        <path d="M 0 9 L 4.5 0 L 9 9 Z" fill="#475569" />
+      </marker>
+
+      <marker id="m-orange-up" markerWidth="9" markerHeight="9" refX="4.5" refY="1" orient="auto">
+        <path d="M 0 9 L 4.5 0 L 9 9 Z" fill="#D97706" />
+      </marker>
+      <marker id="m-orange-down" markerWidth="9" markerHeight="9" refX="4.5" refY="8" orient="auto">
+        <path d="M 0 0 L 4.5 9 L 9 0 Z" fill="#D97706" />
+      </marker>
+    </defs>
+
+    <!-- 1. Sources -> ETL (Scrape harian) -->
+    <!-- Sources right = 275, ETL left = 335, y = 355 -->
+    <line x1="275" y1="355" x2="333" y2="355" stroke="#0284C7" stroke-width="2.5" marker-end="url(#m-blue-right)" />
+    <text x="305" y="335" class="svg-text blue">Scrape</text>
+    <text x="305" y="348" class="svg-text blue">harian</text>
+
+    <!-- 2. ETL -> Supabase (Upper: Data bersih silver layer) -->
+    <!-- ETL right = 575, Supabase left = 665, y = 230 -->
+    <line x1="575" y1="230" x2="663" y2="230" stroke="#0D9488" stroke-width="2.5" marker-end="url(#m-teal-right)" />
+    <text x="620" y="208" class="svg-text teal">Data bersih</text>
+    <text x="620" y="222" class="svg-text teal" style="font-size: 10px;">(silver layer)</text>
+
+    <!-- 3. ETL -> Supabase (Lower: Upsert) -->
+    <!-- ETL right = 575, Supabase left = 665, y = 480 -->
+    <line x1="575" y1="480" x2="663" y2="480" stroke="#0D9488" stroke-width="2.5" marker-end="url(#m-teal-right)" />
+    <text x="620" y="468" class="svg-text teal">Upsert</text>
+
+    <!-- 4. Developer -> Scheduler (Jalankan & monitor pipeline) -->
+    <!-- Dev top = 770, Scheduler bottom = 715, x = 455 -->
+    <line x1="455" y1="768" x2="455" y2="717" stroke="#475569" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-slate-up)" />
+    <text x="468" y="742" class="svg-text slate" style="text-anchor: start; font-size: 11px;">Jalankan &amp; monitor pipeline</text>
+
+    <!-- 5. Scheduler -> ETL (Dashed vertical arrow) -->
+    <!-- Scheduler top = 630, ETL bottom = 570, x = 455 -->
+    <line x1="455" y1="630" x2="455" y2="572" stroke="#0284C7" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-blue-up)" />
+
+    <!-- 6. Supabase -> Mesin Analitik (Top: Fitur & riwayat harga) -->
+    <!-- Supabase right = 955, Analytics left = 1060, y = 230 -->
+    <line x1="955" y1="230" x2="1058" y2="230" stroke="#0D9488" stroke-width="2.5" marker-end="url(#m-teal-right)" />
+    <text x="1008" y="210" class="svg-text teal">Fitur &amp;</text>
+    <text x="1008" y="223" class="svg-text teal" style="font-size: 10.5px;">riwayat harga</text>
+
+    <!-- 7. Supabase <-> Mesin Analitik (Middle: REST API Supabase Client) -->
+    <!-- Supabase right = 955, Analytics left = 1060, y = 375 -->
+    <line x1="957" y1="375" x2="1058" y2="375" stroke="#0D9488" stroke-width="2.5" marker-start="url(#m-teal-left)" marker-end="url(#m-teal-right)" />
+    <text x="1008" y="352" class="svg-text teal">REST API</text>
+    <text x="1008" y="366" class="svg-text teal" style="font-size: 10px;">(Supabase Client)</text>
+
+    <!-- 8. Mesin Analitik -> Supabase (Bottom: Hasil proyeksi & skor risiko) -->
+    <!-- Analytics left = 1060, Supabase right = 955, y = 510 -->
+    <line x1="1060" y1="510" x2="957" y2="510" stroke="#D97706" stroke-width="2.5" marker-end="url(#m-orange-left)" />
+    <text x="1008" y="488" class="svg-text orange">Hasil proyeksi &amp;</text>
+    <text x="1008" y="502" class="svg-text orange">skor risiko</text>
+
+    <!-- Vertical dashed line inside Mesin Analitik (EWS Engine <-> fact boxes) -->
+    <line x1="1170" y1="465" x2="1170" y2="520" stroke="#D97706" stroke-width="2" stroke-dasharray="4 3" marker-start="url(#m-orange-up)" marker-end="url(#m-orange-down)" />
+
+    <!-- 9. Mesin Analitik <-> Dashboard Next.js (REST API) -->
+    <!-- Analytics right = 1280, Dashboard left = 1350, y = 375 -->
+    <line x1="1282" y1="375" x2="1348" y2="375" stroke="#D97706" stroke-width="2.5" marker-start="url(#m-orange-left)" marker-end="url(#m-orange-right)" />
+    <text x="1315" y="354" class="svg-text orange">REST</text>
+    <text x="1315" y="368" class="svg-text orange">API</text>
+
+    <!-- 10. Supabase -> Dashboard Next.js (Query Line via Bottom) -->
+    <!-- Supabase bottom = 760, center = 810; drops to 800, runs to 1460, turns up to Dashboard bottom = 590 -->
+    <path d="M 810 760 L 810 800 L 1460 800 L 1460 592" fill="none" stroke="#0D9488" stroke-width="2.5" marker-end="url(#m-teal-up)" />
+    <text x="1135" y="788" class="svg-text teal" style="font-size: 13px; font-weight: 800;">Query</text>
+
+    <!-- 11. Dashboard <-> Warga & UMKM -->
+    <!-- Dashboard right = 1570, Actor left = 1710, y = 210 -->
+    <line x1="1572" y1="210" x2="1708" y2="210" stroke="#0284C7" stroke-width="2.5" marker-start="url(#m-blue-left)" marker-end="url(#m-blue-right)" />
+    <text x="1640" y="188" class="svg-text blue">Cek harga &amp;</text>
+    <text x="1640" y="202" class="svg-text blue">rencana belanja</text>
+
+    <!-- 12. Dashboard <-> Analis TPID / Satgas Pangan -->
+    <!-- Dashboard right = 1570, Actor left = 1710, y = 430 -->
+    <line x1="1572" y1="430" x2="1708" y2="430" stroke="#0284C7" stroke-width="2.5" marker-start="url(#m-blue-left)" marker-end="url(#m-blue-right)" />
+    <text x="1640" y="408" class="svg-text blue">Pantau risiko &amp;</text>
+    <text x="1640" y="422" class="svg-text blue">rekomendasi</text>
+  </svg>
+
+  <!-- 1. Sumber Data Eksternal -->
+  <div class="card box-sources">
+    <div class="card-title">Sumber Data Eksternal</div>
+    <div class="sources-list">
+      <div class="source-item">
+        <img src="diagram-icons/sumber-data.svg" class="source-icon" alt="SISKAPERBAPO">
+        <div class="source-text">
+          <h4>SISKAPERBAPO<br>Jatim</h4>
+          <p>(harga 6 pasar)</p>
+        </div>
+      </div>
+      <div class="source-item">
+        <img src="diagram-icons/sumber-data.svg" class="source-icon" alt="Open-Meteo">
+        <div class="source-text">
+          <h4>Open-Meteo</h4>
+          <p>(cuaca)</p>
+        </div>
+      </div>
+      <div class="source-item">
+        <img src="diagram-icons/sumber-data.svg" class="source-icon" alt="BPS">
+        <div class="source-text">
+          <h4>BPS</h4>
+          <p>(inflasi)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Pipeline ETL -->
+  <div class="card box-etl">
+    <div class="card-title">Pipeline ETL</div>
+    <div class="etl-content">
+      <div class="etl-step">
+        <h4>Scraper &amp; Downloader</h4>
+      </div>
+      <div class="etl-arrow">&darr;</div>
+      <div class="etl-step">
+        <h4>Preprocessing</h4>
+        <p>(validasi, dual-price, forward-fill)</p>
+      </div>
+      <div class="etl-arrow">&darr;</div>
+      <div class="etl-step">
+        <h4>Ingest Supabase</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Scheduler Lokal -->
+  <div class="box-scheduler">
+    <h4>Task Scheduler Lokal</h4>
+    <p>(harian 07:00, catch-up)</p>
+  </div>
+
+  <!-- Developer/Admin -->
+  <div class="actor-dev-card">
+    <img src="diagram-icons/char-dev-clean.png" class="actor-char-img" alt="Developer / Admin">
+    <span class="actor-label">Developer/Admin</span>
+  </div>
+
+  <!-- 3. Supabase PostgreSQL -->
+  <div class="card box-db">
+    <div class="card-title">Supabase PostgreSQL</div>
+    <div class="db-content">
+      <!-- Dimensi -->
+      <div class="db-section">
+        <div class="db-pill-list">
+          <div class="db-pill">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            dim_pasar
+          </div>
+          <div class="db-pill">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            dim_komoditas
+          </div>
+          <div class="db-pill">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            dim_kalender
+          </div>
+        </div>
+      </div>
+
+      <!-- Fakta -->
+      <div class="db-section">
+        <div class="db-pill-list">
+          <div class="db-pill">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            fact_harga_pasar
+          </div>
+          <div class="db-pill">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            fact_harga_produsen
+          </div>
+          <div class="db-pill">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            fact_cuaca
+          </div>
+          <div class="db-pill">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            fact_inflasi
+          </div>
+        </div>
+      </div>
+
+      <!-- Hasil Inferensi Rencana -->
+      <div class="db-section" style="border: 1.5px dashed #0D9488; background: #FAFEFD;">
+        <div class="db-pill-list">
+          <div class="db-pill dashed">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            fact_forecast
+          </div>
+          <div class="db-pill dashed">
+            <svg class="db-cyl-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            fact_early_warning
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Mesin Analitik -->
+  <div class="card box-analytics">
+    <div class="card-title">Mesin Analitik</div>
+    <div class="analytics-content">
+      <div class="engine-box">
+        <h4>Forecast Engine</h4>
+        <p>(LightGBM/CatBoost,<br>H+1 s/d H+14)</p>
+      </div>
+
+      <div class="engine-box" style="background: #F59E0B;">
+        <h4 style="color: #FFFFFF;">EWS Engine</h4>
+        <p style="color: #FEF3C7;">(skor 4 pilar)</p>
+      </div>
+
+      <div class="engine-artifacts">
+        <div class="db-pill dashed" style="font-size: 11.5px; justify-content: center;">fact_forecast</div>
+        <div class="db-pill dashed" style="font-size: 11.5px; justify-content: center;">fact_early_warning</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Dashboard Next.js -->
+  <div class="card box-dashboard">
+    <div class="card-title">Dashboard Next.js</div>
+    <div class="dash-content">
+      <img src="diagram-icons/dashboard-web.svg" class="dash-icon-wrap" alt="Dashboard Next.js">
+      <div class="dash-features">
+        <div class="dash-feat-item">Beranda &amp; Best Price</div>
+        <div class="dash-feat-item">Peta Disparitas</div>
+        <div class="dash-feat-item">Early Warning</div>
+        <div class="dash-feat-item">Peramalan</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Right Side Actors -->
+  <div class="actor-right-box" style="top: 155px;">
+    <img src="diagram-icons/char-warga-clean.png" class="actor-char-img" alt="Warga & UMKM">
+    <span class="actor-label">Warga &amp; UMKM</span>
+  </div>
+
+  <div class="actor-right-box" style="top: 375px;">
+    <img src="diagram-icons/char-analis-clean.png" class="actor-char-img" alt="Analis TPID / Satgas Pangan">
+    <span class="actor-label">Analis TPID /<br>Satgas Pangan</span>
+  </div>
+
+  <!-- Legenda -->
+  <div class="legend-box">
+    <div class="legend-title">Legenda:</div>
+    <div class="legend-row">
+      <div class="leg-badge orange"></div>
+      <span>= Proses / Modul</span>
+    </div>
+    <div class="legend-row">
+      <div class="leg-badge teal"></div>
+      <span>= Database</span>
+    </div>
+    <div class="legend-row">
+      <div class="leg-badge dashed"></div>
+      <span>= Rencana / Belum diimplementasi</span>
+    </div>
+  </div>
+
+</body>
+</html>
