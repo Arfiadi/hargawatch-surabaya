@@ -238,9 +238,14 @@ export default function HomePage() {
     loadMainData();
   }, []);
 
-  // Monitor scroll: floating basket appears only when truly inside Best Price Finder and disappears once scrolled past
+  // Monitor scroll: floating basket appears only when truly inside Best Price Finder and disappears once scrolled past (mobile/tablet only)
   useEffect(() => {
     const handleScroll = () => {
+      // Pada layar desktop (lg ke atas), keranjang belanja sudah tampil berdampingan di kolom kanan
+      if (window.innerWidth >= 1024) {
+        setShowFloatingBasket(false);
+        return;
+      }
       const el = document.getElementById("best-price-finder-section");
       if (!el) return;
       const rect = el.getBoundingClientRect();
@@ -2114,11 +2119,11 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Floating Sticky Cart Bar (Portal langsung ke document.body agar tidak terjebak container transform, otomatis menghilang saat scroll lewat Best Price Finder) */}
+      {/* Floating Sticky Cart Bar (Portal langsung ke document.body agar tidak terjebak container transform, otomatis menghilang saat scroll lewat Best Price Finder, dan disembunyikan pada layar desktop) */}
       {isMounted && typeof document !== "undefined" && basketList.length > 0 && createPortal(
         <aside
           aria-label="Keranjang Belanja Mengambang"
-          className={`fixed bottom-5 left-0 right-0 mx-auto w-[calc(100%-24px)] max-w-md z-[9999] transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[transform,opacity] transform ${
+          className={`lg:hidden fixed bottom-5 left-0 right-0 mx-auto w-[calc(100%-24px)] max-w-md z-[9999] transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[transform,opacity] transform ${
             showFloatingBasket
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 translate-y-8 pointer-events-none"
