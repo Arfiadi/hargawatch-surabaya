@@ -62,9 +62,9 @@
     "komoditas_id": 16,
     "commodity": "Telur Ayam Ras",
     "horizon": 7,
-    "model_name": "CatBoost p50",
-    "wape_pct": 3.22,
-    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\catboost_16_h7.pkl",
+    "model_name": "XGBoost p50",
+    "wape_pct": 3.04,
+    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\xgboost_16_h7.pkl",
     "features": [
       "pasar_id",
       "price_current",
@@ -78,17 +78,20 @@
       "rolling_mean_14d",
       "rolling_std_14d",
       "pct_change_1d",
-      "pct_change_7d"
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
     ],
-    "updated_at": "2026-10-11T19:23:06.721849"
+    "updated_at": "2026-10-23T19:35:43.560849"
   },
   "10_h7": {
     "komoditas_id": 10,
     "commodity": "Minyak Goreng Curah",
     "horizon": 7,
-    "model_name": "LightGBM p50",
-    "wape_pct": 1.5,
-    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\lightgbm_10_h7.pkl",
+    "model_name": "Naive Last Value",
+    "wape_pct": 0.23,
+    "model_path": null,
     "features": [
       "pasar_id",
       "price_current",
@@ -102,9 +105,12 @@
       "rolling_mean_14d",
       "rolling_std_14d",
       "pct_change_1d",
-      "pct_change_7d"
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
     ],
-    "updated_at": "2026-10-11T19:23:08.119939"
+    "updated_at": "2026-10-23T19:38:38.645533"
   },
   "2_h7": {
     "komoditas_id": 2,
@@ -126,9 +132,12 @@
       "rolling_mean_14d",
       "rolling_std_14d",
       "pct_change_1d",
-      "pct_change_7d"
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
     ],
-    "updated_at": "2026-10-11T19:23:08.119967"
+    "updated_at": "2026-10-23T19:44:24.423011"
   },
   "13_h7": {
     "komoditas_id": 13,
@@ -150,9 +159,12 @@
       "rolling_mean_14d",
       "rolling_std_14d",
       "pct_change_1d",
-      "pct_change_7d"
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
     ],
-    "updated_at": "2026-10-11T19:23:08.119985"
+    "updated_at": "2026-10-23T19:41:40.307935"
   },
   "3_h7": {
     "komoditas_id": 3,
