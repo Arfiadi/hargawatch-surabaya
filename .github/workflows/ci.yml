@@ -12,6 +12,9 @@ on:
       - main
       - development
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -58,6 +61,10 @@ jobs:
       - name: Install dependencies
         working-directory: web
         run: npm ci
+
+      - name: Security audit dependencies
+        working-directory: web
+        run: npm audit --audit-level=high
 
       - name: Build Next.js
         working-directory: web
