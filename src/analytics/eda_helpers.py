@@ -11,8 +11,6 @@ from typing import Dict, Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 from statsmodels.tsa.stattools import adfuller, kpss, acf, pacf

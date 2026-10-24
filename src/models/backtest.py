@@ -172,7 +172,7 @@ def run_walk_forward_backtest(
         "all", "ensemble", "lightgbm", "lgb", "lgbm", "ridge", "linear",
         "naive", "naive_last", "naivelastvalue", "naive_sma", "sma",
         "xgboost", "xgb", "catboost", "cb", "auto_arima", "arima", "auto_ets", "ets",
-        "sanity", "statistical", "gbdt"
+        "sanity", "statistical", "gbdt", "fast", "benchmark"
     }
     norm_model = model_type.lower().strip()
     if norm_model not in valid_models:
@@ -181,12 +181,13 @@ def run_walk_forward_backtest(
         )
 
     eval_all = norm_model in ["all", "ensemble"]
-    do_naive_last = eval_all or norm_model in ["naive", "naive_last", "naivelastvalue", "sanity"]
-    do_naive_sma = eval_all or norm_model in ["naive_sma", "sma", "sanity"]
-    do_ridge = eval_all or norm_model in ["ridge", "linear"]
-    do_lightgbm = eval_all or norm_model in ["lightgbm", "lgb", "lgbm", "gbdt"]
-    do_xgboost = eval_all or norm_model in ["xgboost", "xgb", "gbdt"]
-    do_catboost = eval_all or norm_model in ["catboost", "cb", "gbdt"]
+    do_fast = eval_all or norm_model in ["fast", "benchmark"]
+    do_naive_last = eval_all or do_fast or norm_model in ["naive", "naive_last", "naivelastvalue", "sanity"]
+    do_naive_sma = eval_all or do_fast or norm_model in ["naive_sma", "sma", "sanity"]
+    do_ridge = eval_all or do_fast or norm_model in ["ridge", "linear"]
+    do_lightgbm = eval_all or do_fast or norm_model in ["lightgbm", "lgb", "lgbm", "gbdt"]
+    do_xgboost = eval_all or do_fast or norm_model in ["xgboost", "xgb", "gbdt"]
+    do_catboost = eval_all or do_fast or norm_model in ["catboost", "cb", "gbdt"]
     do_auto_arima = eval_all or norm_model in ["auto_arima", "arima", "statistical"]
     do_auto_ets = eval_all or norm_model in ["auto_ets", "ets", "statistical"]
 
