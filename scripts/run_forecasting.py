@@ -180,7 +180,7 @@ def train_and_forecast_commodity(
     # If stable commodity with Naive champion strategy (Beras, Bawang Putih, Daging Ayam)
     # or if commodity is strategic staple known to be Naive-dominated
     is_naive_champion = (champ_name and "naive" in champ_name.lower()) or (
-        komoditas_id in [2, 13, 3] and not is_cabai
+        komoditas_id in [2, 13, 49] and not is_cabai
     )
 
     all_forecasts = []

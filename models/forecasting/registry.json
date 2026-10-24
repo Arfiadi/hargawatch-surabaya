@@ -166,30 +166,6 @@
     ],
     "updated_at": "2026-10-23T19:41:40.307935"
   },
-  "3_h7": {
-    "komoditas_id": 3,
-    "commodity": "Bawang Putih",
-    "horizon": 7,
-    "model_name": "Naive Last Value",
-    "wape_pct": 3.62,
-    "model_path": null,
-    "features": [
-      "pasar_id",
-      "price_current",
-      "price_lag_1",
-      "price_lag_2",
-      "price_lag_3",
-      "price_lag_7",
-      "price_lag_14",
-      "rolling_mean_7d",
-      "rolling_std_7d",
-      "rolling_mean_14d",
-      "rolling_std_14d",
-      "pct_change_1d",
-      "pct_change_7d"
-    ],
-    "updated_at": "2026-10-11T19:23:08.119999"
-  },
   "7_h7": {
     "komoditas_id": 7,
     "commodity": "Gula Kristal Putih",
