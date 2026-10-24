@@ -1,5 +1,6 @@
 """Skrip Setup Tabel Machine Learning & Early Warning ke Supabase.
-Mengeksekusi DDL untuk membuat tabel `fact_forecast` dan `fact_early_warning`.
+Mengeksekusi DDL untuk membuat tabel `fact_forecast` dan `fact_early_warning`
+serta mengaktifkan Row Level Security (RLS) dan Public Read-Only Policies.
 """
 
 import os
@@ -38,6 +39,20 @@ CREATE TABLE IF NOT EXISTS public.fact_early_warning (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (tanggal, pasar_id, komoditas_id)
 );
+
+-- Row Level Security (RLS) & Public Read-Only Policies
+ALTER TABLE public.fact_forecast ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fact_early_warning ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'fact_forecast' AND policyname = 'Public read-only fact_forecast') THEN
+        CREATE POLICY "Public read-only fact_forecast" ON public.fact_forecast FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'fact_early_warning' AND policyname = 'Public read-only fact_early_warning') THEN
+        CREATE POLICY "Public read-only fact_early_warning" ON public.fact_early_warning FOR SELECT TO anon, authenticated USING (true);
+    END IF;
+END $$;
 """
 
 def koneksi(retry=3):
@@ -73,7 +88,7 @@ def main():
     conn = koneksi()
     try:
         with conn.cursor() as cur:
-            print("Mengeksekusi DDL pembuatan tabel fact_forecast & fact_early_warning...")
+            print("Mengeksekusi DDL pembuatan tabel & RLS fact_forecast & fact_early_warning...")
             cur.execute(DDL_ML)
             conn.commit()
             
@@ -83,6 +98,7 @@ def main():
             
             print("\nSetup Berhasil!")
             print(f"Tabel yang tersedia: {', '.join(tabel_terbuat)}")
+            print("Row Level Security (RLS) & Public read-only policies aktif.")
             
     except psycopg2.Error as e:
         conn.rollback()
