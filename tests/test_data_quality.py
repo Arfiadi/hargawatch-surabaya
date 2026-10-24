@@ -35,3 +35,19 @@ def test_non_positive_price_dropped(sample_price_series):
     # Hari 9 (12000.0) dan Hari 12 (12500.0) harus tetap utuh
     assert df["harga_asli"].iloc[9] == 12000.0
     assert df["harga_asli"].iloc[12] == 12500.0
+
+
+def test_parse_angka_missing_values():
+    """Memastikan string kosong, strip, dan nol di-parse menjadi None (bukan integer 0)."""
+    from src.pipeline.scrape_data import parse_angka as parse_pasar
+    from src.pipeline.scrape_produsen import parse_angka as parse_prod
+
+    for parse_fn in [parse_pasar, parse_prod]:
+        assert parse_fn(None) is None
+        assert parse_fn("") is None
+        assert parse_fn("-") is None
+        assert parse_fn("--") is None
+        assert parse_fn("0") is None
+        assert parse_fn("Rp 0") is None
+        assert parse_fn("16.500") == 16500
+        assert parse_fn("12.500,50") == 12500.5

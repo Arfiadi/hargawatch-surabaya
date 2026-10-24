@@ -63,18 +63,18 @@ def get_html_table(tanggal, retry=3):
 
 
 def parse_angka(teks):
-    """'16.500' -> 16500 ; '-' / '' -> 0"""
+    """'16.500' -> 16500 ; '-' / '' / '0' -> None"""
     if teks is None:
-        return 0
+        return None
     bersih = teks.strip()
-    if not bersih or bersih in ("-", "--"):
-        return 0
+    if not bersih or bersih in ("-", "--", "0", "0,00", "Rp 0"):
+        return None
     bersih = bersih.replace("Rp", "").replace(" ", "").replace(".", "").replace(",", ".")
     try:
         nilai = float(bersih)
-        return int(nilai) if nilai.is_integer() else nilai
+        return None if nilai <= 0 else (int(nilai) if nilai.is_integer() else nilai)
     except ValueError:
-        return 0
+        return None
 
 
 def parse_tabel(html, kota_filter=None):
