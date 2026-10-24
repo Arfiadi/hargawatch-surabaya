@@ -44,3 +44,11 @@ def sample_ews_inputs():
     })
     
     return df_current, df_forecasts
+
+
+@pytest.fixture(autouse=True)
+def mock_raw_datasets_if_missing(monkeypatch):
+    """Automatically fallbacks to synthetic datasets in CI or when local files/DB credentials are absent."""
+    from src.analytics.features import DATA_PROCESSED, generate_mock_raw_datasets
+    if not (DATA_PROCESSED / "fact_harga_pasar.csv").exists():
+        monkeypatch.setattr("src.analytics.features.load_raw_datasets", lambda force_db=False: generate_mock_raw_datasets())

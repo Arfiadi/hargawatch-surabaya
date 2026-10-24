@@ -121,6 +121,19 @@ def run_walk_forward_backtest(
     """
     komoditas_id, canonical_name = resolve_commodity(commodity_name)
 
+    # Validate model_type early (fail-fast)
+    valid_models = {
+        "all", "ensemble", "lightgbm", "lgb", "lgbm", "ridge", "linear",
+        "naive", "naive_last", "naivelastvalue", "naive_sma", "sma",
+        "xgboost", "xgb", "catboost", "cb", "auto_arima", "arima", "auto_ets", "ets",
+        "sanity", "statistical", "gbdt", "fast", "benchmark"
+    }
+    norm_model = model_type.lower().strip()
+    if norm_model not in valid_models:
+        raise ValueError(
+            f"Unsupported model_type '{model_type}'. Expected one of: 'lightgbm', 'xgboost', 'catboost', 'auto_arima', 'auto_ets', 'ridge', 'naive_last', 'naive_sma', 'sanity', 'statistical', 'gbdt', 'all'."
+        )
+
     if verbose:
         print(f"\n[BACKTEST] Building supervised dataset for {canonical_name} (ID: {komoditas_id}), Horizon: {horizon}d...")
     
