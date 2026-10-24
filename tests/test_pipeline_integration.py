@@ -10,7 +10,7 @@ def test_supabase_connection_and_schema():
     """Menguji koneksi langsung ke Supabase dan ketersediaan tabel fact_forecast & fact_early_warning."""
     try:
         conn = koneksi()
-    except Exception as e:
+    except (Exception, SystemExit) as e:
         pytest.skip(f"Koneksi Supabase tidak tersedia pada environment saat ini: {e}")
 
     try:

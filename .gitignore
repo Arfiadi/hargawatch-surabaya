@@ -18,7 +18,9 @@ htmlcov/
 
 # Data (Tetap lokal, di-generate ulang via script)
 data/raw/
-data/processed/
+data/processed/*
+!data/processed/dim_komoditas.csv
+!data/processed/dim_pasar.csv
 data/**/*.json
 
 # ML & Experiment Logs & Model Blobs
