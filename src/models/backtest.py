@@ -121,6 +121,19 @@ def run_walk_forward_backtest(
     """
     komoditas_id, canonical_name = resolve_commodity(commodity_name)
 
+    # Validate model_type early (fail-fast)
+    valid_models = {
+        "all", "ensemble", "lightgbm", "lgb", "lgbm", "ridge", "linear",
+        "naive", "naive_last", "naivelastvalue", "naive_sma", "sma",
+        "xgboost", "xgb", "catboost", "cb", "auto_arima", "arima", "auto_ets", "ets",
+        "sanity", "statistical", "gbdt", "fast", "benchmark"
+    }
+    norm_model = model_type.lower().strip()
+    if norm_model not in valid_models:
+        raise ValueError(
+            f"Unsupported model_type '{model_type}'. Expected one of: 'lightgbm', 'xgboost', 'catboost', 'auto_arima', 'auto_ets', 'ridge', 'naive_last', 'naive_sma', 'sanity', 'statistical', 'gbdt', 'all'."
+        )
+
     if verbose:
         print(f"\n[BACKTEST] Building supervised dataset for {canonical_name} (ID: {komoditas_id}), Horizon: {horizon}d...")
     
@@ -136,12 +149,15 @@ def run_walk_forward_backtest(
         "price_lag_7", "price_lag_14", "rolling_mean_7d", "rolling_std_7d",
         "rolling_mean_14d", "rolling_std_14d", "pct_change_1d", "pct_change_7d"
     ]
+    keputran_cols = ["keputran_price_lag_1", "keputran_price_lag_2", "keputran_price_lag_3"]
+    feature_cols += [c for c in keputran_cols if c in df.columns]
     
-    # Calendar feature toggle
+    # Calendar feature toggle (ablasi weekend D4, sertakan idulfitri D7)
     if include_calendar:
         calendar_cols = [
-            "target_bulan", "target_is_weekend", "target_is_libur_nasional",
-            "target_is_ramadan", "target_is_pra_ramadan"
+            "target_bulan", "target_is_libur_nasional",
+            "target_is_ramadan", "target_is_pra_ramadan",
+            "target_hari_ke_idulfitri"
         ]
         feature_cols += [c for c in calendar_cols if c in df.columns]
 
@@ -169,7 +185,7 @@ def run_walk_forward_backtest(
         "all", "ensemble", "lightgbm", "lgb", "lgbm", "ridge", "linear",
         "naive", "naive_last", "naivelastvalue", "naive_sma", "sma",
         "xgboost", "xgb", "catboost", "cb", "auto_arima", "arima", "auto_ets", "ets",
-        "sanity", "statistical", "gbdt"
+        "sanity", "statistical", "gbdt", "fast", "benchmark"
     }
     norm_model = model_type.lower().strip()
     if norm_model not in valid_models:
@@ -178,12 +194,13 @@ def run_walk_forward_backtest(
         )
 
     eval_all = norm_model in ["all", "ensemble"]
-    do_naive_last = eval_all or norm_model in ["naive", "naive_last", "naivelastvalue", "sanity"]
-    do_naive_sma = eval_all or norm_model in ["naive_sma", "sma", "sanity"]
-    do_ridge = eval_all or norm_model in ["ridge", "linear"]
-    do_lightgbm = eval_all or norm_model in ["lightgbm", "lgb", "lgbm", "gbdt"]
-    do_xgboost = eval_all or norm_model in ["xgboost", "xgb", "gbdt"]
-    do_catboost = eval_all or norm_model in ["catboost", "cb", "gbdt"]
+    do_fast = eval_all or norm_model in ["fast", "benchmark"]
+    do_naive_last = eval_all or do_fast or norm_model in ["naive", "naive_last", "naivelastvalue", "sanity"]
+    do_naive_sma = eval_all or do_fast or norm_model in ["naive_sma", "sma", "sanity"]
+    do_ridge = eval_all or do_fast or norm_model in ["ridge", "linear"]
+    do_lightgbm = eval_all or do_fast or norm_model in ["lightgbm", "lgb", "lgbm", "gbdt"]
+    do_xgboost = eval_all or do_fast or norm_model in ["xgboost", "xgb", "gbdt"]
+    do_catboost = eval_all or do_fast or norm_model in ["catboost", "cb", "gbdt"]
     do_auto_arima = eval_all or norm_model in ["auto_arima", "arima", "statistical"]
     do_auto_ets = eval_all or norm_model in ["auto_ets", "ets", "statistical"]
 

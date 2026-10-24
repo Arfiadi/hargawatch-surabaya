@@ -106,6 +106,40 @@ export const FORECAST_COMMODITIES = [
   { id: 7, name: "Gula Kristal Putih", unit: "kg" },
 ];
 
+/**
+ * Normalizes commodity names to consistent, uniform Title Case.
+ * Eliminates uppercase/screaming entries (e.g. 'KACANG HIJAU' -> 'Kacang Hijau', 'WORTEL' -> 'Wortel').
+ */
+export function formatCommodityName(name: string): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+
+  const overrides: Record<string, string> = {
+    "KACANG HIJAU": "Kacang Hijau",
+    "KACANG TANAH": "Kacang Tanah",
+    "KETELA POHON": "Ketela Pohon",
+    "KOL/KUBIS": "Kol / Kubis",
+    "KOL / KUBIS": "Kol / Kubis",
+    "KENTANG": "Kentang",
+    "WORTEL": "Wortel",
+    "BUNCIS": "Buncis",
+    "Minyak Goreng MINYAKITA": "Minyak Goreng Minyakita",
+    "MINYAK GORENG MINYAKITA": "Minyak Goreng Minyakita",
+    "MINYAKITA": "Minyakita",
+    "Bawang Putih Sinco/Honan": "Bawang Putih Sinco / Honan",
+    "BAWANG PUTIH SINCO/HONAN": "Bawang Putih Sinco / Honan",
+    "Terigu Protein Sedang (Kemasan)": "Terigu Protein Sedang (Kemasan)",
+  };
+
+  if (overrides[trimmed]) {
+    return overrides[trimmed];
+  }
+
+  return trimmed
+    .toLowerCase()
+    .replace(/(^|[\s\/\(\)\-])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase())
+    .replace(/\bMinyakita\b/gi, "Minyakita");
+}
 
 export interface FoodStabilitySummary {
   stabilityIndex: string;
@@ -148,7 +182,7 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
 
     if (!ewsRes.data || ewsRes.data.length === 0) return null;
 
-    const komMap = new Map(komRes.data?.map(k => [k.komoditas_id, k.nama_komoditas]) || []);
+    const komMap = new Map(komRes.data?.map(k => [k.komoditas_id, formatCommodityName(k.nama_komoditas)]) || []);
     const pasarMap = new Map(pasarRes.data?.map(p => [p.pasar_id, p.nama_pasar]) || []);
 
     const total = ewsRes.data.length;
@@ -254,7 +288,7 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
         komoditas_id: cid,
         category: komMeta.grup || "Pangan Pokok",
         tag: komMeta.grup || "Pangan Strategis",
-        name: komMeta.nama_komoditas,
+        name: formatCommodityName(komMeta.nama_komoditas),
         status: isCritical ? "Kritis" : isWarning ? "Waspada" : "Normal",
         isCritical,
         isWarning,
@@ -272,7 +306,7 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
         deltaClass: isCritical ? "text-status-critical" : "text-status-normal",
         sparkPath: "M0,24 L30,22 L60,25 L100,18 L140,16 L170,12 L200,10",
         sparkClass: isCritical ? "text-status-critical" : "text-status-normal",
-        basketItemName: komMeta.nama_komoditas,
+        basketItemName: formatCommodityName(komMeta.nama_komoditas),
         basketItemPrice: cheapestPrice,
       });
     }
@@ -343,7 +377,7 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
         if (harga !== undefined || e !== undefined) {
           items.push({
             komoditas_id: kom.komoditas_id,
-            nama_komoditas: kom.nama_komoditas,
+            nama_komoditas: formatCommodityName(kom.nama_komoditas),
             pasar_id: pas.pasar_id,
             nama_pasar: pas.nama_pasar,
             total_skor: e?.total_skor || 0,
@@ -365,7 +399,7 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
 
     // Nama komoditas yang mengalami alert
     const alertCommodityNames = Array.from(
-      new Set(items.filter(i => i.status_warning !== "NORMAL").map(i => i.nama_komoditas))
+      new Set(items.filter(i => i.status_warning !== "NORMAL").map(i => formatCommodityName(i.nama_komoditas)))
     );
 
     // Format tanggal Indonesia: misal "10 Okt 2026"
@@ -431,7 +465,7 @@ export async function getLiveForecastDetails(komoditasId: number = 50): Promise<
       .single();
 
     const matchedPreset = FORECAST_COMMODITIES.find((c) => c.id === komoditasId);
-    const nama_komoditas = komData?.nama_komoditas || matchedPreset?.name || `Komoditas ${komoditasId}`;
+    const nama_komoditas = formatCommodityName(komData?.nama_komoditas || matchedPreset?.name || `Komoditas ${komoditasId}`);
     const satuan = komData?.satuan || matchedPreset?.unit || "kg";
 
     // 2. Ambil tanggal terbaru dari fact_harga_pasar
@@ -769,7 +803,7 @@ export const ALL_CATALOG_COMMODITIES: CatalogCommodity[] = [
   
   // Minyak & Gula
   { id: 10, name: "Minyak Goreng Curah", unit: "kg", icon: "minyak", shortName: "Minyak Curah", group: "Minyak & Gula" },
-  { id: 96, name: "Minyak Goreng MINYAKITA", unit: "liter", icon: "minyak", shortName: "MINYAKITA", group: "Minyak & Gula" },
+  { id: 96, name: "Minyak Goreng Minyakita", unit: "liter", icon: "minyak", shortName: "Minyakita", group: "Minyak & Gula" },
   { id: 92, name: "Minyak Kemasan Premium", unit: "liter", icon: "minyak", shortName: "Minyak Premium", group: "Minyak & Gula" },
   { id: 7, name: "Gula Kristal Putih", unit: "kg", icon: "gula", shortName: "Gula Pasir", group: "Minyak & Gula" },
   
@@ -1005,7 +1039,7 @@ export async function getLiveMarketComparison(): Promise<MarketComparisonRow[] |
     if (!priceRes.data || priceRes.data.length === 0) return null;
 
     const latestPrices = priceRes.data.filter(p => !isNaN(Number(p.harga_imputasi)));
-    const komMap = new Map(komRes.data ? komRes.data.map(k => [k.komoditas_id, k]) : []);
+    const komMap = new Map(komRes.data ? komRes.data.map(k => [k.komoditas_id, { ...k, nama_komoditas: formatCommodityName(k.nama_komoditas) }]) : []);
 
     // 3. Muat seluruh komoditas katalog lengkap (37/38 komoditas)
     const catalogCids = ALL_CATALOG_COMMODITIES.map(c => c.id);
@@ -1025,7 +1059,7 @@ export async function getLiveMarketComparison(): Promise<MarketComparisonRow[] |
       const row = buildComparisonRow(
         cid,
         {
-          nama_komoditas: catMeta?.name || kMeta?.nama_komoditas || "Komoditas",
+          nama_komoditas: formatCommodityName(catMeta?.name || kMeta?.nama_komoditas || "Komoditas"),
           satuan: catMeta?.unit || kMeta?.satuan || "kg"
         },
         cPrices
@@ -1064,7 +1098,7 @@ function buildComparisonRow(
   // Pasar IDs: 1: Tambahrejo, 2: Wonokromo, 3: Genteng, 4: Pucang, 5: Keputran, 146: Soponyono
   return {
     komoditas_id: cid,
-    komoditas: kMeta.nama_komoditas,
+    komoditas: formatCommodityName(kMeta.nama_komoditas),
     satuan: kMeta.satuan || "kg",
     keputran: pMap[5] || rerata,
     wonokromo: pMap[2] || rerata,
@@ -1109,7 +1143,7 @@ export async function getLiveMarketComparisonForCommodity(
     const row = buildComparisonRow(
       komoditasId,
       {
-        nama_komoditas: catMeta?.name || kMeta.nama_komoditas,
+        nama_komoditas: formatCommodityName(catMeta?.name || kMeta.nama_komoditas),
         satuan: catMeta?.unit || kMeta.satuan,
       },
       latestPrices

@@ -7,8 +7,11 @@ from src.utils.ingest_supabase import koneksi
 conn = koneksi()
 cur = conn.cursor()
 
-# Enable public read for fact_forecast and fact_early_warning
+# Enable Row Level Security (RLS) & Public read-only policies for ML tables
 cur.execute("""
+ALTER TABLE IF EXISTS public.fact_forecast ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.fact_early_warning ENABLE ROW LEVEL SECURITY;
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'fact_forecast' AND policyname = 'Public read-only fact_forecast') THEN
@@ -23,4 +26,4 @@ END $$;
 conn.commit()
 cur.close()
 conn.close()
-print("Success: Policies configured!")
+print("Success: Policies configured with RLS enabled!")

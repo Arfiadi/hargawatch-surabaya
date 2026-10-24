@@ -11,12 +11,13 @@ import {
   getLiveMarketLocations,
   ALL_CATALOG_COMMODITIES,
   MarketComparisonRow,
+  formatCommodityName,
 } from "@/lib/dataService";
 
 const SurabayaMap = dynamic(() => import("@/components/SurabayaMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[580px] bg-surface-subtle rounded-xl border border-border-subtle relative overflow-hidden animate-pulse flex flex-col justify-between p-6 select-none">
+    <div className="w-full h-[370px] sm:h-[440px] lg:h-[580px] bg-surface-subtle rounded-xl border border-border-subtle relative overflow-hidden animate-pulse flex flex-col justify-between p-6 select-none">
       <div className="flex items-center justify-between">
         <div className="h-5 w-48 bg-surface-card rounded" />
         <div className="h-8 w-32 bg-surface-card rounded-lg" />
@@ -37,6 +38,8 @@ const SurabayaMap = dynamic(() => import("@/components/SurabayaMap"), {
 interface ComparisonRowItem {
   komoditas_id: number;
   komoditas: string;
+  icon: string;
+  iconBoxClass: string;
   group: string;
   sub: string;
   satuan: string;
@@ -70,6 +73,49 @@ const catalogGroupOf = (komoditasId: number): string =>
   ALL_CATALOG_COMMODITIES.find((c) => c.id === komoditasId)?.group ||
   "Palawija & Lainnya";
 
+function getCommodityIcon(nama: string): string {
+  const n = (nama || "").toLowerCase();
+  if (n.includes("cabai") || n.includes("cabe")) return "local_fire_department";
+  if (n.includes("bawang")) return "spa";
+  if (n.includes("telur")) return "egg";
+  if (n.includes("minyak")) return "water_drop";
+  if (n.includes("gula")) return "cookie";
+  if (n.includes("garam")) return "grain";
+  if (n.includes("ayam")) return "egg_alt";
+  if (n.includes("sapi") || n.includes("daging")) return "lunch_dining";
+  if (
+    n.includes("ikan") ||
+    n.includes("bandeng") ||
+    n.includes("tongkol") ||
+    n.includes("lele") ||
+    n.includes("kembung")
+  ) {
+    return "set_meal";
+  }
+  if (
+    n.includes("tomat") ||
+    n.includes("kentang") ||
+    n.includes("wortel") ||
+    n.includes("kubis") ||
+    n.includes("sayur")
+  ) {
+    return "eco";
+  }
+  if (n.includes("susu")) return "local_cafe";
+  if (n.includes("mie") || n.includes("indomie")) return "ramen_dining";
+  if (
+    n.includes("beras") ||
+    n.includes("jagung") ||
+    n.includes("terigu") ||
+    n.includes("kedelai") ||
+    n.includes("gandum") ||
+    n.includes("kacang")
+  ) {
+    return "grain";
+  }
+  return "nutrition";
+}
+
 function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
   const isHigh = d.disparitasPct >= 15;
   const isMed = d.disparitasPct >= 8 && d.disparitasPct < 15;
@@ -77,7 +123,13 @@ function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
   const formattedSatuan = rawSatuan.match(/^\d/) ? rawSatuan : `1 ${rawSatuan}`;
   return {
     komoditas_id: d.komoditas_id,
-    komoditas: d.komoditas,
+    komoditas: formatCommodityName(d.komoditas),
+    icon: getCommodityIcon(d.komoditas),
+    iconBoxClass: isHigh
+      ? "bg-status-critical/10 text-status-critical"
+      : isMed
+      ? "bg-status-warning/10 text-status-warning"
+      : "bg-primary/10 text-primary",
     group: catalogGroupOf(d.komoditas_id),
     sub: "Pantauan Harian 6 Pasar",
     satuan: formattedSatuan,
@@ -112,6 +164,17 @@ export default function SpatialMapPage() {
   const [isSortedDesc, setIsSortedDesc] = useState<boolean>(true);
   const [tableSearchQuery, setTableSearchQuery] = useState<string>("");
   const [tableGroupFilter, setTableGroupFilter] = useState<string>("Semua");
+  const [tableCurrentPage, setTableCurrentPage] = useState<number>(1);
+  const [expandedCardIds, setExpandedCardIds] = useState<Record<number, boolean>>({});
+  const TABLE_ITEMS_PER_PAGE = 10;
+
+  const toggleCardExpanded = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedCardIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
   const [marketCoords, setMarketCoords] = useState<Record<number, { lat: number; lng: number }>>({
     1: { lat: -7.2472, lng: 112.7631 }, // Tambahrejo
     2: { lat: -7.3005, lng: 112.7388 }, // Wonokromo
@@ -301,6 +364,16 @@ export default function SpatialMapPage() {
     return r.komoditas.toLowerCase().includes(q) || r.sub.toLowerCase().includes(q);
   });
 
+  useEffect(() => {
+    setTableCurrentPage(1);
+  }, [tableGroupFilter, tableSearchQuery]);
+
+  const totalTablePages = Math.max(1, Math.ceil(filteredTableRows.length / TABLE_ITEMS_PER_PAGE));
+  const paginatedTableRows = useMemo(() => {
+    const start = (tableCurrentPage - 1) * TABLE_ITEMS_PER_PAGE;
+    return filteredTableRows.slice(start, start + TABLE_ITEMS_PER_PAGE);
+  }, [filteredTableRows, tableCurrentPage]);
+
   const handleExportCSV = () => {
     const csvContent =
       "Komoditas Pokok,Satuan,Keputran (Induk),Wonokromo,Pucang Anom,Genteng,Tambahrejo,Soponyono,Rerata Kota,Disparitas Rp,Disparitas %\n" +
@@ -341,27 +414,28 @@ export default function SpatialMapPage() {
 
               {/* Dynamic Quick Telemetry Card */}
               {loadingTable || !activeCommodity ? (
-                <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-xl shadow-sm border border-border-subtle/70 animate-pulse">
-                  <div className="flex flex-col pr-space-sm space-y-1.5">
-                    <div className="w-24 h-3 bg-surface-subtle rounded"></div>
-                    <div className="w-16 h-6 bg-surface-subtle rounded"></div>
+                <div className="grid grid-cols-2 divide-x divide-border-subtle bg-surface-card px-3.5 py-2.5 sm:px-4 rounded-xl shadow-sm border border-border-subtle/70 w-full sm:w-auto shrink-0 animate-pulse">
+                  <div className="flex flex-col pr-3 space-y-1.5 min-w-0">
+                    <div className="w-20 sm:w-28 h-3 bg-surface-subtle rounded"></div>
+                    <div className="w-14 sm:w-16 h-6 bg-surface-subtle rounded"></div>
                   </div>
-                  <div className="w-px h-8 bg-border-subtle"></div>
-                  <div className="flex flex-col pl-space-xs space-y-1.5">
-                    <div className="w-32 h-3 bg-surface-subtle rounded"></div>
-                    <div className="w-28 h-5 bg-surface-subtle rounded"></div>
-                    <div className="w-20 h-3 bg-surface-subtle rounded"></div>
+                  <div className="flex flex-col pl-3 space-y-1.5 min-w-0">
+                    <div className="w-20 sm:w-36 h-3 bg-surface-subtle rounded"></div>
+                    <div className="w-16 sm:w-28 h-5 bg-surface-subtle rounded"></div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-xl shadow-sm border border-border-subtle/70">
-                  <div className="flex flex-col pr-space-sm">
-                    <span className="font-label-caps text-label-caps text-text-muted uppercase">
+                <div className="grid grid-cols-2 divide-x divide-border-subtle bg-surface-card px-3.5 py-2.5 sm:px-4 rounded-xl shadow-sm border border-border-subtle/70 w-full sm:w-auto shrink-0">
+                  <div className="flex flex-col pr-3 min-w-0">
+                    <span
+                      className="font-label-caps text-[10px] sm:text-label-caps text-text-muted uppercase truncate"
+                      title={`Disparitas ${activeCommodity.komoditas}`}
+                    >
                       Disparitas {activeCommodity.komoditas}
                     </span>
-                    <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <span
-                        className={`font-metric-display text-metric-display ${
+                        className={`font-metric-display text-2xl sm:text-metric-display font-extrabold ${
                           activeCommodity.disparitasPct >= 15
                             ? "text-status-critical"
                             : activeCommodity.disparitasPct >= 8
@@ -372,23 +446,27 @@ export default function SpatialMapPage() {
                         {activeCommodity.disparitasPct}%
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded-full font-label-caps text-label-caps ${activeCommodity.badgeClass}`}
+                        className={`px-2 py-0.5 rounded-full font-label-caps text-[10px] sm:text-label-caps font-semibold shrink-0 ${activeCommodity.badgeClass}`}
                       >
                         {activeCommodity.disparitasPct >= 15 ? "Tinggi" : activeCommodity.disparitasPct >= 8 ? "Waspada" : "Wajar"}
                       </span>
                     </div>
                   </div>
-                  <div className="w-px h-8 bg-border-subtle"></div>
-                  <div className="flex flex-col pl-space-xs">
-                    <span className="font-label-caps text-label-caps text-text-muted uppercase">
-                      Selisih Ekstrem (Max - Min)
+                  <div className="flex flex-col pl-3 min-w-0">
+                    <span className="font-label-caps text-[10px] sm:text-label-caps text-text-muted uppercase">
+                      Selisih Ekstrem
                     </span>
-                    <span className="font-metric-value text-metric-value text-text-primary font-bold">
-                      Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}
-                    </span>
-                    <span className="font-body-sm text-body-sm text-text-secondary">
-                      {maxMarket.shortName} vs {minMarket.shortName}
-                    </span>
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 mt-0.5 min-w-0">
+                      <span className="font-metric-value text-lg sm:text-metric-value text-text-primary font-bold whitespace-nowrap">
+                        Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}
+                      </span>
+                      <span
+                        className="text-[11px] sm:text-xs text-text-secondary truncate mt-0.5 sm:mt-0"
+                        title={`${maxMarket.shortName} vs ${minMarket.shortName}`}
+                      >
+                        ({maxMarket.shortName} vs {minMarket.shortName})
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -484,7 +562,7 @@ export default function SpatialMapPage() {
             {/* 2. Geospatial Interactive Map & Real Market Inspector Panel */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md mb-space-lg">
               {/* Real Spatial Viewport Container (Leaflet + OpenStreetMap) */}
-              <div className="lg:col-span-8 bg-surface-card rounded-xl shadow-sm overflow-hidden flex flex-col relative min-h-[580px] border border-border-subtle/70">
+              <div className="lg:col-span-8 bg-surface-card rounded-xl shadow-sm overflow-hidden flex flex-col relative min-h-[320px] sm:min-h-[400px] lg:min-h-[580px] border border-border-subtle/70">
                 <SurabayaMap
                   markets={markets}
                   selectedCommodityName={activeCommodity?.komoditas || "Komoditas Pokok"}
@@ -529,22 +607,25 @@ export default function SpatialMapPage() {
                   </div>
                 ) : (
                   <div id="market-inspector" className="bg-surface-card p-space-md rounded-xl shadow-sm border border-border-subtle/70 flex flex-col scroll-mt-24">
-                    <div className="flex items-start justify-between pb-space-sm mb-space-sm border-b border-border-subtle">
-                      <div>
+                    <div className="flex items-start justify-between pb-space-sm mb-space-sm border-b border-border-subtle gap-2">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-primary text-headline-sm">
+                          <span className="material-symbols-outlined text-primary text-headline-sm shrink-0">
                             storefront
                           </span>
-                          <h2 className="font-headline-sm text-headline-sm text-text-primary">
+                          <h2 className="font-headline-sm text-headline-sm text-text-primary truncate">
                             {selectedMarket.name}
                           </h2>
                         </div>
-                        <span className="text-xs text-text-secondary mt-0.5 block">
+                        <span
+                          className="text-xs text-text-secondary mt-0.5 block whitespace-nowrap truncate"
+                          title={`${selectedMarket.address} • Surabaya ${selectedMarket.zone}`}
+                        >
                           {selectedMarket.address} &bull; Surabaya {selectedMarket.zone}
                         </span>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded-full font-label-caps text-label-caps font-bold ${
+                        className={`px-2.5 py-0.5 rounded-full font-label-caps text-label-caps font-bold whitespace-nowrap shrink-0 ${
                           selectedMarket.price === minPrice
                             ? "bg-status-normal-bg text-status-normal"
                             : selectedMarket.price === maxPrice
@@ -606,7 +687,7 @@ export default function SpatialMapPage() {
                         <span className="material-symbols-outlined text-sm">info</span>
                         Peran Distribusi &amp; Karakter Pasar:
                       </div>
-                      <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed">
+                      <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed text-justify">
                         {selectedMarket.characteristic}
                       </p>
                     </div>
@@ -647,10 +728,10 @@ export default function SpatialMapPage() {
                     </h2>
                   </div>
                   <p className="font-body-sm text-body-sm text-text-secondary mt-1">
-                    Warna hijau menunjukkan pasar dengan harga termurah, sedangkan oranye/merah menunjukkan pasar tertinggi.{latestDate ? ` • Pantauan: ${new Date(latestDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}` : ""}
+                    Warna hijau menunjukkan pasar dengan harga terendah, sedangkan merah menunjukkan pasar tertinggi.
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
                   {/* Search Filter for Table */}
                   <div className="relative w-full sm:w-56">
                     <input
@@ -658,7 +739,7 @@ export default function SpatialMapPage() {
                       placeholder="Cari komoditas..."
                       value={tableSearchQuery}
                       onChange={(e) => setTableSearchQuery(e.target.value)}
-                      className="w-full h-9 bg-surface-subtle text-text-primary placeholder-text-muted font-body-sm text-body-sm pl-8 pr-7 rounded-lg border border-border-subtle focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                      className="w-full h-9 bg-surface-subtle text-text-primary placeholder-text-muted text-xs sm:text-sm pl-8 pr-7 rounded-lg border border-border-subtle focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                     />
                     <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[17px] pointer-events-none">
                       search
@@ -674,29 +755,29 @@ export default function SpatialMapPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
-                      className="flex-1 sm:flex-initial px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle"
+                      className="h-9 px-3 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary hover:text-text-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle whitespace-nowrap shrink-0"
                       onClick={handleExportCSV}
                       title="Unduh seluruh data komparasi dalam format CSV"
                     >
-                      <span className="material-symbols-outlined text-body-md">file_download</span>
-                      Export CSV
+                      <span className="material-symbols-outlined text-[17px]">file_download</span>
+                      <span>Export CSV</span>
                     </button>
                     <button
-                      className="flex-1 sm:flex-initial px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle"
+                      className="h-9 px-3 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary hover:text-text-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle whitespace-nowrap shrink-0"
                       onClick={handleSortDisparitas}
                       title="Urutkan data berdasarkan disparitas persentase"
                     >
-                      <span className="material-symbols-outlined text-body-md">sort</span>
-                      Sort {isSortedDesc ? "↓" : "↑"}
+                      <span className="material-symbols-outlined text-[17px]">sort</span>
+                      <span>Sort {isSortedDesc ? "↓" : "↑"}</span>
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Group Filter Chips (pola terstruktur & rapi) */}
-              <div className="px-space-md py-3 bg-surface-subtle/30 flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-border-subtle/60">
+              <div className="px-space-md py-3 bg-surface-subtle/30 flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-border-subtle/60 pr-8">
                 {ORDERED_GROUPS.filter((g) => g === "Semua" || comparisonRows.some((r) => r.group === g)).map((g) => {
                   const count =
                     g === "Semua"
@@ -730,41 +811,35 @@ export default function SpatialMapPage() {
                 })}
               </div>
 
-              {/* Mobile Horizontal Scroll Affordance Banner */}
-              <div className="sm:hidden px-space-md py-2 bg-surface-subtle/80 text-text-secondary text-[11px] font-medium flex items-center justify-between border-b border-border-subtle/60">
-                <span className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-primary">swipe</span> Geser tabel untuk melihat seluruh 6 pasar
-                </span>
-                <span className="text-primary font-bold text-xs">&rarr;</span>
-              </div>
-
-              {/* Data Table Container with Horizontal Overflow */}
-              <div className="w-full overflow-x-auto">
+              {/* 1. Tampilan Desktop & Tablet: Data Table Container with Sticky Commodity Column (≥ 768px) */}
+              <div className="hidden md:block w-full overflow-x-auto">
                 <table className="w-full text-left font-body-sm text-body-sm border-collapse min-w-[1000px]">
                   <thead>
                     <tr className="bg-surface-subtle text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
-                      <th className="py-3 px-space-md sticky left-0 bg-surface-subtle z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">Komoditas Pokok</th>
-                      <th className="py-3 px-space-xs">Satuan</th>
-                      <th className="py-3 px-space-sm">Keputran (Induk)</th>
-                      <th className="py-3 px-space-sm">Wonokromo</th>
-                      <th className="py-3 px-space-sm">Pucang Anom</th>
-                      <th className="py-3 px-space-sm">Genteng</th>
-                      <th className="py-3 px-space-sm">Tambahrejo</th>
-                      <th className="py-3 px-space-sm">Soponyono</th>
-                      <th className="py-3 px-space-sm">Rerata Kota</th>
-                      <th className="py-3 px-space-md text-right">Disparitas (Max-Min)</th>
+                      <th className="py-2.5 sm:py-3 px-2.5 sm:px-space-md sticky left-0 bg-surface-subtle z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[135px] sm:w-[190px] min-w-[135px] sm:min-w-[190px]">
+                        Komoditas Pokok
+                      </th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-xs text-center min-w-[55px] sm:min-w-[70px]">Satuan</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Keputran (Induk)</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Wonokromo</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Pucang Anom</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Genteng</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Tambahrejo</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Soponyono</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Rerata Kota</th>
+                      <th className="py-2.5 sm:py-3 px-2 sm:px-space-md text-right min-w-[105px] sm:min-w-[125px]">Disparitas</th>
                     </tr>
                   </thead>
                   <tbody className="text-text-primary">
                     {loadingTable ? (
                       Array.from({ length: 7 }).map((_, idx) => (
                         <tr key={idx} className="border-b border-surface-subtle/40 animate-pulse">
-                          <td className="py-3.5 px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
-                            <div className="flex items-center gap-space-xs">
-                              <div className="w-2.5 h-2.5 rounded-full bg-surface-subtle shrink-0"></div>
+                          <td className="py-2.5 sm:py-3.5 px-2.5 sm:px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[145px] sm:w-[220px] min-w-[145px] sm:min-w-[220px]">
+                            <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-subtle shrink-0"></div>
                               <div className="space-y-1">
-                                <div className="w-32 h-4 bg-surface-subtle rounded"></div>
-                                <div className="w-20 h-2.5 bg-surface-subtle rounded"></div>
+                                <div className="w-24 sm:w-32 h-3.5 sm:h-4 bg-surface-subtle rounded"></div>
+                                <div className="w-16 sm:w-20 h-2 sm:h-2.5 bg-surface-subtle rounded"></div>
                               </div>
                             </div>
                           </td>
@@ -809,7 +884,7 @@ export default function SpatialMapPage() {
                         </td>
                       </tr>
                     ) : (
-                      filteredTableRows.map((row, idx) => {
+                      paginatedTableRows.map((row, idx) => {
                       const prices = [
                         row.keputran,
                         row.wonokromo,
@@ -826,23 +901,23 @@ export default function SpatialMapPage() {
                         const isMax = price === rowMax;
                         return (
                           <td
-                            className={`py-3.5 px-space-sm font-metric-value ${
+                            className={`py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm min-w-[95px] sm:min-w-[110px] transition-colors ${
                               isMin
-                                ? "bg-status-normal-bg text-status-normal font-semibold"
+                                ? "bg-emerald-50/70 hover:bg-emerald-100/60 text-emerald-700 font-bold"
                                 : isMax
-                                ? "bg-status-critical-bg text-status-critical font-semibold"
-                                : ""
+                                ? "bg-rose-50/70 hover:bg-rose-100/60 text-rose-700 font-bold"
+                                : "text-text-secondary"
                             }`}
                           >
-                            Rp {price.toLocaleString("id-ID")}
+                            <div>Rp {price.toLocaleString("id-ID")}</div>
                             {isMin && (
-                              <span className="text-label-caps font-label-caps block font-normal text-status-normal/80">
-                                Min
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 leading-tight mt-0.5">
+                                Terendah
                               </span>
                             )}
                             {isMax && (
-                              <span className="text-label-caps font-label-caps block font-normal text-status-critical/80">
-                                Max
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-rose-100/90 text-rose-700 border border-rose-200/80 leading-tight mt-0.5">
+                                Tertinggi
                               </span>
                             )}
                           </td>
@@ -860,22 +935,27 @@ export default function SpatialMapPage() {
                           }`}
                           title="Klik untuk melihat perbandingan spasial komoditas ini pada peta"
                         >
-                          <td className="py-3.5 px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
-                            <div className="flex items-center gap-space-xs">
-                              <span
-                                className={`w-2.5 h-2.5 rounded-full shrink-0 ${row.dotClass}`}
-                              ></span>
-                              <div className="flex flex-col">
-                                <span className="font-title-md text-body-md text-text-primary font-semibold">
+                          <td className="py-2.5 sm:py-3.5 px-2.5 sm:px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[145px] sm:w-[220px] min-w-[145px] sm:min-w-[220px] max-w-[155px] sm:max-w-none">
+                            <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                              <div
+                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 ${row.iconBoxClass}`}
+                                title={row.komoditas}
+                              >
+                                <span className="material-symbols-outlined text-[15px] sm:text-[18px]">
+                                  {row.icon}
+                                </span>
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-title-md text-xs sm:text-body-md text-text-primary font-semibold truncate sm:whitespace-normal">
                                   {row.komoditas}
                                 </span>
-                                <span className="text-text-muted font-label-caps text-label-caps">
+                                <span className="text-text-muted font-label-caps text-[10px] sm:text-label-caps truncate sm:whitespace-normal">
                                   {row.sub}
                                 </span>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3.5 px-space-xs text-text-secondary font-label-caps">
+                          <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-xs text-text-secondary font-label-caps text-[11px] sm:text-xs text-center whitespace-nowrap min-w-[55px] sm:min-w-[70px]">
                             {row.satuan}
                           </td>
                           {renderCell(row.keputran)}
@@ -884,20 +964,18 @@ export default function SpatialMapPage() {
                           {renderCell(row.genteng)}
                           {renderCell(row.tambahrejo)}
                           {renderCell(row.soponyono)}
-                          <td className="py-3.5 px-space-sm font-metric-value text-text-secondary">
+                          <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm text-text-secondary min-w-[95px] sm:min-w-[110px]">
                             Rp {row.rerata.toLocaleString("id-ID")}
                           </td>
-                          <td className="py-3.5 px-space-md text-right">
+                          <td className="py-2.5 sm:py-3.5 px-2 sm:px-space-md text-right min-w-[105px] sm:min-w-[125px]">
                             <div className="flex flex-col items-end">
                               <span
-                                className={`font-metric-delta text-body-sm font-bold ${row.statusClass}`}
+                                className={`font-metric-delta text-xs sm:text-body-sm font-bold ${row.statusClass}`}
                               >
                                 Rp {row.disparitasRp.toLocaleString("id-ID")}
                               </span>
-                              <span
-                                className={`px-space-2xs py-0.5 rounded-full font-label-caps text-label-caps ${row.badgeClass}`}
-                              >
-                                {row.statusBadge}
+                              <span className="text-text-muted font-label-caps text-[9px] sm:text-[10px] leading-tight">
+                                {row.disparitasPct}%
                               </span>
                             </div>
                           </td>
@@ -908,21 +986,295 @@ export default function SpatialMapPage() {
                 </table>
               </div>
 
-              {/* Table Footer Meta */}
-              <div className="p-space-md bg-surface-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-space-xs font-body-sm text-body-sm text-text-secondary">
-                <div className="flex items-center gap-space-xs">
-                  <span className="material-symbols-outlined text-body-md text-status-normal">
-                    verified_user
-                  </span>
-                  <span>Data perbandingan harga riil 6 pasar pantauan Kota Surabaya terintegrasi dari basis data pantauan harian.</span>
-                </div>
-                <div className="flex items-center gap-space-xs font-label-caps text-label-caps">
-                  <span className="w-2.5 h-2.5 rounded-full bg-status-normal-bg border border-status-normal inline-block"></span>{" "}
-                  Harga Termurah (Acuan)
-                  <span className="w-2.5 h-2.5 rounded-full bg-status-critical-bg border border-status-critical inline-block ml-2"></span>{" "}
-                  Harga Tertinggi (Anomali)
-                </div>
+              {/* 2. Tampilan HP (< md / < 768px): Card View List Persis Seperti EWS */}
+              <div className="block md:hidden p-3.5 space-y-3.5">
+                {loadingTable ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-surface-card border border-border-subtle/80 shadow-xs animate-pulse space-y-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-surface-subtle shrink-0"></div>
+                        <div className="flex-1 space-y-1.5">
+                          <div className="w-32 h-4 bg-surface-subtle rounded"></div>
+                          <div className="w-20 h-3 bg-surface-subtle rounded"></div>
+                        </div>
+                        <div className="w-16 h-5 bg-surface-subtle rounded-full"></div>
+                      </div>
+                      <div className="h-14 bg-surface-subtle rounded-lg"></div>
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        {Array.from({ length: 6 }).map((_, cIdx) => (
+                          <div key={cIdx} className="h-12 bg-surface-subtle rounded-lg"></div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : errorTable ? (
+                  <div className="p-8 rounded-xl bg-surface-card border border-border-subtle text-center flex flex-col items-center gap-2">
+                    <span className="material-symbols-outlined text-3xl text-status-warning">cloud_off</span>
+                    <span className="font-semibold text-text-primary text-sm">Data matriks disparitas tidak tersedia</span>
+                    <p className="text-xs text-text-secondary">Gagal memuat matriks perbandingan 6 pasar.</p>
+                    <button
+                      onClick={() => loadTableData()}
+                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded-lg hover:bg-primary/90 transition shadow-xs cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-sm">refresh</span>
+                      Coba Lagi
+                    </button>
+                  </div>
+                ) : filteredTableRows.length === 0 ? (
+                  <div className="p-8 rounded-xl bg-surface-card border border-border-subtle text-center text-text-muted text-sm">
+                    <span className="material-symbols-outlined text-3xl block mb-1">search_off</span>
+                    Komoditas &quot;{tableSearchQuery}&quot; tidak ditemukan dalam matriks komparasi.
+                  </div>
+                ) : (
+                  paginatedTableRows.map((row, idx) => {
+                    const marketEntries = [
+                      { name: "Keputran (Induk)", shortName: "Keputran", price: row.keputran },
+                      { name: "Pasar Wonokromo", shortName: "Wonokromo", price: row.wonokromo },
+                      { name: "Pasar Pucang Anom", shortName: "Pucang Anom", price: row.pucang },
+                      { name: "Pasar Genteng", shortName: "Genteng", price: row.genteng },
+                      { name: "Pasar Tambahrejo", shortName: "Tambahrejo", price: row.tambahrejo },
+                      { name: "Pasar Soponyono", shortName: "Soponyono", price: row.soponyono },
+                    ];
+
+                    const validPrices = marketEntries.map((m) => m.price).filter((p) => p > 0);
+                    const rowMin = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+                    const rowMax = validPrices.length > 0 ? Math.max(...validPrices) : 0;
+                    const hasSpread = rowMin < rowMax;
+
+                    const minMarkets = marketEntries.filter((m) => m.price === rowMin);
+                    const maxMarkets = marketEntries.filter((m) => m.price === rowMax);
+                    const isSelected = row.komoditas_id === selectedCommodityId;
+                    const isExpanded = !!expandedCardIds[row.komoditas_id];
+
+                    return (
+                      <div
+                        key={row.komoditas_id || idx}
+                        onClick={() => setSelectedCommodityId(row.komoditas_id)}
+                        className={`p-3.5 rounded-xl bg-white border shadow-2xs hover:shadow-xs transition-[box-shadow,border-color,background-color] duration-150 flex flex-col gap-2.5 cursor-pointer ${
+                          isSelected
+                            ? "border-primary ring-2 ring-primary/20 bg-primary/2 border-l-4 border-l-primary"
+                            : "border-slate-200 border-l-4 border-l-emerald-600"
+                        }`}
+                      >
+                        {/* Header: Icon, Nama Lengkap, Satuan & Disparitas Badge */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-2xs ${row.iconBoxClass}`}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                {row.icon}
+                              </span>
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <h3 className="font-headline-sm text-xs sm:text-sm text-slate-900 font-bold leading-tight truncate">
+                                {row.komoditas}
+                              </h3>
+                              <span className="font-label-caps text-[10.5px] text-slate-500 font-medium">
+                                {row.satuan} • {row.sub}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end shrink-0">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full font-label-caps text-[10.5px] font-bold tracking-wide ${row.statusClass} bg-slate-100 border border-slate-200`}
+                            >
+                              Δ Rp {row.disparitasRp.toLocaleString("id-ID")}
+                            </span>
+                            <span className="text-slate-500 font-mono text-[9.5px] mt-0.5">
+                              Disparitas {row.disparitasPct}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Quick Insight Bar: Termurah vs Tertinggi (Compact Single Strip) */}
+                        {hasSpread ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            {/* Termurah */}
+                            <div className="bg-emerald-50/90 border border-emerald-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-emerald-700">arrow_downward</span> Termurah
+                                </span>
+                                <span className="text-[11px] text-emerald-950 font-medium truncate block">
+                                  {minMarkets.map((m) => m.shortName).join(", ")}
+                                </span>
+                              </div>
+                              <span className="text-xs sm:text-sm font-extrabold text-emerald-700 shrink-0 ml-1">
+                                Rp {rowMin.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+
+                            {/* Tertinggi */}
+                            <div className="bg-rose-50/90 border border-rose-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-rose-700">arrow_upward</span> Tertinggi
+                                </span>
+                                <span className="text-[11px] text-rose-950 font-medium truncate block">
+                                  {maxMarkets.map((m) => m.shortName).join(", ")}
+                                </span>
+                              </div>
+                              <span className="text-xs sm:text-sm font-extrabold text-rose-700 shrink-0 ml-1">
+                                Rp {rowMax.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                          </div>
+                        ) : rowMin > 0 ? (
+                          <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs flex justify-between items-center">
+                            <span className="text-slate-600 font-medium text-[11px]">Harga Seragam:</span>
+                            <span className="font-bold text-slate-900 text-xs">Rp {rowMin.toLocaleString("id-ID")}</span>
+                          </div>
+                        ) : null}
+
+                        {/* Accordion Toggle Bar & Active Pin Indicator */}
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+                          <span className="flex items-center gap-1 text-slate-500 font-medium text-[10.5px]">
+                            <span className="material-symbols-outlined text-[13px] text-primary">map</span>
+                            {isSelected ? (
+                              <strong className="text-primary font-semibold">Aktif di peta</strong>
+                            ) : (
+                              "Ketuk untuk sorot peta"
+                            )}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => toggleCardExpanded(row.komoditas_id, e)}
+                            className="px-2.5 py-1 rounded-lg bg-surface-subtle hover:bg-slate-200 text-slate-700 font-semibold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <span>{isExpanded ? "Tutup 6 Pasar" : "Lihat 6 Pasar"}</span>
+                            <span
+                              className={`material-symbols-outlined text-sm transition-transform duration-200 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            >
+                              expand_more
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* Expandable 6 Markets Breakdown List */}
+                        {isExpanded && (
+                          <div className="pt-2 border-t border-dashed border-slate-200 flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between text-[10.5px] text-slate-500 font-medium mb-0.5">
+                              <span className="font-bold text-slate-700 uppercase tracking-wider font-label-caps">
+                                Rincian 6 Pasar:
+                              </span>
+                              <span>
+                                Rerata: <strong className="text-slate-800 font-bold">Rp {row.rerata.toLocaleString("id-ID")}</strong>
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {marketEntries.map((m, mIdx) => {
+                                const isMin = hasSpread && m.price === rowMin;
+                                const isMax = hasSpread && m.price === rowMax;
+
+                                return (
+                                  <div
+                                    key={mIdx}
+                                    className={`px-2 py-1.5 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                                      isMin
+                                        ? "bg-emerald-50/80 border-emerald-300 text-emerald-950 font-semibold"
+                                        : isMax
+                                        ? "bg-rose-50/80 border-rose-300 text-rose-950 font-semibold"
+                                        : "bg-slate-50/70 border-slate-200 text-slate-800"
+                                    }`}
+                                  >
+                                    <div className="min-w-0 pr-1 flex items-center gap-1">
+                                      <span className="truncate text-[11px] font-medium" title={m.name}>
+                                        {m.shortName}
+                                      </span>
+                                      {isMin && (
+                                        <span className="text-[8.5px] font-extrabold text-emerald-800 bg-emerald-100 px-1 py-0.2 rounded">
+                                          Min
+                                        </span>
+                                      )}
+                                      {isMax && (
+                                        <span className="text-[8.5px] font-extrabold text-rose-800 bg-rose-100 px-1 py-0.2 rounded">
+                                          Max
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span
+                                      className={`text-[11px] shrink-0 font-bold ${
+                                        isMin ? "text-emerald-700" : isMax ? "text-rose-700" : "text-slate-900"
+                                      }`}
+                                    >
+                                      Rp {m.price > 0 ? m.price.toLocaleString("id-ID") : "-"}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
+
+              {/* Table Footer Actions: Pagination */}
+              <div className="p-space-md bg-surface-subtle/30 flex flex-col sm:flex-row items-center justify-between gap-space-sm border-t border-border-subtle/40">
+                <div className="flex items-center gap-space-xs text-body-sm text-text-secondary text-xs sm:text-sm">
+                  <span>
+                    Menampilkan{" "}
+                    <strong className="text-on-surface font-bold">
+                      {filteredTableRows.length === 0
+                        ? 0
+                        : (tableCurrentPage - 1) * TABLE_ITEMS_PER_PAGE + 1}
+                      –
+                      {Math.min(tableCurrentPage * TABLE_ITEMS_PER_PAGE, filteredTableRows.length)}
+                    </strong>{" "}
+                    dari <strong className="text-on-surface font-bold">{filteredTableRows.length}</strong> komoditas
+                  </span>
+                </div>
+
+                {totalTablePages > 1 && (
+                  <div className="flex items-center gap-1 bg-surface-card p-1 rounded-xl border border-border-subtle shadow-xs">
+                    <button
+                      onClick={() => setTableCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={tableCurrentPage === 1}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                      title="Halaman Sebelumnya"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">chevron_left</span>
+                      <span className="hidden sm:inline">Sebelumnya</span>
+                    </button>
+
+                    {Array.from({ length: totalTablePages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setTableCurrentPage(page)}
+                        className={`w-7.5 h-7.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                          tableCurrentPage === page
+                            ? "bg-primary text-white shadow-xs"
+                            : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setTableCurrentPage((p) => Math.min(totalTablePages, p + 1))}
+                      disabled={tableCurrentPage === totalTablePages}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                      title="Halaman Berikutnya"
+                    >
+                      <span className="hidden sm:inline">Berikutnya</span>
+                      <span className="material-symbols-outlined text-[15px]">chevron_right</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+
             </div>
           </section>
         </div>

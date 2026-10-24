@@ -1,0 +1,483 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" style="background:#FFFFFF; font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <defs>
+    <filter id="cardShadow" x="-2%" y="-2%" width="104%" height="106%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+    <filter id="hubShadow" x="-3%" y="-2%" width="106%" height="106%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#004328" flood-opacity="0.15"/>
+    </filter>
+    
+    <!-- Marker Arrows -->
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563EB" />
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#16A34A" />
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9333EA" />
+    </marker>
+    <marker id="arrowViolet" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#7C3AED" />
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#DC2626" />
+    </marker>
+
+    <!-- Gradients -->
+    <linearGradient id="hubGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#004d2f"/>
+      <stop offset="100%" stop-color="#00331e"/>
+    </linearGradient>
+    <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#EDF2F7"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="100%" stop-color="#FEF08A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ==================== SLIDE HEADER ==================== -->
+  <g transform="translate(60, 42)">
+    <rect x="0" y="0" width="8" height="48" rx="4" fill="#004328" />
+    <text x="24" y="26" font-size="26" font-weight="800" fill="#0F172A" letter-spacing="-0.02em">Arsitektur Sistem HargaWatch Surabaya</text>
+    <text x="24" y="46" font-size="14" font-weight="500" fill="#475569">Platform Intelijen Harga Pangan, Early Warning System (EWS) &#38; Peramalan Deret Waktu 6 Pasar Acuan Kota Surabaya</text>
+    <rect x="1560" y="4" width="240" height="36" rx="18" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1.5" />
+    <circle cx="1580" cy="22" r="5" fill="#16A34A" />
+    <text x="1595" y="27" font-size="12" font-weight="700" fill="#16A34A" font-family="'JetBrains Mono', monospace">PRODUCTION READY v1.0</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- LAYER 1: DATA SOURCES LAYER                                               -->
+  <!-- ========================================================================= -->
+  <g transform="translate(60, 110)">
+    <!-- Container -->
+    <rect x="0" y="0" width="1800" height="135" rx="16" fill="#F0F7FF" stroke="#3B82F6" stroke-width="2" filter="url(#cardShadow)"/>
+    
+    <!-- Badge -->
+    <circle cx="40" cy="40" r="24" fill="#2563EB" />
+    <text x="40" y="48" font-size="22" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+    <text x="76" y="36" font-size="18" font-weight="800" fill="#1E40AF">Data Sources Layer</text>
+    <text x="76" y="54" font-size="12" font-weight="600" fill="#3B82F6">(External Data Providers &#38; Scraped Portals)</text>
+    
+    <!-- Source 1: SISKAPERBAPO Konsumen -->
+    <g transform="translate(350, 15)">
+      <rect x="0" y="0" width="330" height="105" rx="12" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <circle cx="32" cy="34" r="18" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+      <path d="M32 22 A12 12 0 1 0 32 46 A12 12 0 1 0 32 22 M20 34 h24 M32 22 a16 16 0 0 1 0 24 a16 16 0 0 1 0 -24" fill="none" stroke="#2563EB" stroke-width="1.6"/>
+      <text x="58" y="30" font-size="13" font-weight="700" fill="#0F172A">SISKAPERBAPO Jatim</text>
+      <text x="58" y="46" font-size="11" font-weight="600" fill="#2563EB">Harga Harian 6 Pasar Surabaya</text>
+      <text x="14" y="74" font-size="10.5" font-weight="500" fill="#64748B">Wonokromo, Keputran, Genteng,</text>
+      <text x="14" y="90" font-size="10.5" font-weight="500" fill="#64748B">Pucang Anom, Tambahrejo, Soponyono</text>
+      <rect x="245" y="10" width="75" height="18" rx="9" fill="#DBEAFE"/>
+      <text x="282" y="23" font-size="9" font-weight="700" fill="#1E40AF" text-anchor="middle">37 Komoditas</text>
+    </g>
+
+    <!-- Source 2: Harga Produsen -->
+    <g transform="translate(700, 15)">
+      <rect x="0" y="0" width="330" height="105" rx="12" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <circle cx="32" cy="34" r="18" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+      <path d="M22 26 h20 v16 h-20 z M20 26 l2 -4 h20 l2 4 M28 34 h8 v8 h-8 z" fill="none" stroke="#2563EB" stroke-width="1.6"/>
+      <text x="58" y="30" font-size="13" font-weight="700" fill="#0F172A">Harga Produsen Surabaya</text>
+      <text x="58" y="46" font-size="11" font-weight="600" fill="#2563EB">SISKAPERBAPO Tingkat Produsen</text>
+      <text x="14" y="74" font-size="10.5" font-weight="500" fill="#64748B">PS Bendul Mrisi, RPH Pegirikan</text>
+      <text x="14" y="90" font-size="10.5" font-weight="500" fill="#64748B">Basis perhitungan margin grosir-ritel</text>
+      <rect x="245" y="10" width="75" height="18" rx="9" fill="#DBEAFE"/>
+      <text x="282" y="23" font-size="9" font-weight="700" fill="#1E40AF" text-anchor="middle">Harian</text>
+    </g>
+
+    <!-- Source 3: Open-Meteo Cuaca -->
+    <g transform="translate(1050, 15)">
+      <rect x="0" y="0" width="340" height="105" rx="12" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <circle cx="32" cy="34" r="18" fill="#FEF3C7" stroke="#FDE68A" stroke-width="1"/>
+      <path d="M26 36 a6 6 0 0 1 12 0 h3 a5 5 0 0 1 0 10 h-18 a4 4 0 0 1 0 -8 z M34 22 v3 M24 25 l2 2 M44 25 l-2 2" fill="none" stroke="#D97706" stroke-width="1.6"/>
+      <text x="58" y="30" font-size="13" font-weight="700" fill="#0F172A">Open-Meteo API</text>
+      <text x="58" y="46" font-size="11" font-weight="600" fill="#D97706">Kovariat Cuaca Harian Surabaya</text>
+      <text x="14" y="74" font-size="10.5" font-weight="500" fill="#64748B">Curah Hujan (mm), Suhu Mean/Max/Min</text>
+      <text x="14" y="90" font-size="10.5" font-weight="500" fill="#64748B">Kelembapan, Kecepatan Angin (ERA5)</text>
+      <rect x="250" y="10" width="80" height="18" rx="9" fill="#FEF3C7"/>
+      <text x="290" y="23" font-size="9" font-weight="700" fill="#B45309" text-anchor="middle">ERA5 Reanalysis</text>
+    </g>
+
+    <!-- Source 4: BPS & Kalender -->
+    <g transform="translate(1410, 15)">
+      <rect x="0" y="0" width="370" height="105" rx="12" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <circle cx="32" cy="34" r="18" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+      <path d="M22 24 h20 v18 h-20 z M22 30 h20 M28 20 v6 M36 20 v6" fill="none" stroke="#2563EB" stroke-width="1.6"/>
+      <text x="58" y="30" font-size="13" font-weight="700" fill="#0F172A">BPS Jatim &#38; Kalender HBKN</text>
+      <text x="58" y="46" font-size="11" font-weight="600" fill="#2563EB">Kovariat Makro &#38; Momentum</text>
+      <text x="14" y="74" font-size="10.5" font-weight="500" fill="#64748B">Laju Inflasi Bulanan Kota Surabaya (BPS)</text>
+      <text x="14" y="90" font-size="10.5" font-weight="500" fill="#64748B">Kalender Libur SKB 3 Menteri, Ramadan, Idulfitri</text>
+      <rect x="280" y="10" width="80" height="18" rx="9" fill="#DBEAFE"/>
+      <text x="320" y="23" font-size="9" font-weight="700" fill="#1E40AF" text-anchor="middle">Eksogen/Fitur</text>
+    </g>
+  </g>
+
+  <!-- CONNECTOR 1 -> 2: EXTRACT / INGEST -->
+  <g>
+    <path d="M 450 245 L 450 288" fill="none" stroke="#2563EB" stroke-width="2.5" marker-end="url(#arrowBlue)" />
+    <rect x="300" y="254" width="300" height="26" rx="13" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5" />
+    <text x="450" y="271" font-size="11" font-weight="700" fill="#1E40AF" text-anchor="middle">Extract &#38; Scrape (update_harian.py / catchup)</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- LAYER 2: DATA PIPELINE & STORAGE HUB                                      -->
+  <!-- ========================================================================= -->
+  <g transform="translate(60, 290)">
+    <!-- Container -->
+    <rect x="0" y="0" width="1070" height="315" rx="16" fill="#F0FDF4" stroke="#16A34A" stroke-width="2" filter="url(#cardShadow)"/>
+    
+    <!-- Badge -->
+    <circle cx="40" cy="40" r="24" fill="#16A34A" />
+    <text x="40" y="48" font-size="22" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+    <text x="76" y="34" font-size="18" font-weight="800" fill="#14532D">Data Pipeline &#38; Storage Hub</text>
+    <text x="76" y="52" font-size="12" font-weight="600" fill="#16A34A">(Medallion Central Hub Architecture)</text>
+
+    <!-- Sub-container: Ingestion & Cleaner -->
+    <g transform="translate(25, 75)">
+      <!-- Master Orchestrator Banner -->
+      <rect x="0" y="0" width="560" height="42" rx="8" fill="#DCFCE7" stroke="#86EFAC" stroke-width="1.2" />
+      <circle cx="20" cy="21" r="9" fill="#16A34A" />
+      <path d="M16 21 l3 3 l6 -6" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+      <text x="36" y="18" font-size="11.5" font-weight="800" fill="#14532D">Master Daily Orchestrator (On-Premise 06:00 WIB)</text>
+      <text x="36" y="32" font-size="10.5" font-weight="500" fill="#166534">Windows Task Scheduler &#8594; run_pipeline.bat &#8594; run_daily_pipeline.py (Bypass Cloudflare WAF)</text>
+
+      <!-- Step 1: Scrape & Validation -->
+      <g transform="translate(0, 52)">
+        <rect x="0" y="0" width="270" height="170" rx="10" fill="#FFFFFF" stroke="#BBF7D0" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <text x="14" y="24" font-size="13" font-weight="800" fill="#0F172A">ETL Pipeline</text>
+        <text x="14" y="38" font-size="10" font-weight="600" fill="#16A34A">update_harian.py + catchup.py</text>
+        <line x1="14" y1="46" x2="256" y2="46" stroke="#F1F5F9" stroke-width="1.5"/>
+        <text x="14" y="68" font-size="10.5" font-weight="600" fill="#334155">&#8226; Target H-1 (Kemarin WIB)</text>
+        <text x="24" y="82" font-size="9.5" font-weight="500" fill="#64748B">Petugas pasar entry siang/malam</text>
+        <text x="14" y="104" font-size="10.5" font-weight="600" fill="#334155">&#8226; Idempotent Upsert</text>
+        <text x="24" y="118" font-size="9.5" font-weight="500" fill="#64748B">ON CONFLICT DO UPDATE</text>
+        <text x="14" y="140" font-size="10.5" font-weight="600" fill="#334155">&#8226; Auto Catch-up 400 Hari</text>
+        <text x="24" y="154" font-size="9.5" font-weight="500" fill="#64748B">Menambal tanggal bolong jika mati</text>
+      </g>
+
+      <!-- Step 2: Causal Cleaning -->
+      <g transform="translate(285, 52)">
+        <rect x="0" y="0" width="275" height="170" rx="10" fill="#FFFFFF" stroke="#BBF7D0" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <text x="14" y="24" font-size="13" font-weight="800" fill="#0F172A">Data Cleaning &#38; Imputasi</text>
+        <text x="14" y="38" font-size="10" font-weight="600" fill="#16A34A">preprocessing_final.py</text>
+        <line x1="14" y1="46" x2="261" y2="46" stroke="#F1F5F9" stroke-width="1.5"/>
+        <text x="14" y="68" font-size="10.5" font-weight="600" fill="#334155">&#8226; Dual-Price Column</text>
+        <text x="24" y="82" font-size="9.5" font-weight="500" fill="#64748B">harga_asli vs harga_imputasi</text>
+        <text x="14" y="104" font-size="10.5" font-weight="600" fill="#334155">&#8226; Causal Bounded Ffill</text>
+        <text x="24" y="118" font-size="9.5" font-weight="500" fill="#64748B">Maksimal limit=7 hari libur/kosong</text>
+        <text x="14" y="140" font-size="10.5" font-weight="600" fill="#334155">&#8226; Zero Zombie Data (PASS)</text>
+        <text x="24" y="154" font-size="9.5" font-weight="500" fill="#64748B">Terbukti aman pada Audit EDA D1</text>
+      </g>
+
+      <!-- Connecting arrow inside L2 -->
+      <path d="M 270 137 L 283 137" fill="none" stroke="#16A34A" stroke-width="2" marker-end="url(#arrowGreen)"/>
+      <path d="M 560 137 L 588 137" fill="none" stroke="#16A34A" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+    </g>
+
+    <!-- Supabase Central Storage Hub (The Cylinder Medallion) -->
+    <g transform="translate(615, 20)">
+      <!-- Cylinder Container -->
+      <rect x="0" y="0" width="430" height="275" rx="14" fill="#FFFFFF" stroke="#004328" stroke-width="2" filter="url(#hubShadow)"/>
+      
+      <!-- Hub Header with Supabase Logo Style -->
+      <rect x="0" y="0" width="430" height="48" rx="14" fill="url(#hubGrad)"/>
+      <!-- Lightning Icon -->
+      <path d="M30 14 l-10 14 h8 l-4 12 l14 -16 h-8 z" fill="#3ECF8E"/>
+      <text x="50" y="27" font-size="15" font-weight="800" fill="#FFFFFF">Supabase PostgreSQL</text>
+      <text x="50" y="41" font-size="10.5" font-weight="600" fill="#86EFAC">CENTRAL HUB &#8226; Port 6543 (Connection Pooler)</text>
+      <rect x="330" y="13" width="85" height="22" rx="11" fill="#0d5c3a" stroke="#3ECF8E" stroke-width="1"/>
+      <text x="372" y="28" font-size="10" font-weight="700" fill="#3ECF8E" text-anchor="middle">Single Hub</text>
+
+      <!-- Silver Layer Partition -->
+      <g transform="translate(15, 60)">
+        <rect x="0" y="0" width="400" height="96" rx="8" fill="url(#silverGrad)" stroke="#CBD5E1" stroke-width="1.2"/>
+        <rect x="10" y="8" width="85" height="18" rx="4" fill="#64748B"/>
+        <text x="52" y="21" font-size="9.5" font-weight="800" fill="#FFFFFF" text-anchor="middle">SILVER LAYER</text>
+        <text x="105" y="22" font-size="11" font-weight="700" fill="#1E293B">Clean Normalized Historical Data</text>
+        <text x="14" y="44" font-size="10" font-weight="600" fill="#334155">&#8226; fact_harga_pasar (476k baris, 2020–2026)</text>
+        <text x="14" y="60" font-size="10" font-weight="600" fill="#334155">&#8226; fact_harga_produsen, fact_cuaca, fact_inflasi</text>
+        <text x="14" y="76" font-size="10" font-weight="600" fill="#334155">&#8226; dim_pasar (6), dim_komoditas (37), dim_kalender</text>
+        <text x="14" y="90" font-size="9" font-style="italic" fill="#64748B">*Disimpan aman dengan foreign key &#38; flag is_imputed</text>
+      </g>
+
+      <!-- Gold Layer Partition -->
+      <g transform="translate(15, 166)">
+        <rect x="0" y="0" width="400" height="96" rx="8" fill="url(#goldGrad)" stroke="#FACC15" stroke-width="1.2"/>
+        <rect x="10" y="8" width="75" height="18" rx="4" fill="#CA8A04"/>
+        <text x="47" y="21" font-size="9.5" font-weight="800" fill="#FFFFFF" text-anchor="middle">GOLD LAYER</text>
+        <text x="95" y="22" font-size="11" font-weight="700" fill="#854D0E">ML Predictions &#38; Risk Intelligence</text>
+        <text x="14" y="44" font-size="10" font-weight="700" fill="#713F12">&#8226; fact_forecast (Prediksi H+7 s/d H+14 p10/p50/p90)</text>
+        <text x="14" y="60" font-size="10" font-weight="700" fill="#713F12">&#8226; fact_early_warning (Composite Risk Score 0–100)</text>
+        <text x="14" y="76" font-size="10" font-weight="600" fill="#854D0E">Status: NORMAL (&#60;40) | WASPADA (40-69) | TINGGI (&#8805;70)</text>
+        <text x="14" y="90" font-size="9" font-style="italic" fill="#A16207">*Siap dikonsumsi langsung secara read-only oleh Web</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- LAYER 3: AI & ANALYTICS ENGINE LAYER                                      -->
+  <!-- ========================================================================= -->
+  <g transform="translate(60, 630)">
+    <!-- Container -->
+    <rect x="0" y="0" width="1070" height="410" rx="16" fill="#FAF5FF" stroke="#9333EA" stroke-width="2" filter="url(#cardShadow)"/>
+    
+    <!-- Badge -->
+    <circle cx="40" cy="40" r="24" fill="#9333EA" />
+    <text x="40" y="48" font-size="22" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+    <text x="76" y="34" font-size="18" font-weight="800" fill="#581C87">AI &#38; Analytics Engine Layer</text>
+    <text x="76" y="52" font-size="12" font-weight="600" fill="#9333EA">(Core Modeling, Quantile Forecast &#38; Early Warning System)</text>
+
+    <!-- Top Workflow: 4 Stage ML Engine -->
+    <g transform="translate(25, 75)">
+      <!-- Stage 1: Feature Engineering -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="240" height="210" rx="10" fill="#FFFFFF" stroke="#E9D5FF" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="28" cy="28" r="16" fill="#F3E8FF"/>
+        <path d="M22 28 h12 M28 22 v12" stroke="#9333EA" stroke-width="2" fill="none"/>
+        <text x="52" y="26" font-size="13" font-weight="800" fill="#0F172A">Feature Engineering</text>
+        <text x="52" y="40" font-size="10" font-weight="600" fill="#9333EA">src/analytics/features.py</text>
+        <line x1="12" y1="52" x2="228" y2="52" stroke="#F1F5F9" stroke-width="1.5"/>
+        <text x="12" y="74" font-size="10.5" font-weight="600" fill="#334155">&#8226; Lags 1, 2, 3, 7, 14 Hari</text>
+        <text x="12" y="94" font-size="10.5" font-weight="600" fill="#334155">&#8226; Rolling Mean &#38; Std (7 &#38; 30)</text>
+        <text x="12" y="114" font-size="10.5" font-weight="600" fill="#334155">&#8226; Disparitas vs Rerata Kota</text>
+        <text x="12" y="134" font-size="10.5" font-weight="600" fill="#334155">&#8226; Sinyal Kalender HBKN</text>
+        <text x="22" y="150" font-size="9.5" font-weight="500" fill="#64748B">H-14 s/d H+7 Idulfitri</text>
+        <text x="12" y="172" font-size="10.5" font-weight="600" fill="#334155">&#8226; Curah Hujan &#38; Suhu</text>
+        <text x="12" y="196" font-size="9" font-weight="700" fill="#7E22CE">Bebas kebocoran masa depan</text>
+      </g>
+
+      <!-- Stage 2: Champion Models & Batch Inference -->
+      <g transform="translate(260, 0)">
+        <rect x="0" y="0" width="240" height="210" rx="10" fill="#FFFFFF" stroke="#E9D5FF" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="28" cy="28" r="16" fill="#F3E8FF"/>
+        <path d="M22 28 a6 6 0 1 1 12 0 a6 6 0 1 1 -12 0 M28 20 v4 M28 32 v4 M20 28 h4 M32 28 h4" stroke="#9333EA" stroke-width="1.8" fill="none"/>
+        <text x="52" y="26" font-size="13" font-weight="800" fill="#0F172A">Champion Models (.pkl)</text>
+        <text x="52" y="40" font-size="10" font-weight="600" fill="#9333EA">models/forecasting/*.pkl</text>
+        <line x1="12" y1="52" x2="228" y2="52" stroke="#F1F5F9" stroke-width="1.5"/>
+        <text x="12" y="74" font-size="10.5" font-weight="600" fill="#334155">&#8226; LightGBM &#38; CatBoost</text>
+        <text x="22" y="90" font-size="9.5" font-weight="500" fill="#64748B">Model teruji WAPE 13.98%</text>
+        <text x="12" y="112" font-size="10.5" font-weight="600" fill="#334155">&#8226; Fast Batch Inference</text>
+        <text x="22" y="128" font-size="9.5" font-weight="500" fill="#64748B">joblib.load() &#8226; ~10-15 detik</text>
+        <text x="12" y="150" font-size="10.5" font-weight="600" fill="#334155">&#8226; Tanpa Retraining Harian</text>
+        <text x="22" y="166" font-size="9.5" font-weight="500" fill="#64748B">Hanya inferensi di run harian</text>
+        <text x="12" y="194" font-size="9" font-weight="700" fill="#15803D">Tracking: W&#38;B Model Registry</text>
+      </g>
+
+      <!-- Stage 3: Quantile Regression Bands -->
+      <g transform="translate(520, 0)">
+        <rect x="0" y="0" width="240" height="210" rx="10" fill="#FFFFFF" stroke="#E9D5FF" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="28" cy="28" r="16" fill="#F3E8FF"/>
+        <path d="M20 36 l6 -8 l6 4 l8 -12" stroke="#9333EA" stroke-width="2" fill="none"/>
+        <text x="52" y="26" font-size="13" font-weight="800" fill="#0F172A">Quantile Regression</text>
+        <text x="52" y="40" font-size="10" font-weight="600" fill="#9333EA">Confidence Bands 14-Hari</text>
+        <line x1="12" y1="52" x2="228" y2="52" stroke="#F1F5F9" stroke-width="1.5"/>
+        <text x="12" y="74" font-size="10.5" font-weight="600" fill="#334155">&#8226; p50 (Median Forecast)</text>
+        <text x="22" y="90" font-size="9.5" font-weight="500" fill="#64748B">Titik ekspektasi harga utama</text>
+        <text x="12" y="112" font-size="10.5" font-weight="600" fill="#334155">&#8226; p10 (Batas Bawah Optimis)</text>
+        <text x="22" y="128" font-size="9.5" font-weight="500" fill="#64748B">Interval batas bawah risiko</text>
+        <text x="12" y="150" font-size="10.5" font-weight="600" fill="#334155">&#8226; p90 (Batas Atas Krisis)</text>
+        <text x="22" y="166" font-size="9.5" font-weight="500" fill="#64748B">Sinyal lonjakan harga ekstrem</text>
+        <text x="12" y="194" font-size="9" font-weight="700" fill="#2563EB">Transparansi ketidakpastian</text>
+      </g>
+
+      <!-- Stage 4: EWS 4 Pilar Engine -->
+      <g transform="translate(780, 0)">
+        <rect x="0" y="0" width="240" height="210" rx="10" fill="#FFFFFF" stroke="#E9D5FF" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="28" cy="28" r="16" fill="#FEE2E2"/>
+        <path d="M28 20 l10 16 h-20 z M28 26 v4 M28 32 v1" stroke="#DC2626" stroke-width="1.8" fill="none"/>
+        <text x="52" y="26" font-size="13" font-weight="800" fill="#0F172A">Early Warning System</text>
+        <text x="52" y="40" font-size="10" font-weight="600" fill="#DC2626">src/safety/early_warning.py</text>
+        <line x1="12" y1="52" x2="228" y2="52" stroke="#F1F5F9" stroke-width="1.5"/>
+        <text x="12" y="74" font-size="10.5" font-weight="700" fill="#991B1B">Skor Risiko Komposit (0-100):</text>
+        <text x="12" y="94" font-size="10" font-weight="600" fill="#334155">1. Tren 7 Hari (Bobot 20%)</text>
+        <text x="12" y="112" font-size="10" font-weight="600" fill="#334155">2. Volatilitas 14 Hari (20%)</text>
+        <text x="12" y="130" font-size="10" font-weight="600" fill="#334155">3. Anomali Disparitas (20%)</text>
+        <text x="12" y="148" font-size="10" font-weight="600" fill="#334155">4. Lonjakan Model Prediksi (40%)</text>
+        <rect x="12" y="165" width="216" height="32" rx="6" fill="#FEF2F2" stroke="#FECACA" stroke-width="1"/>
+        <text x="120" y="185" font-size="10" font-weight="800" fill="#B91C1C" text-anchor="middle">Output: Normal / Waspada / Tinggi</text>
+      </g>
+
+      <!-- Connectors between ML stages -->
+      <path d="M 240 105 L 258 105" fill="none" stroke="#9333EA" stroke-width="2" marker-end="url(#arrowPurple)"/>
+      <path d="M 500 105 L 518 105" fill="none" stroke="#9333EA" stroke-width="2" marker-end="url(#arrowPurple)"/>
+      <path d="M 760 105 L 778 105" fill="none" stroke="#9333EA" stroke-width="2" marker-end="url(#arrowPurple)"/>
+    </g>
+
+    <!-- Bottom Row: Crisis Alerting & Satgas Push Notification -->
+    <g transform="translate(25, 305)">
+      <rect x="0" y="0" width="1020" height="85" rx="10" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <circle cx="36" cy="42" r="22" fill="#E11D48"/>
+      <path d="M26 42 l20 -10 l-6 18 l-6 -6 l-3 3 z" fill="#FFFFFF"/>
+      <text x="70" y="34" font-size="14" font-weight="800" fill="#9F1239">Observability &#38; Push Crisis Alerting (Satgas Pangan Telegram Bot)</text>
+      <text x="70" y="52" font-size="11" font-weight="600" fill="#E11D48">scripts/generate_daily_alerts.py &#8226; Dispatch otomatis ke HP Pejabat Pemkot / Satgas Pangan saat Status WASPADA / TINGGI</text>
+      <text x="70" y="70" font-size="10.5" font-weight="500" fill="#64748B">Menjamin tim pangan menerima peringatan dini lonjakan harga seketika tanpa harus membuka website terlebih dahulu.</text>
+      <rect x="875" y="24" width="130" height="36" rx="8" fill="#E11D48"/>
+      <text x="940" y="46" font-size="11.5" font-weight="800" fill="#FFFFFF" text-anchor="middle">PUSH ALERT &#9889;</text>
+    </g>
+  </g>
+
+  <!-- BI-DIRECTIONAL CONNECTOR L2 <-> L3 -->
+  <!-- 1. Query Silver to L3 -->
+  <path d="M 740 565 L 740 628" fill="none" stroke="#2563EB" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <rect x="610" y="582" width="210" height="24" rx="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.2"/>
+  <text x="715" y="598" font-size="10.5" font-weight="700" fill="#1E40AF" text-anchor="middle">&#8595; Query Data Historis (Silver)</text>
+
+  <!-- 2. Upsert Gold to L2 -->
+  <path d="M 940 628 L 940 568" fill="none" stroke="#16A34A" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <rect x="840" y="582" width="220" height="24" rx="12" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.2"/>
+  <text x="950" y="598" font-size="10.5" font-weight="700" fill="#166534" text-anchor="middle">&#8593; Upsert Forecast &#38; EWS (Gold)</text>
+
+  <!-- ========================================================================= -->
+  <!-- LAYER 4: APPLICATION LAYER (FRONTEND WEB)                                 -->
+  <!-- ========================================================================= -->
+  <g transform="translate(1160, 290)">
+    <!-- Container -->
+    <rect x="0" y="0" width="700" height="425" rx="16" fill="#F5F3FF" stroke="#7C3AED" stroke-width="2" filter="url(#cardShadow)"/>
+    
+    <!-- Badge -->
+    <circle cx="40" cy="40" r="24" fill="#7C3AED" />
+    <text x="40" y="48" font-size="22" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+    <text x="76" y="34" font-size="18" font-weight="800" fill="#4C1D95">Application Layer (Web Frontend)</text>
+    <text x="76" y="52" font-size="12" font-weight="600" fill="#7C3AED">(Cockpit &#38; Public Dashboard Next.js 15)</text>
+
+    <!-- Tech Stack Pill Group -->
+    <g transform="translate(25, 75)">
+      <rect x="0" y="0" width="650" height="75" rx="10" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <text x="16" y="24" font-size="11.5" font-weight="800" fill="#0F172A">Frontend Architecture Stack</text>
+      
+      <!-- Tech badges -->
+      <g transform="translate(16, 36)">
+        <rect x="0" y="0" width="135" height="26" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <circle cx="14" cy="13" r="6" fill="#0F172A"/>
+        <text x="14" y="16" font-size="8" font-weight="800" fill="#FFF" text-anchor="middle">N</text>
+        <text x="26" y="17" font-size="10.5" font-weight="700" fill="#0F172A">Next.js 15 (App)</text>
+
+        <rect x="145" y="0" width="100" height="26" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="155" y="17" font-size="10.5" font-weight="700" fill="#0284C7">React 19</text>
+
+        <rect x="255" y="0" width="125" height="26" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="265" y="17" font-size="10.5" font-weight="700" fill="#0D9488">Tailwind CSS v4</text>
+
+        <rect x="390" y="0" width="115" height="26" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="400" y="17" font-size="10.5" font-weight="700" fill="#15803D">Leaflet Map</text>
+
+        <rect x="515" y="0" width="120" height="26" rx="6" fill="#FEF2F2" stroke="#FECACA" stroke-width="1"/>
+        <text x="525" y="17" font-size="9" font-weight="800" fill="#DC2626">No 3rd-Party Chart</text>
+      </g>
+    </g>
+
+    <!-- 4 Production Modules -->
+    <g transform="translate(25, 165)">
+      <text x="0" y="16" font-size="13" font-weight="800" fill="#4C1D95">4 Modul Antarmuka Produksi (Responsive)</text>
+      
+      <!-- Module 1: Dashboard Publik -->
+      <g transform="translate(0, 30)">
+        <rect x="0" y="0" width="315" height="96" rx="10" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="24" cy="24" r="14" fill="#F3E8FF"/>
+        <path d="M18 24 l4 4 l8 -8" stroke="#7C3AED" stroke-width="2" fill="none"/>
+        <text x="46" y="24" font-size="12" font-weight="800" fill="#0F172A">1. Dashboard Publik</text>
+        <text x="46" y="38" font-size="10" font-weight="600" fill="#7C3AED">Best Price Finder &#38; Smart Basket</text>
+        <text x="14" y="62" font-size="10" font-weight="500" fill="#64748B">&#8226; Rekomendasi pasar termurah hari ini</text>
+        <text x="14" y="78" font-size="10" font-weight="500" fill="#64748B">&#8226; Kalkulator hemat belanja dapur bulanan</text>
+      </g>
+
+      <!-- Module 2: Peta Spasial -->
+      <g transform="translate(335, 30)">
+        <rect x="0" y="0" width="315" height="96" rx="10" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="24" cy="24" r="14" fill="#F3E8FF"/>
+        <path d="M24 16 a6 6 0 0 1 6 6 c0 5 -6 10 -6 10 s-6 -5 -6 -10 a6 6 0 0 1 6 -6 z" stroke="#7C3AED" stroke-width="1.8" fill="none"/>
+        <text x="46" y="24" font-size="12" font-weight="800" fill="#0F172A">2. Peta Disparitas Pasar</text>
+        <text x="46" y="38" font-size="10" font-weight="600" fill="#7C3AED">Visualisasi Geospasial Surabaya</text>
+        <text x="14" y="62" font-size="10" font-weight="500" fill="#64748B">&#8226; Peta interaktif 6 pasar utama</text>
+        <text x="14" y="78" font-size="10" font-weight="500" fill="#64748B">&#8226; Disparitas spasial Pasar Keputran vs Genteng</text>
+      </g>
+
+      <!-- Module 3: EWS Matrix -->
+      <g transform="translate(0, 138)">
+        <rect x="0" y="0" width="315" height="96" rx="10" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="24" cy="24" r="14" fill="#FEE2E2"/>
+        <path d="M24 18 v8 M24 30 v1" stroke="#DC2626" stroke-width="2"/>
+        <text x="46" y="24" font-size="12" font-weight="800" fill="#0F172A">3. Early Warning &#38; Risiko</text>
+        <text x="46" y="38" font-size="10" font-weight="600" fill="#DC2626">Cockpit Satgas Pangan &#38; TPID</text>
+        <text x="14" y="62" font-size="10" font-weight="500" fill="#64748B">&#8226; Matriks Risiko Komoditas x 6 Pasar</text>
+        <text x="14" y="78" font-size="10" font-weight="500" fill="#64748B">&#8226; Tombol Disposisi Operasi Pasar Murah</text>
+      </g>
+
+      <!-- Module 4: Forecasting 14-Hari -->
+      <g transform="translate(335, 138)">
+        <rect x="0" y="0" width="315" height="96" rx="10" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5" filter="url(#cardShadow)"/>
+        <circle cx="24" cy="24" r="14" fill="#EFF6FF"/>
+        <path d="M18 28 l4 -4 l4 2 l6 -6" stroke="#2563EB" stroke-width="2" fill="none"/>
+        <text x="46" y="24" font-size="12" font-weight="800" fill="#0F172A">4. Forecasting &#38; Tren</text>
+        <text x="46" y="38" font-size="10" font-weight="600" fill="#2563EB">Proyeksi 14 Hari p10/p50/p90</text>
+        <text x="14" y="62" font-size="10" font-weight="500" fill="#64748B">&#8226; Kurva native SVG (Tanpa Chart.js/D3)</text>
+        <text x="14" y="78" font-size="10" font-weight="500" fill="#64748B">&#8226; Garis acuan HAP Bapanas &#38; HET Kemendag</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- CONNECTOR SUPABASE -> L4 (FETCH READ-ONLY) -->
+  <path d="M 1045 420 L 1158 420" fill="none" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrowViolet)"/>
+  <rect x="1035" y="396" width="135" height="22" rx="11" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.2"/>
+  <text x="1102" y="411" font-size="9.5" font-weight="800" fill="#5B21B6" text-anchor="middle">Read-Only Query &#8594;</text>
+
+  <!-- ========================================================================= -->
+  <!-- LAYER 5: END USER LAYER (DUAL-PERSONA)                                    -->
+  <!-- ========================================================================= -->
+  <g transform="translate(1160, 745)">
+    <!-- Container -->
+    <rect x="0" y="0" width="700" height="295" rx="16" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2" filter="url(#cardShadow)"/>
+    
+    <!-- Badge -->
+    <circle cx="40" cy="40" r="24" fill="#F59E0B" />
+    <text x="40" y="48" font-size="22" font-weight="800" fill="#FFFFFF" text-anchor="middle">5</text>
+    <text x="76" y="34" font-size="18" font-weight="800" fill="#78350F">End User Layer</text>
+    <text x="76" y="52" font-size="12" font-weight="600" fill="#D97706">(Dual-Persona User Journey &#38; Nilai Dampak Riil)</text>
+
+    <!-- Persona 1: Masyarakat & UMKM -->
+    <g transform="translate(25, 75)">
+      <rect x="0" y="0" width="315" height="200" rx="12" fill="#FFFFFF" stroke="#FDE68A" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <circle cx="34" cy="34" r="18" fill="#FEF3C7"/>
+      <path d="M26 36 a6 6 0 0 1 16 0 M34 22 a4 4 0 1 1 0 8 a4 4 0 1 1 0 -8" fill="none" stroke="#D97706" stroke-width="1.8"/>
+      <text x="60" y="30" font-size="14" font-weight="800" fill="#0F172A">Warga &#38; Pelaku UMKM</text>
+      <text x="60" y="46" font-size="11" font-weight="600" fill="#D97706">Konsumen Rumah Tangga &#38; Warung</text>
+      <line x1="14" y1="58" x2="301" y2="58" stroke="#F1F5F9" stroke-width="1.5"/>
+      <text x="14" y="82" font-size="11" font-weight="700" fill="#334155">&#8226; Cari Lokasi Belanja Paling Murah</text>
+      <text x="24" y="98" font-size="10" font-weight="500" fill="#64748B">Transparansi harga harian 6 pasar</text>
+      <text x="14" y="122" font-size="11" font-weight="700" fill="#334155">&#8226; Smart Shopping Basket</text>
+      <text x="24" y="138" font-size="10" font-weight="500" fill="#64748B">Hitung total belanja &#38; hemat hingga Rp70rb/bln</text>
+      <text x="14" y="162" font-size="11" font-weight="700" fill="#334155">&#8226; Tips Waktu Kulakan Terbaik</text>
+      <text x="24" y="178" font-size="10" font-weight="500" fill="#64748B">Pasar Keputran grosir dini hari (01.00–05.00)</text>
+    </g>
+
+    <!-- Persona 2: Pemkot & Satgas Pangan -->
+    <g transform="translate(360, 75)">
+      <rect x="0" y="0" width="315" height="200" rx="12" fill="#FFFFFF" stroke="#FDE68A" stroke-width="1.5" filter="url(#cardShadow)"/>
+      <circle cx="34" cy="34" r="18" fill="#EFF6FF"/>
+      <path d="M22 26 l12 -6 l12 6 M25 26 v12 M34 26 v12 M43 26 v12 M20 38 h28" fill="none" stroke="#2563EB" stroke-width="1.8"/>
+      <text x="60" y="30" font-size="14" font-weight="800" fill="#0F172A">Pemkot &#38; Satgas Pangan</text>
+      <text x="60" y="46" font-size="11" font-weight="600" fill="#2563EB">Disperindag, DKPP, TPID Surabaya</text>
+      <line x1="14" y1="58" x2="301" y2="58" stroke="#F1F5F9" stroke-width="1.5"/>
+      <text x="14" y="82" font-size="11" font-weight="700" fill="#334155">&#8226; Mitigasi Risiko Inflasi Pangan</text>
+      <text x="24" y="98" font-size="10" font-weight="500" fill="#64748B">Deteksi dini lonjakan sebelum krisis harga</text>
+      <text x="14" y="122" font-size="11" font-weight="700" fill="#334155">&#8226; Intervensi Operasi Pasar Terarah</text>
+      <text x="24" y="138" font-size="10" font-weight="500" fill="#64748B">Rekomendasi titik pasar &#38; komoditas prioritas</text>
+      <text x="14" y="162" font-size="11" font-weight="700" fill="#B91C1C">&#8226; Alert Real-Time via Telegram</text>
+      <text x="24" y="178" font-size="10" font-weight="600" fill="#E11D48">Terima notifikasi instan langsung di ponsel</text>
+    </g>
+  </g>
+
+  <!-- CONNECTOR L4 -> L5 -->
+  <path d="M 1510 715 L 1510 743" fill="none" stroke="#D97706" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <rect x="1440" y="720" width="140" height="20" rx="10" fill="#FFFBEB" stroke="#D97706" stroke-width="1"/>
+  <text x="1510" y="734" font-size="9.5" font-weight="700" fill="#B45309" text-anchor="middle">Akses Antarmuka</text>
+
+  <!-- CONNECTOR TELEGRAM BOT -> PERSONA PEMKOT -->
+  <path d="M 1045 970 Q 1120 970 1120 880 T 1520 880" fill="none" stroke="#E11D48" stroke-dasharray="4,4" stroke-width="2" marker-end="url(#arrowRed)"/>
+  <rect x="1100" y="870" width="140" height="20" rx="10" fill="#FFE4E6" stroke="#E11D48" stroke-width="1"/>
+  <text x="1170" y="884" font-size="9" font-weight="800" fill="#BE123C" text-anchor="middle">Push Alert ke HP &#8594;</text>
+
+</svg>

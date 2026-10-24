@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import {
@@ -178,8 +179,15 @@ export default function HomePage() {
 
   // Dynamic Real Shopping Basket State
   const [basketList, setBasketList] = useState<BasketItem[]>(DEFAULT_BASKET_ITEMS);
+  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const [basketSim, setBasketSim] = useState<ShoppingBasketSimulation | null>(null);
   const [isBasketLoading, setIsBasketLoading] = useState<boolean>(false);
+  const [showFloatingBasket, setShowFloatingBasket] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  const activeBasketList = useMemo(() => {
+    return basketList.filter((b) => checkedItems[b.komoditas_id] !== false);
+  }, [basketList, checkedItems]);
 
   // Multi-Commodity 14-Day Trajectory State
   // Per-Market 14-Day Trajectory Comparison for Selected Commodity
@@ -226,7 +234,36 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    setIsMounted(true);
     loadMainData();
+  }, []);
+
+  // Monitor scroll: floating basket appears only when truly inside Best Price Finder and disappears once scrolled past (mobile/tablet only)
+  useEffect(() => {
+    const handleScroll = () => {
+      // Pada layar desktop (lg ke atas), keranjang belanja sudah tampil berdampingan di kolom kanan
+      if (window.innerWidth >= 1024) {
+        setShowFloatingBasket(false);
+        return;
+      }
+      const el = document.getElementById("best-price-finder-section");
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // Baru muncul saat benar-benar masuk ke area Best Price Finder (bagian atas mendekati atas layar)
+      // dan otomatis menghilang saat sudah melewati bagian bawahnya
+      const hasEntered = rect.top <= 220;
+      const hasPassed = rect.bottom <= 120;
+      setShowFloatingBasket(hasEntered && !hasPassed);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, []);
 
   // Fetch live 14-day forecast trends comparing all 6 markets for the selected commodity
@@ -250,11 +287,16 @@ export default function HomePage() {
     loadTrends(trendCommodityId);
   }, [trendCommodityId]);
 
-  // Compute live basket simulation from Supabase on basketList change
+  // Compute live basket simulation from Supabase on activeBasketList change
   useEffect(() => {
     let isMounted = true;
+    if (activeBasketList.length === 0) {
+      setBasketSim(null);
+      setIsBasketLoading(false);
+      return;
+    }
     setIsBasketLoading(true);
-    getLiveShoppingBasket(basketList).then((sim) => {
+    getLiveShoppingBasket(activeBasketList).then((sim) => {
       if (isMounted) {
         if (sim) setBasketSim(sim);
         setIsBasketLoading(false);
@@ -263,7 +305,7 @@ export default function HomePage() {
     return () => {
       isMounted = false;
     };
-  }, [basketList]);
+  }, [activeBasketList]);
 
   const categories = [
     "Semua",
@@ -317,6 +359,7 @@ export default function HomePage() {
       }
     });
 
+    setCheckedItems((prev) => ({ ...prev, [cid]: true }));
     setAddedItems((prev) => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
       setAddedItems((prev) => ({ ...prev, [item.id]: false }));
@@ -324,6 +367,25 @@ export default function HomePage() {
 
     setResetMessage(`"${item.name}" berhasil ditambahkan ke Keranjang Belanja.`);
     setTimeout(() => setResetMessage(null), 3000);
+  };
+
+  const allChecked =
+    basketList.length > 0 && basketList.every((b) => checkedItems[b.komoditas_id] !== false);
+
+  const handleToggleCheck = (komoditasId: number) => {
+    setCheckedItems((prev) => ({
+      ...prev,
+      [komoditasId]: prev[komoditasId] === false ? true : false,
+    }));
+  };
+
+  const handleToggleAll = () => {
+    const nextVal = !allChecked;
+    const newChecked: Record<number, boolean> = {};
+    basketList.forEach((b) => {
+      newChecked[b.komoditas_id] = nextVal;
+    });
+    setCheckedItems(newChecked);
   };
 
   const handleUpdateQty = (komoditasId: number, delta: number) => {
@@ -347,6 +409,7 @@ export default function HomePage() {
 
   const handleResetBasket = () => {
     setBasketList(DEFAULT_BASKET_ITEMS);
+    setCheckedItems({});
     setResetMessage("Simulasi keranjang belanja telah diatur ulang ke formula default konsumsi keluarga.");
     setTimeout(() => setResetMessage(null), 3000);
   };
@@ -475,7 +538,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <main className="w-full pt-20 bg-surface-canvas min-h-screen">
+      <main className="w-full pt-20 bg-surface-canvas flex-1">
         <div className="flex flex-col w-full">
           {/* Sub-Hero Section */}
           <section className="relative w-full bg-surface-card shadow-sm overflow-hidden mb-space-lg">
@@ -585,7 +648,7 @@ export default function HomePage() {
                               ? `${stabilitySummary.alertCount} Titik`
                               : "0 Titik"}
                           </span>
-                          <span className="font-label-caps text-label-caps text-text-muted truncate max-w-[110px]">
+                          <span className="font-label-caps text-[11px] sm:text-label-caps text-text-muted whitespace-nowrap">
                             {stabilitySummary.alertNote}
                           </span>
                         </div>
@@ -633,7 +696,7 @@ export default function HomePage() {
                           {stabilitySummary.bannerTitle}
                         </span>
                       </div>
-                      <p className="font-body-md text-body-md text-text-primary mt-0.5">
+                      <p className="font-body-md text-body-md text-text-primary mt-0.5 text-justify">
                         {stabilitySummary.bannerMessage}
                       </p>
                     </div>
@@ -653,10 +716,10 @@ export default function HomePage() {
           </section>
 
           {/* Main Content 2-Column Split: Best Price Finder (60%) vs Smart Shopping Basket (40%) */}
-          <section className="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop w-full mb-space-2xl">
+          <section className="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop w-full mb-space-lg sm:mb-space-xl lg:mb-space-2xl">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
               {/* LEFT COLUMN: Best Price Finder (lg:col-span-7) */}
-              <div className="lg:col-span-7 flex flex-col gap-space-md">
+              <div className="lg:col-span-7 flex flex-col gap-space-md" id="best-price-finder-section">
                 {/* Filter & Search Toolbar */}
                 <div className="bg-surface-card rounded-xl p-space-md shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-md">
@@ -699,41 +762,41 @@ export default function HomePage() {
                 </div>
 
                 {/* Commodity Cards List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md" id="commodity-grid">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-space-md" id="commodity-grid">
                   {loadingCommodities ? (
                     Array.from({ length: 6 }).map((_, i) => (
                       <div
                         key={`commodity-skel-${i}`}
-                        className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/50 flex flex-col justify-between animate-pulse"
+                        className="bg-surface-card rounded-xl p-2.5 sm:p-space-md shadow-sm border border-border-subtle/50 flex flex-col justify-between animate-pulse"
                       >
                         <div>
-                          <div className="flex items-start justify-between gap-space-xs mb-space-xs">
-                            <div className="flex items-center gap-space-xs">
-                              <div className="w-9 h-9 rounded-lg bg-surface-subtle shrink-0" />
-                              <div className="space-y-1">
-                                <div className="h-3 w-16 bg-surface-subtle rounded" />
-                                <div className="h-5 w-32 bg-surface-subtle rounded" />
+                          <div className="flex items-start justify-between gap-1.5 sm:gap-space-xs mb-1.5 sm:mb-space-xs">
+                            <div className="flex items-center gap-1.5 sm:gap-space-xs min-w-0">
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-surface-subtle shrink-0" />
+                              <div className="space-y-1 min-w-0">
+                                <div className="h-2.5 sm:h-3 w-12 sm:w-16 bg-surface-subtle rounded" />
+                                <div className="h-3.5 sm:h-5 w-20 sm:w-32 bg-surface-subtle rounded" />
                               </div>
                             </div>
-                            <div className="h-5 w-16 bg-surface-subtle rounded-full" />
+                            <div className="h-4 sm:h-5 w-10 sm:w-16 bg-surface-subtle rounded-full shrink-0" />
                           </div>
-                          <div className="p-space-xs rounded-lg bg-surface-subtle/60 mb-space-xs">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="h-3 w-28 bg-surface-subtle rounded" />
-                              <div className="h-3 w-20 bg-surface-subtle rounded" />
+                          <div className="p-2 sm:p-space-xs rounded-lg bg-surface-subtle/60 mb-1.5 sm:mb-space-xs">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                              <div className="h-2.5 sm:h-3 w-16 sm:w-28 bg-surface-subtle rounded" />
+                              <div className="h-2.5 sm:h-3 w-12 sm:w-20 bg-surface-subtle rounded" />
                             </div>
-                            <div className="flex items-baseline justify-between">
-                              <div className="h-5 w-32 bg-surface-subtle rounded" />
-                              <div className="h-6 w-24 bg-surface-subtle rounded" />
+                            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                              <div className="h-4 sm:h-5 w-20 sm:w-32 bg-surface-subtle rounded" />
+                              <div className="h-5 sm:h-6 w-16 sm:w-24 bg-surface-subtle rounded" />
                             </div>
                           </div>
-                          <div className="flex items-center justify-between pt-1 mb-space-sm">
-                            <div className="h-4 w-32 bg-surface-subtle rounded" />
-                            <div className="h-4 w-14 bg-surface-subtle rounded" />
+                          <div className="flex items-center justify-between pt-0.5 sm:pt-1 mb-1.5 sm:mb-space-sm">
+                            <div className="h-3 sm:h-4 w-16 sm:w-32 bg-surface-subtle rounded" />
+                            <div className="h-3 sm:h-4 w-10 sm:w-14 bg-surface-subtle rounded" />
                           </div>
-                          <div className="w-full h-8 bg-surface-subtle/40 rounded mb-space-sm" />
+                          <div className="w-full h-5 sm:h-8 bg-surface-subtle/40 rounded mb-1.5 sm:mb-space-sm" />
                         </div>
-                        <div className="w-full h-9 bg-surface-subtle rounded-lg mt-1" />
+                        <div className="w-full h-7 sm:h-9 bg-surface-subtle rounded-lg mt-1" />
                       </div>
                     ))
                   ) : errorCommodities ? (
@@ -765,107 +828,125 @@ export default function HomePage() {
                     filteredCommodities.map((item) => (
                       <div
                         key={item.id}
-                        className="bg-surface-card rounded-xl p-space-md shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden group"
+                        className="bg-surface-card rounded-xl p-2.5 sm:p-space-md shadow-sm hover:shadow-md transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden group border border-border-subtle/40 will-change-transform"
                       >
                         {item.isCritical && (
                           <div className="absolute top-0 left-0 right-0 h-1 bg-status-critical"></div>
                         )}
                         <div>
-                          <div className="flex items-start justify-between gap-space-xs mb-space-xs">
-                            <div className="flex items-center gap-space-xs min-w-0">
-                              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                                <CommodityIcon id={item.komoditas_id || item.id} className="w-5 h-5" />
+                          {/* Top Meta: Icon + Category Tag on Left, Status Pill on Right */}
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <div className="w-6.5 h-6.5 sm:w-8 sm:h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <CommodityIcon id={item.komoditas_id || item.id} className="w-4 h-4 sm:w-5 sm:h-5" />
                               </div>
-                              <div className="min-w-0">
-                                <span
-                                  className={`font-label-caps text-label-caps uppercase block ${
-                                    item.isCritical
-                                      ? "text-status-critical font-semibold"
-                                      : item.isWarning
-                                      ? "text-status-warning font-semibold"
-                                      : "text-text-muted"
-                                  }`}
-                                >
-                                  {item.tag}
-                                </span>
-                                <h3 className="font-title-md text-title-md text-text-primary truncate">{item.name}</h3>
-                              </div>
-                            </div>
-                            <span
-                              className={`inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full font-label-caps text-label-caps ${
-                                item.isCritical
-                                  ? "bg-status-critical-bg text-status-critical"
-                                  : item.isWarning
-                                  ? "bg-status-warning-bg text-status-warning"
-                                  : "bg-status-normal-bg text-status-normal"
-                              }`}
-                            >
-                              {item.isCritical ? (
-                                <span className="material-symbols-outlined text-body-sm">warning</span>
-                              ) : (
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    item.isWarning ? "bg-status-warning" : "bg-status-normal"
-                                  }`}
-                                ></span>
-                              )}
-                              {item.status}
-                            </span>
-                          </div>
-                          <div
-                            className={`rounded-lg p-space-xs mb-space-sm ${
-                              item.isCritical ? "bg-status-warning-bg" : "bg-surface-subtle"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-label-caps text-label-caps text-text-secondary">
-                                {item.cheapestBadge}
-                              </span>
                               <span
-                                className={`font-label-caps text-label-caps font-semibold ${
-                                  item.isCritical ? "text-status-critical" : "text-status-normal"
+                                className={`text-[10px] sm:text-label-caps uppercase tracking-wider truncate font-bold ${
+                                  item.isCritical
+                                    ? "text-status-critical"
+                                    : item.isWarning
+                                    ? "text-status-warning"
+                                    : "text-slate-500"
                                 }`}
                               >
-                                {item.cheapestSub}
+                                {item.tag}
                               </span>
                             </div>
-                            <div className="flex items-baseline justify-between">
-                              <div>
-                                <span className="font-body-md text-body-md font-semibold text-primary">
-                                  {item.marketName}
+                            <span
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9.5px] sm:text-label-caps shrink-0 font-medium ${
+                                item.isCritical
+                                  ? "bg-status-critical-bg text-status-critical border border-rose-200"
+                                  : item.isWarning
+                                  ? "bg-status-warning-bg text-status-warning border border-amber-200"
+                                  : "bg-status-normal-bg text-status-normal border border-emerald-200"
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  item.isCritical
+                                    ? "bg-status-critical"
+                                    : item.isWarning
+                                    ? "bg-status-warning"
+                                    : "bg-status-normal"
+                                }`}
+                              ></span>
+                              <span>{item.status}</span>
+                            </span>
+                          </div>
+
+                          {/* Full-width Commodity Name (Never gets truncated by status pill!) */}
+                          <h3
+                            className="font-bold text-xs sm:text-sm text-slate-900 leading-tight line-clamp-1 mb-2"
+                            title={item.name}
+                          >
+                            {item.name}
+                          </h3>
+
+                          {/* Price & Market Focus Box (Shopee-style) */}
+                          <div
+                            className={`rounded-lg p-2 sm:p-space-xs mb-1.5 sm:mb-space-sm ${
+                              item.isCritical ? "bg-rose-50/70 border border-rose-100" : "bg-surface-subtle"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1 gap-1">
+                              <span className="text-[10px] sm:text-label-caps text-slate-500 font-medium truncate">
+                                <span className="sm:hidden">Termurah</span>
+                                <span className="hidden sm:inline">{item.cheapestBadge}</span>
+                              </span>
+                              <span
+                                className={`text-[10px] sm:text-label-caps font-bold shrink-0 ${
+                                  item.isCritical ? "text-rose-600" : "text-emerald-700"
+                                }`}
+                              >
+                                {item.cheapestSub.replace("/kg", "")}
+                              </span>
+                            </div>
+
+                            {/* Responsive layout: mobile stacked (Price prominent, Market below), sm+ side-by-side */}
+                            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2">
+                              <div className="order-1 sm:order-2 sm:text-right">
+                                <span className="font-extrabold text-sm sm:text-metric-value text-slate-900">
+                                  {item.price}
+                                </span>
+                                <span className="text-[10px] sm:text-body-sm text-slate-500 ml-0.5">{item.unit}</span>
+                              </div>
+                              <div className="order-2 sm:order-1 min-w-0">
+                                <span className="font-semibold text-xs sm:text-body-md text-primary truncate flex items-center gap-1" title={item.marketName}>
+                                  <span className="material-symbols-outlined text-[13px] sm:text-[15px] shrink-0 text-primary">
+                                    location_on
+                                  </span>
+                                  <span className="truncate">{item.marketName.replace("Pasar ", "")}</span>
                                 </span>
                                 <p
-                                  className={`font-label-caps text-label-caps ${
-                                    item.isCritical ? "text-status-critical" : "text-text-muted"
+                                  className={`text-[9.5px] sm:text-label-caps truncate ${
+                                    item.isCritical ? "text-rose-600" : "text-slate-500"
                                   }`}
                                 >
                                   {item.marketSub}
                                 </p>
                               </div>
-                              <div className="text-right">
-                                <span className="font-metric-value text-metric-value text-text-primary">
-                                  {item.price}
-                                </span>
-                                <span className="font-body-sm text-body-sm text-text-muted">{item.unit}</span>
-                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between text-text-secondary font-body-sm text-body-sm mb-space-sm pt-1">
-                            <span>
-                              Rata-rata Kota:{" "}
-                              <strong className="font-metric-delta text-text-primary">{item.cityAvg}</strong>
+
+                          {/* City Average & Trend */}
+                          <div className="flex items-center justify-between text-text-secondary text-[10px] sm:text-body-sm mb-1.5 sm:mb-space-sm pt-0.5">
+                            <span className="truncate mr-1">
+                              <span className="hidden sm:inline">Rata-rata Kota: </span>
+                              <span className="sm:hidden">Rerata: </span>
+                              <strong className="font-semibold text-text-primary">{item.cityAvg}</strong>
                             </span>
                             <span
-                              className={`inline-flex items-center font-metric-delta text-metric-delta ${item.deltaClass}`}
+                              className={`inline-flex items-center font-medium shrink-0 ${item.deltaClass}`}
                             >
-                              <span className="material-symbols-outlined text-body-sm mr-0.5">
+                              <span className="material-symbols-outlined text-[11px] sm:text-body-sm mr-0.5">
                                 {item.deltaIcon}
                               </span>
                               {item.delta}
                             </span>
                           </div>
+
                           {/* Sparkline Visual */}
-                          <div className="w-full h-8 mb-space-sm">
+                          <div className="w-full h-5 sm:h-8 mb-1.5 sm:mb-space-sm">
                             <svg
                               className={`w-full h-full ${item.sparkClass}`}
                               preserveAspectRatio="none"
@@ -881,18 +962,25 @@ export default function HomePage() {
                             </svg>
                           </div>
                         </div>
+
+                        {/* Button Masukkan Keranjang */}
                         <button
-                          className={`w-full py-2 font-body-sm text-body-sm font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                          className={`w-full py-1.5 sm:py-2 text-xs sm:text-body-sm font-semibold rounded-lg flex items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer ${
                             addedItems[item.id]
                               ? "bg-primary text-on-primary"
                               : "bg-surface-subtle hover:bg-primary hover:text-on-primary text-text-primary"
                           }`}
                           onClick={() => handleAddToBasket(item)}
                         >
-                          <span className="material-symbols-outlined text-body-md">
+                          <span className="material-symbols-outlined text-sm sm:text-body-md">
                             {addedItems[item.id] ? "check" : "add_shopping_cart"}
                           </span>
-                          {addedItems[item.id] ? "Ditambahkan!" : "+ Masukkan Keranjang"}
+                          <span className="hidden sm:inline">
+                            {addedItems[item.id] ? "Ditambahkan!" : "+ Masukkan Keranjang"}
+                          </span>
+                          <span className="sm:hidden">
+                            {addedItems[item.id] ? "Ditambahkan" : "+ Keranjang"}
+                          </span>
                         </button>
                       </div>
                     ))
@@ -931,7 +1019,7 @@ export default function HomePage() {
                       <h4 className="font-headline-sm text-body-md text-text-primary font-bold mb-1">
                         Strategi Belanja Cerdas di {highestSavingItem.marketName}
                       </h4>
-                      <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed">
+                      <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed text-justify">
                         {highestSavingItem.marketName} saat ini mencatat harga terendah untuk {highestSavingItem.name} sebesar <strong className="text-text-primary font-semibold">{highestSavingItem.price}{highestSavingItem.unit}</strong> dibanding rata-rata Surabaya ({highestSavingItem.cityAvg}). Memilih belanja di {highestSavingItem.marketName} memberikan efisiensi anggaran paling signifikan hari ini dengan potensi penghematan hingga <strong className="text-status-normal font-semibold">{highestSavingItem.cheapestSub.replace("Hemat ", "")}</strong>.
                       </p>
                     </div>
@@ -941,202 +1029,287 @@ export default function HomePage() {
               </div>
 
               {/* RIGHT COLUMN: Smart Shopping Basket (lg:col-span-5) */}
-              <div className="lg:col-span-5 flex flex-col gap-space-md">
-                <div className="bg-surface-card rounded-xl p-space-md shadow-sm">
-                  {/* Basket Header */}
-                  <div className="flex items-center justify-between pb-space-sm mb-space-sm bg-surface-subtle -mx-space-md -mt-space-md p-space-md rounded-t-xl">
-                    <div className="flex items-center gap-space-xs">
-                      <div className="w-9 h-9 rounded-lg bg-primary text-on-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined text-title-md">shopping_basket</span>
+              <div className="lg:col-span-5 flex flex-col gap-space-md" id="smart-shopping-basket">
+                <div className="bg-surface-card rounded-2xl p-3.5 sm:p-5 shadow-sm border border-border-subtle/80 transition-all">
+                  {/* Basket Header (Shopee Style) */}
+                  <div className="flex items-center justify-between pb-2.5 sm:pb-3 mb-3 border-b border-border-subtle/60 gap-2">
+                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-xs shrink-0">
+                        <span className="material-symbols-outlined text-[19px] sm:text-[22px]">shopping_bag</span>
                       </div>
-                      <div>
-                        <h3 className="font-headline-sm text-headline-sm text-text-primary">Smart Shopping Basket</h3>
-                        <p className="font-label-caps text-label-caps text-text-secondary">
-                          Kalkulator Simulasi Belanja Keluarga
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="font-headline-sm text-sm sm:text-base text-text-primary font-bold truncate">Smart Shopping Basket</h3>
+                          <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] sm:text-[10px] font-bold font-label-caps shrink-0">
+                            SIMULASI
+                          </span>
+                        </div>
+                        <p className="font-label-caps text-[10.5px] sm:text-xs text-text-secondary truncate">
+                          Kalkulator 6 Pasar Tradisional Surabaya
                         </p>
                       </div>
                     </div>
                     <button
-                      className="font-label-caps text-label-caps text-text-muted hover:text-error transition-colors flex items-center gap-1 cursor-pointer"
+                      className="font-label-caps text-[11px] sm:text-xs text-text-muted hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer py-1 px-2 rounded-lg hover:bg-rose-50 shrink-0"
                       onClick={handleResetBasket}
                       title="Atur ulang simulasi keranjang"
                     >
-                      <span className="material-symbols-outlined text-body-sm">restart_alt</span> Reset
+                      <span className="material-symbols-outlined text-sm">restart_alt</span> Reset
                     </button>
                   </div>
 
+                  {/* Select All Checkbox Bar (Ala Shopee Cart Header) */}
+                  {basketList.length > 0 && (
+                    <div className="flex items-center justify-between px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-subtle/80 rounded-xl mb-3 text-xs">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={allChecked}
+                          onChange={handleToggleAll}
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded text-primary accent-primary cursor-pointer focus:ring-primary"
+                        />
+                        <span className="font-bold text-slate-800 text-xs">
+                          Pilih Semua ({activeBasketList.length}/{basketList.length})
+                        </span>
+                      </label>
+                      <span className="text-slate-500 text-[10.5px] sm:text-[11px]">
+                        {activeBasketList.length === 0 ? "Semua nonaktif" : "Dihitung di ranking"}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Basket Itemized List */}
                   {basketList.length === 0 ? (
-                    <div className="p-4 text-center bg-surface-canvas rounded-lg mb-space-md">
-                      <span className="material-symbols-outlined text-text-muted text-title-lg block mb-1">remove_shopping_cart</span>
-                      <p className="font-body-sm text-text-muted mb-2">Keranjang belanja kosong.</p>
+                    <div className="p-6 text-center bg-surface-canvas rounded-xl mb-space-md border border-dashed border-border-subtle">
+                      <span className="material-symbols-outlined text-text-muted text-3xl block mb-2">remove_shopping_cart</span>
+                      <p className="font-body-sm text-text-muted mb-3">Keranjang belanja kosong.</p>
                       <button
                         onClick={handleResetBasket}
-                        className="px-3 py-1 bg-primary text-on-primary rounded text-label-caps font-semibold cursor-pointer"
+                        className="px-4 py-2 bg-primary text-on-primary rounded-xl text-xs font-semibold shadow-xs hover:bg-primary-container transition-all cursor-pointer"
                       >
                         Muat Ulang Keranjang Default
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-2 mb-space-md">
-                      {(basketSim?.items || basketList.map((b) => ({ ...b, itemTotal: 0 }))).map((item) => (
-                        <div
-                          key={item.id || item.komoditas_id}
-                          className="flex items-center justify-between p-space-xs rounded-lg bg-surface-canvas text-body-sm font-body-sm hover:bg-surface-subtle/70 transition-colors"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="material-symbols-outlined text-text-muted text-body-md shrink-0">
-                              {item.icon}
-                            </span>
-                            <span className="text-text-primary font-medium truncate">{item.name}</span>
-                          </div>
+                    <div className="space-y-1.5 sm:space-y-2 mb-3.5 sm:mb-4">
+                      {basketList.map((item) => {
+                        const isChecked = checkedItems[item.komoditas_id] !== false;
+                        const simItem = basketSim?.items.find((si) => si.komoditas_id === item.komoditas_id);
+                        const itemSubtotal = simItem?.itemTotal || 0;
 
-                          <div className="flex items-center gap-space-xs shrink-0">
-                            {/* Quantity Controls */}
-                            <div className="flex items-center bg-surface-subtle rounded border border-border-subtle">
-                              <button
-                                onClick={() => handleUpdateQty(item.komoditas_id, -1)}
-                                className="w-6 h-6 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-variant/40 rounded-l cursor-pointer text-body-sm font-bold"
-                                title="Kurangi"
-                              >
-                                -
-                              </button>
-                              <span className="px-1.5 py-0.5 font-metric-delta text-text-secondary text-xs min-w-[42px] text-center">
-                                {item.qty} {item.unit}
-                              </span>
-                              <button
-                                onClick={() => handleUpdateQty(item.komoditas_id, 1)}
-                                className="w-6 h-6 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-variant/40 rounded-r cursor-pointer text-body-sm font-bold"
-                                title="Tambah"
-                              >
-                                +
-                              </button>
+                        return (
+                          <div
+                            key={item.id || item.komoditas_id}
+                            className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all ${
+                              isChecked
+                                ? "bg-white border-slate-200/90 shadow-2xs hover:border-slate-300"
+                                : "bg-slate-50/70 border-slate-200/50 opacity-60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 pr-1 flex-1">
+                              {/* Checkbox item */}
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleToggleCheck(item.komoditas_id)}
+                                className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded text-primary accent-primary cursor-pointer shrink-0"
+                                title="Sertakan dalam simulasi"
+                              />
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-subtle flex items-center justify-center shrink-0 text-text-secondary">
+                                <span className="material-symbols-outlined text-base sm:text-lg">
+                                  {item.icon}
+                                </span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-slate-900 font-semibold text-xs sm:text-sm truncate block" title={item.name}>
+                                  {item.name}
+                                </span>
+                                {itemSubtotal > 0 && isChecked && (
+                                  <span className="text-[10.5px] sm:text-[11px] font-bold text-primary block">
+                                    Rp {itemSubtotal.toLocaleString("id-ID")}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
-                            {/* Estimated subtotal across city */}
-                            {item.itemTotal > 0 && (
-                              <span className="font-metric-value text-body-md text-text-primary w-20 text-right">
-                                Rp {item.itemTotal.toLocaleString("id-ID")}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                              {/* Stepper Touch-Friendly Ala Shopee */}
+                              <div className="flex items-center bg-slate-100 rounded-lg border border-slate-200 p-0.5">
+                                <button
+                                  onClick={() => handleUpdateQty(item.komoditas_id, -1)}
+                                  className="w-5.5 h-5.5 sm:w-6 sm:h-6 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white rounded-md cursor-pointer text-xs font-bold transition-colors shadow-2xs"
+                                  title="Kurangi"
+                                >
+                                  -
+                                </button>
+                                <span className="px-1 sm:px-2 py-0.5 font-semibold text-slate-800 text-[11px] sm:text-xs min-w-[34px] sm:min-w-[42px] text-center">
+                                  {item.qty} {item.unit}
+                                </span>
+                                <button
+                                  onClick={() => handleUpdateQty(item.komoditas_id, 1)}
+                                  className="w-5.5 h-5.5 sm:w-6 sm:h-6 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white rounded-md cursor-pointer text-xs font-bold transition-colors shadow-2xs"
+                                  title="Tambah"
+                                >
+                                  +
+                                </button>
+                              </div>
 
-                            {/* Delete button */}
-                            <button
-                              onClick={() => handleRemoveItem(item.komoditas_id)}
-                              className="text-text-muted hover:text-error transition-colors p-1 cursor-pointer"
-                              title="Hapus dari keranjang"
-                            >
-                              <span className="material-symbols-outlined text-body-sm">close</span>
-                            </button>
+                              {/* Delete button */}
+                              <button
+                                onClick={() => handleRemoveItem(item.komoditas_id)}
+                                className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1 sm:p-1.5 rounded-lg transition-colors cursor-pointer"
+                                title="Hapus dari keranjang"
+                              >
+                                <span className="material-symbols-outlined text-[16px] sm:text-sm">delete_outline</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
-                  {/* Market Ranking Comparison List */}
-                  <div className="mb-space-md">
-                    <div className="flex items-center justify-between gap-1 mb-space-xs">
-                      <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                        Ranking Total Belanja di 6 Pasar
+                  {/* Market Ranking Comparison List (Ala Pilihan Toko / Kurir Shopee) */}
+                  <div className="mb-3.5 sm:mb-4">
+                    <div className="flex items-center justify-between gap-1 mb-2">
+                      <span className="font-label-caps text-[11px] sm:text-xs text-text-secondary uppercase tracking-wider font-bold truncate">
+                        Ranking Belanja 6 Pasar
                       </span>
+                      {activeBasketList.length > 0 && (
+                        <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium shrink-0">
+                          {activeBasketList.length} item aktif
+                        </span>
+                      )}
                     </div>
 
                     {isBasketLoading ? (
-                      <div className="space-y-2 py-4 text-center text-text-muted text-body-sm">
-                        <span className="material-symbols-outlined animate-spin align-middle mr-1">sync</span>
-                        Menghitung simulasi 6 pasar...
+                      <div className="space-y-2 py-6 text-center text-text-muted text-xs bg-surface-canvas rounded-xl">
+                        <span className="material-symbols-outlined animate-spin text-lg align-middle mr-1.5 text-primary">sync</span>
+                        Menghitung simulasi harga 6 pasar...
+                      </div>
+                    ) : activeBasketList.length === 0 ? (
+                      <div className="text-text-muted text-xs text-center py-4 bg-surface-canvas rounded-xl">
+                        Centang minimal 1 barang di atas untuk melihat perbandingan pasar.
                       </div>
                     ) : basketSim?.rankings && basketSim.rankings.length > 0 ? (
                       <div className="space-y-2">
-                        {basketSim.rankings.map((m) => {
-                          const isFirst = m.rank === 1;
+                        {/* Winner Store (#1 Keputran) - Shopee Recommendation Style */}
+                        {(() => {
+                          const winner = basketSim.rankings[0];
+                          const mostExp = basketSim.rankings[basketSim.rankings.length - 1];
+                          const maxSaving = mostExp ? mostExp.totalBelanja - winner.totalBelanja : 0;
+                          const cleanWilayah = winner.wilayah.replace(/^Surabaya\s+/i, "");
                           return (
-                            <div
-                              key={m.pasar_id}
-                              className={`p-space-xs rounded-lg flex items-center justify-between transition-all ${
-                                isFirst
-                                  ? "bg-status-normal-bg border border-status-normal/30 shadow-xs"
-                                  : "bg-surface-canvas"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center font-metric-delta text-metric-delta ${
-                                    isFirst
-                                      ? "bg-status-normal text-white"
-                                      : "bg-surface-subtle text-text-secondary"
-                                  }`}
-                                >
-                                  #{m.rank}
-                                </span>
-                                <div>
-                                  <span
-                                    className={`font-body-md text-body-md ${
-                                      isFirst ? "font-semibold text-text-primary" : "font-medium text-text-primary"
-                                    }`}
-                                  >
-                                    {m.nama_pasar}
+                            <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-2 border-emerald-500/80 shadow-xs relative overflow-hidden">
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="bg-emerald-600 text-white text-[9.5px] sm:text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs shrink-0">
+                                    <span className="material-symbols-outlined text-[12px] sm:text-[13px]">verified</span> Paling Hemat
                                   </span>
-                                  <span
-                                    className={`block font-label-caps text-label-caps ${
-                                      isFirst ? "text-status-normal font-semibold" : "text-text-muted"
-                                    }`}
-                                  >
-                                    {isFirst ? "Rekomendasi Terbaik • Termurah" : m.wilayah}
+                                  <span className="text-emerald-900 font-bold text-xs">Pilihan Terbaik</span>
+                                </div>
+                                <span className="font-extrabold text-base sm:text-lg text-emerald-700 tracking-tight shrink-0">
+                                  Rp {winner.totalBelanja.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs gap-2">
+                                <div className="min-w-0">
+                                  <span className="font-bold text-slate-900 text-xs sm:text-sm truncate block">
+                                    {winner.nama_pasar}
+                                  </span>
+                                  <span className="text-slate-500 text-[10.5px] sm:text-[11px] truncate block">
+                                    Surabaya {cleanWilayah} • Pasar Grosir
                                   </span>
                                 </div>
-                              </div>
-                              <div className="text-right">
-                                <span
-                                  className={`font-metric-value ${
-                                    isFirst
-                                      ? "text-metric-value text-status-normal"
-                                      : "text-body-md text-text-primary"
-                                  }`}
-                                >
-                                  Rp {m.totalBelanja.toLocaleString("id-ID")}
-                                </span>
-                                <span
-                                  className={`block font-label-caps text-label-caps ${
-                                    isFirst
-                                      ? "text-status-normal font-semibold"
-                                      : m.rank === basketSim.rankings.length
-                                      ? "text-status-critical"
-                                      : "text-text-secondary"
-                                  }`}
-                                >
-                                  {isFirst ? "Paling Hemat" : `+Rp ${m.selisih.toLocaleString("id-ID")}`}
-                                </span>
+                                {maxSaving > 0 && (
+                                  <span className="text-[10.5px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
+                                    Hemat Rp {maxSaving.toLocaleString("id-ID")}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           );
-                        })}
+                        })()}
+
+                        {/* Other Markets (#2 to #6) */}
+                        <div className="space-y-1.5 pt-1">
+                          {basketSim.rankings.slice(1).map((m) => {
+                            const isMostExp = m.rank === basketSim.rankings.length;
+                            const cleanWil = m.wilayah.replace(/^Surabaya\s+/i, "");
+                            return (
+                              <div
+                                key={m.pasar_id}
+                                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl flex items-center justify-between text-xs border transition-colors ${
+                                  isMostExp
+                                    ? "bg-rose-50/40 border-rose-200/60"
+                                    : "bg-surface-canvas border-slate-200/70"
+                                }`}
+                              >
+                                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 pr-1">
+                                  <span className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-surface-subtle text-text-secondary flex items-center justify-center font-bold text-[9.5px] sm:text-[10px] shrink-0">
+                                    #{m.rank}
+                                  </span>
+                                  <div className="min-w-0 flex items-center gap-1">
+                                    <span className="font-semibold text-slate-800 text-xs truncate">
+                                      {m.nama_pasar}
+                                    </span>
+                                    <span className="hidden sm:inline text-slate-400 text-[10px] shrink-0">
+                                      {cleanWil}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="text-right flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                  <span className="font-semibold text-slate-900 text-xs">
+                                    Rp {m.totalBelanja.toLocaleString("id-ID")}
+                                  </span>
+                                  <span
+                                    className={`text-[9.5px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                      isMostExp
+                                        ? "bg-rose-100 text-rose-700"
+                                        : "bg-slate-100 text-slate-600"
+                                    }`}
+                                  >
+                                    +{m.selisih > 0 ? `Rp ${m.selisih.toLocaleString("id-ID")}` : "-"}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : (
-                      <div className="text-text-muted text-body-sm text-center py-2">
+                      <div className="text-text-muted text-xs text-center py-2">
                         Pilih item untuk melihat ranking pasar.
                       </div>
                     )}
                   </div>
 
-                  {/* Monthly Savings Breakdown Card */}
+                  {/* Monthly Savings Ticket / Voucher Card (Shopee Voucher Style) */}
                   {basketSim && basketSim.monthlySaving > 0 && (
-                    <div className="bg-primary-fixed/25 rounded-xl p-space-sm mb-space-md flex items-center gap-space-sm border border-primary/20">
-                      <div className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-title-md">savings</span>
-                      </div>
-                      <div>
-                        <span className="font-label-caps text-label-caps text-on-primary-fixed font-semibold uppercase">
-                          Estimasi Penghematan Bulanan
-                        </span>
-                        <p className="font-body-sm text-body-sm text-on-primary-fixed-variant">
-                          Belanja di <strong>{basketSim.cheapestMarket}</strong> vs <strong>{basketSim.mostExpensiveMarket}</strong> menghemat hingga{" "}
-                          <strong className="text-primary font-headline-sm">
-                            Rp {basketSim.monthlySaving.toLocaleString("id-ID")}/bulan
-                          </strong>{" "}
-                          untuk pola konsumsi 4x belanja keluarga.
-                        </p>
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-5 py-3.5 sm:px-6 sm:py-4 mb-3.5 sm:mb-4 shadow-sm">
+                      {/* Symmetrical Ticket cutouts decoration */}
+                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-surface-card"></div>
+                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-surface-card"></div>
+
+                      <div className="flex items-center gap-3 sm:gap-3.5 pl-1 pr-1">
+                        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20 shadow-2xs">
+                          <span className="material-symbols-outlined text-2xl text-emerald-200">savings</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9.5px] uppercase tracking-wider font-extrabold bg-emerald-950/40 text-emerald-200 px-2 py-0.5 rounded-full inline-block">
+                              POTENSI HEMAT BULANAN
+                            </span>
+                          </div>
+                          <div className="text-base sm:text-lg font-extrabold tracking-tight text-white mt-0.5">
+                            Rp {basketSim.monthlySaving.toLocaleString("id-ID")}{" "}
+                            <span className="text-[11px] font-normal text-emerald-100">/ bulan</span>
+                          </div>
+                          <p className="text-[10.5px] sm:text-[11px] text-emerald-100/90 leading-tight mt-0.5">
+                            Belanja di <strong>{basketSim.cheapestMarket}</strong> vs <strong>{basketSim.mostExpensiveMarket}</strong> (estimasi 4x belanja/bulan).
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1144,29 +1317,28 @@ export default function HomePage() {
                   {/* Action Buttons */}
                   <div className="flex flex-col gap-2">
                     <button
-                      className="w-full py-3 bg-[#25D366] text-white rounded-lg font-body-md text-body-md font-semibold flex items-center justify-center gap-2 hover:opacity-95 shadow-sm transition-opacity cursor-pointer"
+                      className="w-full py-2.5 sm:py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
                       onClick={handleShareToWhatsApp}
                     >
-                      <span className="material-symbols-outlined text-title-md">share</span>
+                      <span className="material-symbols-outlined text-base sm:text-lg">share</span>
                       Bagikan Rincian Belanja ke WhatsApp
                     </button>
                     <button
-                      className="w-full py-2 bg-surface-subtle hover:bg-surface-variant/50 text-text-secondary rounded-lg font-body-sm text-body-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="w-full py-2 sm:py-2.5 bg-surface-subtle hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       onClick={handleDownloadList}
                     >
-                      <span className="material-symbols-outlined text-body-md">download_for_offline</span>
-                      Simpan Daftar Belanja (Catatan)
+                      <span className="material-symbols-outlined text-sm sm:text-base">download_for_offline</span>
+                      Simpan Catatan Belanja
                     </button>
                   </div>
                 </div>
-
-
               </div>
+
             </div>
           </section>
 
           {/* Bottom Section: Komparasi Harga Antar-Pasar 14 Hari Konsumen */}
-          <section className="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop w-full mb-space-2xl" id="grafik-tren">
+          <section className="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop w-full mb-space-lg sm:mb-space-xl lg:mb-space-2xl" id="grafik-tren">
             <div className="bg-surface-card rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-border-subtle/80 transition-all">
               {/* Header: Title & Info */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -1187,10 +1359,10 @@ export default function HomePage() {
               </div>
 
               {/* Pola 2: Searchable Dropdown for All 38 Commodities + Strategic Quick Chips */}
-              <div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-between gap-3 bg-surface-subtle/50 p-3 rounded-2xl border border-border-subtle/70">
+              <div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-start gap-8 bg-surface-subtle/50 p-3 rounded-2xl border border-border-subtle/70">
                 {/* Left: Searchable Dropdown for 38 Commodities */}
                 <div className="w-full lg:w-72 shrink-0">
-                  <div className="mb-1">
+                  <div className="mb-1.5">
                     <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
                       Pilih dari 38 Komoditas:
                     </span>
@@ -1209,13 +1381,13 @@ export default function HomePage() {
                 </div>
 
                 {/* Right: Quick Chips (Pangan Pokok Strategis) */}
-                <div className="flex-1 w-full lg:max-w-xl">
-                  <div className="mb-1">
+                <div className="w-full lg:flex-1 min-w-0">
+                  <div className="mb-1.5 pl-1.5">
                     <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
                       Pangan Pokok Strategis:
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar px-1.5 py-1 -mt-1 pr-8">
                     {AVAILABLE_TREND_COMMODITIES.map((c) => {
                       const isSelected = trendCommodityId === c.id;
                       return (
@@ -1226,13 +1398,13 @@ export default function HomePage() {
                             setTrendCommodityId(c.id);
                             setHighlightedMarketId(null);
                           }}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                          className={`h-11 inline-flex items-center justify-center gap-2 px-3.5 rounded-xl text-xs font-semibold shrink-0 whitespace-nowrap transition-all duration-200 cursor-pointer ${
                             isSelected
                               ? "bg-primary text-white shadow-sm shadow-primary/30 ring-2 ring-primary/40 font-bold"
                               : "bg-white hover:bg-surface-subtle text-text-secondary hover:text-text-primary border border-border-subtle hover:border-primary/20 shadow-xs"
                           }`}
                         >
-                          <CommodityIcon id={c.id} className="w-3.5 h-3.5 shrink-0" />
+                          <CommodityIcon id={c.id} className="w-4 h-4 shrink-0" />
                           <span>{c.shortName}</span>
                         </button>
                       );
@@ -1315,8 +1487,8 @@ export default function HomePage() {
                 // SVG dimensions & coordinate transforms
                 const chartLeft = 65;
                 const chartRight = 790;
-                const chartTop = 28;
-                const chartBottom = 220;
+                const chartTop = 38;
+                const chartBottom = 175;
                 const chartWidth = chartRight - chartLeft;
                 const chartHeight = chartBottom - chartTop;
 
@@ -1358,7 +1530,7 @@ export default function HomePage() {
                 const dataMin = activePrices.length > 0 ? Math.min(...activePrices) : 25000;
                 const dataMax = activePrices.length > 0 ? Math.max(...activePrices) : 38000;
                 const rawRange = Math.max(2000, dataMax - dataMin);
-                const pad = Math.round(rawRange * 0.12);
+                const pad = Math.round(rawRange * 0.08);
                 const yMin = Math.max(0, Math.floor((dataMin - pad) / 500) * 500);
                 const yMax = Math.ceil((dataMax + pad) / 500) * 500;
                 const yRange = Math.max(1000, yMax - yMin);
@@ -1510,16 +1682,40 @@ export default function HomePage() {
                     </div>
 
                     {/* Interactive Focus Toolbar: Market Chips */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 bg-surface-canvas/60 rounded-xl border border-border-subtle/80 mb-3">
-                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span className="text-xs font-semibold text-text-secondary mr-1">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 py-2.5 px-3 bg-surface-canvas/60 rounded-xl border border-border-subtle/80 mb-3">
+                      {/* Mobile Header: Label & Action */}
+                      <div className="flex items-center justify-between md:hidden">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-text-secondary">
+                            Fokus Pasar:
+                          </span>
+                          {highlightedMarketId && (
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold animate-pulse">
+                              Fokus Aktif
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const allVisible = TREND_MARKET_CONFIGS.reduce((acc, m) => ({ ...acc, [m.id]: true }), {});
+                            setActiveMarkets(allVisible);
+                            setHighlightedMarketId(null);
+                          }}
+                          className="text-[11px] text-primary hover:text-primary-dark hover:underline font-semibold cursor-pointer shrink-0"
+                        >
+                          Tampilkan Semua
+                        </button>
+                      </div>
+
+                      {/* Market Chips: 2-Col Grid on Mobile, Flex on Desktop */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span className="text-xs font-semibold text-text-secondary mr-1 hidden md:inline">
                           Fokus Pasar:
                         </span>
                         {TREND_MARKET_CONFIGS.map((m) => {
                           const isVisible = !!activeMarkets[m.id];
                           const isHovered = highlightedMarketId === m.id;
-                          const marketPrice = todayMarketStats.find((s) => s.id === m.id)?.price;
-                          const isCheapest = cheapestToday?.id === m.id;
 
                           return (
                             <button
@@ -1528,11 +1724,11 @@ export default function HomePage() {
                               onMouseEnter={() => setHighlightedMarketId(m.id)}
                               onMouseLeave={() => setHighlightedMarketId(null)}
                               onClick={() => setActiveMarkets((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                              className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer select-none border ${
+                              className={`group inline-flex items-center justify-center md:justify-start gap-1.5 px-2.5 py-1.5 md:py-1 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer select-none border ${
                                 !isVisible
                                   ? "opacity-35 bg-surface-subtle/50 text-text-muted line-through border-transparent"
                                   : isHovered
-                                  ? "bg-surface-card text-text-primary shadow-sm scale-105 border-primary/50 ring-2 ring-primary/20"
+                                  ? "bg-surface-card text-text-primary shadow-sm scale-[1.02] md:scale-105 border-primary/50 ring-2 ring-primary/20"
                                   : "bg-surface-card hover:bg-surface-card/90 text-text-secondary hover:text-text-primary border-border-subtle shadow-xs"
                               }`}
                               title={`Klik untuk on/off. Sorot kursor untuk isolasi grafik ${m.name}`}
@@ -1547,7 +1743,8 @@ export default function HomePage() {
                         })}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* Desktop Right Actions */}
+                      <div className="hidden md:flex items-center gap-2">
                         {highlightedMarketId && (
                           <span className="text-[11px] text-primary font-semibold hidden sm:inline animate-pulse">
                             Mode Fokus Aktif
@@ -1568,81 +1765,92 @@ export default function HomePage() {
                     </div>
 
                     {/* Chart Container Canvas */}
-                    <div className="w-full relative bg-surface-card rounded-2xl p-space-md mb-space-md select-none border border-border-subtle/60">
-                      {/* Floating Ranking Leaderboard Tooltip */}
-                      {activeHoverPoint && (
-                        <div
-                          className="absolute z-30 pointer-events-none bg-surface-card/95 backdrop-blur-md border border-border-subtle p-3.5 rounded-xl shadow-xl text-xs min-w-[240px] transition-all duration-75"
-                          style={{
-                            left: `${Math.min(70, Math.max(8, (activeHoverPoint.x / 820) * 100))}%`,
-                            top: "16px",
-                          }}
-                        >
-                          <div className="font-semibold text-text-primary flex items-center justify-between gap-1.5 mb-2 pb-1.5 border-b border-border-subtle">
-                            <span className="font-bold">{activeHoverPoint.dateStr}</span>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                activeHoverPoint.isForecast
-                                  ? "bg-primary-container text-on-primary"
-                                  : "bg-status-normal-bg text-status-normal"
-                              }`}
-                            >
-                              {activeHoverPoint.isForecast ? "Proyeksi model" : "Observasi"}
-                            </span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {activeHoverPoint.prices.map((p, rankIdx) => {
-                              const diffVsCheapest = p.price - baseCheapestPrice;
-                              const isFocus = highlightedMarketId === p.id;
-                              return (
-                                <div
-                                  key={p.id}
-                                  className={`flex items-center justify-between gap-2 px-1.5 py-0.5 rounded ${
-                                    isFocus ? "bg-primary/10 font-bold" : "text-text-secondary"
-                                  } text-[11px]`}
-                                >
-                                  <span className="flex items-center gap-1.5 truncate">
-                                    <span className="text-[9px] font-mono text-text-muted font-bold w-3 text-center">
-                                      #{rankIdx + 1}
-                                    </span>
-                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }}></span>
-                                    <span className={`truncate ${isFocus ? "text-primary font-bold" : "text-text-primary"}`}>
-                                      {p.name}
-                                    </span>
-                                  </span>
-                                  <div className="text-right shrink-0">
-                                    <span className="font-bold text-text-primary font-metric-value">
-                                      Rp {p.price.toLocaleString("id-ID")}
-                                    </span>
-                                    {rankIdx > 0 && diffVsCheapest > 0 && (
-                                      <span className="block text-[9px] text-text-muted font-mono leading-none">
-                                        +{diffVsCheapest.toLocaleString("id-ID")}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+                    <div className="w-full relative bg-surface-card rounded-2xl p-3 sm:p-5 mb-space-md select-none border border-border-subtle/60">
+                      {/* Mobile Swipe Affordance */}
+                      <div className="sm:hidden flex items-center justify-between text-text-muted text-[11px] font-medium mb-2.5 pb-2 border-b border-border-subtle/50">
+                        <span className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[15px] text-primary">swipe</span> Geser grafik untuk melihat pergerakan 14 hari
+                        </span>
+                        <span className="text-primary font-bold text-xs">&rarr;</span>
+                      </div>
 
-                      {/* SVG Canvas */}
-                      <div
-                        className="w-full h-72 sm:h-84 cursor-crosshair"
-                        onMouseMove={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const mouseX = e.clientX - rect.left;
-                          const svgX = (mouseX / rect.width) * 820;
-                          if (svgX >= chartLeft - 15 && svgX <= chartRight + 15) {
-                            const idx = Math.round(((svgX - chartLeft) / chartWidth) * (totalPoints - 1));
-                            const clamped = Math.max(0, Math.min(totalPoints - 1, idx));
-                            setHoveredPointIndex(clamped);
-                          }
-                        }}
-                        onMouseLeave={() => setHoveredPointIndex(null)}
-                      >
-                        <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 820 250">
+                      {/* Scrollable Container on Mobile with ample min-width */}
+                      <div className="w-full overflow-x-auto no-scrollbar">
+                        <div className="min-w-[680px] sm:min-w-full relative">
+                          {/* Floating Ranking Leaderboard Tooltip */}
+                          {activeHoverPoint && (
+                            <div
+                              className="absolute z-30 pointer-events-none bg-surface-card/95 backdrop-blur-md border border-border-subtle p-3.5 rounded-xl shadow-xl text-xs min-w-[240px] transition-opacity duration-150 will-change-transform"
+                              style={{
+                                left: `${Math.min(70, Math.max(8, (activeHoverPoint.x / 820) * 100))}%`,
+                                top: "16px",
+                              }}
+                            >
+                              <div className="font-semibold text-text-primary flex items-center justify-between gap-1.5 mb-2 pb-1.5 border-b border-border-subtle">
+                                <span className="font-bold">{activeHoverPoint.dateStr}</span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    activeHoverPoint.isForecast
+                                      ? "bg-primary-container text-on-primary"
+                                      : "bg-status-normal-bg text-status-normal"
+                                  }`}
+                                >
+                                  {activeHoverPoint.isForecast ? "Proyeksi model" : "Observasi"}
+                                </span>
+                              </div>
+                              <div className="space-y-1.5">
+                                {activeHoverPoint.prices.map((p, rankIdx) => {
+                                  const diffVsCheapest = p.price - baseCheapestPrice;
+                                  const isFocus = highlightedMarketId === p.id;
+                                  return (
+                                    <div
+                                      key={p.id}
+                                      className={`flex items-center justify-between gap-2 px-1.5 py-0.5 rounded ${
+                                        isFocus ? "bg-primary/10 font-bold" : "text-text-secondary"
+                                      } text-[11px]`}
+                                    >
+                                      <span className="flex items-center gap-1.5 truncate">
+                                        <span className="text-[9px] font-mono text-text-muted font-bold w-3 text-center">
+                                          #{rankIdx + 1}
+                                        </span>
+                                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }}></span>
+                                        <span className={`truncate ${isFocus ? "text-primary font-bold" : "text-text-primary"}`}>
+                                          {p.name}
+                                        </span>
+                                      </span>
+                                      <div className="text-right shrink-0">
+                                        <span className="font-bold text-text-primary font-metric-value">
+                                          Rp {p.price.toLocaleString("id-ID")}
+                                        </span>
+                                        {rankIdx > 0 && diffVsCheapest > 0 && (
+                                          <span className="block text-[9px] text-text-muted font-mono leading-none">
+                                            +{diffVsCheapest.toLocaleString("id-ID")}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* SVG Canvas - Tight, responsive, no vertical dead space */}
+                          <div
+                            className="w-full cursor-crosshair relative"
+                            onMouseMove={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const mouseX = e.clientX - rect.left;
+                              const svgX = (mouseX / rect.width) * 820;
+                              if (svgX >= chartLeft - 15 && svgX <= chartRight + 15) {
+                                const idx = Math.round(((svgX - chartLeft) / chartWidth) * (totalPoints - 1));
+                                const clamped = Math.max(0, Math.min(totalPoints - 1, idx));
+                                setHoveredPointIndex(clamped);
+                              }
+                            }}
+                            onMouseLeave={() => setHoveredPointIndex(null)}
+                          >
+                            <svg className="w-full h-auto block" viewBox="0 0 820 215">
                           <defs>
                             <linearGradient id="forecastAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                               <stop offset="0%" stopColor="#004328" stopOpacity="0.05" />
@@ -1663,11 +1871,23 @@ export default function HomePage() {
                             fill="url(#forecastAreaGrad)"
                             rx="4"
                           />
+
+                          {/* Forecast Pill Header in Top Clearance Zone (Bebas tabrakan dari kurva data) */}
+                          <rect
+                            x={(todayX + chartRight) / 2 - 76}
+                            y="10"
+                            width="152"
+                            height="20"
+                            rx="10"
+                            fill="#F0FDF4"
+                            stroke="#BBF7D0"
+                            strokeWidth="1"
+                          />
                           <text
                             x={(todayX + chartRight) / 2}
-                            y={chartTop + 14}
+                            y="24"
                             textAnchor="middle"
-                            className="fill-text-secondary text-[10px] font-medium tracking-wide select-none pointer-events-none"
+                            className="fill-[#166534] font-label-caps text-[10px] font-bold tracking-wide select-none pointer-events-none"
                           >
                             Proyeksi 7 hari ke depan
                           </text>
@@ -1685,7 +1905,7 @@ export default function HomePage() {
                                 y2={lvl.y}
                               />
                               <text
-                                className="fill-[#94A3B8] font-metric-delta text-[10px]"
+                                className="fill-[#64748B] font-metric-delta text-[10px] font-medium"
                                 x="10"
                                 y={lvl.y + 3.5}
                               >
@@ -1711,14 +1931,14 @@ export default function HomePage() {
                             strokeWidth="1.5"
                             x1={todayX}
                             x2={todayX}
-                            y1={chartTop - 10}
+                            y1={chartTop}
                             y2={chartBottom}
                           />
                           <text
-                            className="fill-text-primary font-label-caps text-[9px] font-bold select-none pointer-events-none"
+                            className="fill-[#004328] font-label-caps text-[10px] font-extrabold select-none pointer-events-none"
                             textAnchor="middle"
                             x={todayX}
-                            y={chartTop - 14}
+                            y="24"
                           >
                             Data {formattedDates[todayIdx] || "terkini"}
                           </text>
@@ -1779,7 +1999,7 @@ export default function HomePage() {
 
                                   return (
                                     <g key={i}>
-                                      {/* Static subtle halo on today's cheapest market point (diam / tenang) */}
+                                      {/* Static subtle halo on today's cheapest market point */}
                                       {isToday && s.id === cheapestToday?.id && (
                                         <circle
                                           cx={cx}
@@ -1821,7 +2041,7 @@ export default function HomePage() {
                                 x={xStart}
                                 y="0"
                                 width={w}
-                                height="250"
+                                height={chartBottom}
                                 fill="transparent"
                                 className="cursor-crosshair"
                                 onMouseEnter={() => setHoveredPointIndex(i)}
@@ -1853,45 +2073,110 @@ export default function HomePage() {
                                     r={isFocus ? "6" : "4.5"}
                                     stroke="#FFFFFF"
                                     strokeWidth="2"
-                                    className="transition-all duration-75"
+                                    className="transition-[r] duration-150"
                                   />
                                 );
                               })}
                             </g>
                           )}
-                        </svg>
-                      </div>
 
-                      {/* X-Axis Timeline Labels */}
-                      <div className="flex justify-between items-center text-text-muted font-label-caps text-label-caps pt-2 px-12 sm:px-16 overflow-hidden">
-                        <span>{formattedDates[0]}</span>
-                        <span>{formattedDates[2]}</span>
-                        <span>{formattedDates[4]}</span>
-                        <span className="text-status-normal font-bold">
-                          {formattedDates[todayIdx]} (Hari Ini)
-                        </span>
-                        <span>{formattedDates[8]}</span>
-                        <span>{formattedDates[10]}</span>
-                        <span>{formattedDates[totalPoints - 1]} (Proyeksi)</span>
+                          {/* X-Axis Timeline Labels inside SVG: perfectly aligned and zero dead whitespace */}
+                          <g className="font-label-caps text-[10px] select-none pointer-events-none">
+                            <text x={getX(0)} y="196" textAnchor="start" className="fill-[#64748B] font-medium">
+                              {formattedDates[0]}
+                            </text>
+                            <text x={getX(2)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
+                              {formattedDates[2]}
+                            </text>
+                            <text x={getX(4)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
+                              {formattedDates[4]}
+                            </text>
+                            <text x={todayX} y="196" textAnchor="middle" className="fill-[#16A34A] font-bold">
+                              {formattedDates[todayIdx]} (Hari Ini)
+                            </text>
+                            <text x={getX(8)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
+                              {formattedDates[8]}
+                            </text>
+                            <text x={getX(10)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
+                              {formattedDates[10]}
+                            </text>
+                            <text x={getX(totalPoints - 1)} y="196" textAnchor="end" className="fill-[#64748B] font-medium">
+                              {formattedDates[totalPoints - 1]} (Proyeksi)
+                            </text>
+                          </g>
+                        </svg>
                       </div>
                     </div>
                   </div>
-                );
-              })()}
-
-              {/* Clean Footer Metadata & Source Integrity */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-space-xs text-text-secondary font-body-sm text-body-sm border-t border-border-subtle/40">
-                <div className="flex items-center gap-space-xs">
-                  <span className="material-symbols-outlined text-status-normal text-body-md">
-                    verified_user
-                  </span>
-                  <span>Data perbandingan riil 6 pasar pantauan: Pasar Keputran (Grosir), Wonokromo, Genteng, Pucang Anom, Tambahrejo, dan Soponyono.</span>
                 </div>
               </div>
+            );
+              })()}
+
+
             </div>
           </section>
         </div>
       </main>
+
+      {/* Floating Sticky Cart Bar (Portal langsung ke document.body agar tidak terjebak container transform, otomatis menghilang saat scroll lewat Best Price Finder, dan disembunyikan pada layar desktop) */}
+      {isMounted && typeof document !== "undefined" && basketList.length > 0 && createPortal(
+        <aside
+          aria-label="Keranjang Belanja Mengambang"
+          className={`lg:hidden fixed bottom-5 left-0 right-0 mx-auto w-[calc(100%-24px)] max-w-md z-[9999] transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[transform,opacity] transform ${
+            showFloatingBasket
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 translate-y-8 pointer-events-none"
+          }`}
+        >
+          <div className="bg-white/95 text-slate-900 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 shadow-2xl shadow-slate-900/25 border border-slate-200/90 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center justify-center shadow-xs">
+                  <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
+                </div>
+                {activeBasketList.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-emerald-600 text-white text-[10px] font-extrabold w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-xs border-2 border-white">
+                    {activeBasketList.length}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[11px] text-slate-500 font-medium">Termurah:</span>
+                  <span className="font-extrabold text-sm text-slate-900">
+                    {basketSim && basketSim.rankings.length > 0
+                      ? `Rp ${basketSim.rankings[0].totalBelanja.toLocaleString("id-ID")}`
+                      : "Rp 0"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-700 font-medium truncate flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[13px] text-emerald-600">verified</span>
+                  {basketSim && basketSim.rankings.length > 0
+                    ? `${basketSim.rankings[0].nama_pasar} (Paling Hemat)`
+                    : "Pilih komoditas"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const el = document.getElementById("smart-shopping-basket");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  el.classList.add("ring-4", "ring-primary/40");
+                  setTimeout(() => el.classList.remove("ring-4", "ring-primary/40"), 1800);
+                }
+              }}
+              className="px-3.5 py-2 bg-primary hover:bg-primary-container text-white text-xs font-bold rounded-xl flex items-center gap-1 shrink-0 shadow-xs hover:shadow-sm transition-all active:scale-95 cursor-pointer"
+            >
+              <span>Lihat Keranjang</span>
+              <span className="material-symbols-outlined text-sm">arrow_downward</span>
+            </button>
+          </div>
+        </aside>,
+        document.body
+      )}
 
       <Footer />
     </div>

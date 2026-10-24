@@ -31,7 +31,7 @@ export default function CommodityCard({
 
   return (
     <div
-      className={`bg-white rounded-xl border p-5 transition-all duration-200 hover:shadow-md flex flex-col justify-between relative overflow-hidden ${
+      className={`bg-white rounded-xl border p-5 transition-[box-shadow,transform] duration-200 hover:shadow-md hover:-translate-y-0.5 will-change-transform flex flex-col justify-between relative overflow-hidden ${
         commodity.warningStatus === "TINGGI"
           ? "border-l-4 border-l-status-critical border-border-subtle"
           : commodity.warningStatus === "WASPADA"
@@ -125,7 +125,7 @@ export default function CommodityCard({
       {/* Action Button: Smart Basket */}
       <button
         onClick={() => onAddToBasket && onAddToBasket(commodity)}
-        className={`w-full py-2.5 px-4 rounded-lg font-title-md text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+        className={`w-full py-2.5 px-4 rounded-lg font-title-md text-xs font-semibold flex items-center justify-center gap-2 transition-[background-color,color,transform] duration-150 active:scale-[0.98] ${
           isInBasket
             ? "bg-status-normal text-white hover:bg-status-normal/90"
             : "bg-primary-container text-white hover:bg-primary"

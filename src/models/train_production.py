@@ -53,6 +53,9 @@ def setup_wandb(project: str, run_name: str, config: Dict) -> Tuple[any, bool]:
     """Initializes Weights & Biases with defensive fallback to offline mode if unauthenticated."""
     try:
         import wandb
+        if not hasattr(wandb, "init"):
+            print("[INFO] 'wandb' package not fully available or shadowed by local directory. Continuing in standalone mode.")
+            return None, False
     except ImportError:
         print("[WARN] 'wandb' package is not installed. Experiment tracking will be disabled.")
         return None, False
@@ -112,7 +115,8 @@ def determine_feature_routing(
 def get_feature_columns(
     df: pd.DataFrame,
     include_weather: bool,
-    include_calendar: bool
+    include_calendar: bool,
+    include_keputran: bool = True
 ) -> List[str]:
     """Builds extensible list of feature columns dynamically present in dataset."""
     feature_cols = [
@@ -120,10 +124,16 @@ def get_feature_columns(
         "price_lag_7", "price_lag_14", "rolling_mean_7d", "rolling_std_7d",
         "rolling_mean_14d", "rolling_std_14d", "pct_change_1d", "pct_change_7d"
     ]
+    if include_keputran:
+        keputran_cols = ["keputran_price_lag_1", "keputran_price_lag_2", "keputran_price_lag_3"]
+        feature_cols += [c for c in keputran_cols if c in df.columns]
+
     if include_calendar:
+        # Ablasi weekend D4, sertakan idulfitri D7
         calendar_cols = [
-            "target_bulan", "target_is_weekend", "target_is_libur_nasional",
-            "target_is_ramadan", "target_is_pra_ramadan"
+            "target_bulan", "target_is_libur_nasional",
+            "target_is_ramadan", "target_is_pra_ramadan",
+            "target_hari_ke_idulfitri"
         ]
         feature_cols += [c for c in calendar_cols if c in df.columns]
 

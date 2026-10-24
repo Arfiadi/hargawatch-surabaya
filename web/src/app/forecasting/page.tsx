@@ -174,6 +174,7 @@ export default function ForecastingPage() {
   const [horizon, setHorizon] = useState<7 | 14>(14);
   const [statusFilter, setStatusFilter] = useState<"all" | "alert">("all");
   const [loading, setLoading] = useState<boolean>(true);
+  const [showAllMobileCards, setShowAllMobileCards] = useState<boolean>(false);
   const [forecastData, setForecastData] = useState<CommodityForecastDetails | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<{
     date: string;
@@ -186,6 +187,11 @@ export default function ForecastingPage() {
     screenY?: number;
   } | null>(null);
   const [exportState, setExportState] = useState<"idle" | "downloading" | "success">("idle");
+
+  // Reset expand/collapse saat pengguna berganti komoditas, horizon, atau filter status
+  useEffect(() => {
+    setShowAllMobileCards(false);
+  }, [selectedCommodity, horizon, statusFilter]);
 
   useEffect(() => {
     let isMounted = true;
@@ -244,6 +250,15 @@ export default function ForecastingPage() {
     }
     return sliced;
   }, [isDataInSync, forecastData, horizon, statusFilter]);
+
+  // Batas default kartu proyeksi di mobile sebelum user klik 'View All'
+  const INITIAL_MOBILE_COUNT = 5;
+  const displayedMobileRows = useMemo(() => {
+    if (showAllMobileCards) return activeForecastRows;
+    return activeForecastRows.slice(0, INITIAL_MOBILE_COUNT);
+  }, [showAllMobileCards, activeForecastRows]);
+
+  const hasMoreMobileCards = activeForecastRows.length > INITIAL_MOBILE_COUNT;
 
   const targetHorizonRow = useMemo(() => {
     if (!isDataInSync || !forecastData || forecastData.forecast.length === 0) return null;
@@ -751,28 +766,29 @@ export default function ForecastingPage() {
                   </p>
                 </div>
 
-                {/* Legenda Grafik */}
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-label-caps font-label-caps">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0"></span>
-                    <span className="text-text-primary">Rata-rata Pasar Harian</span>
+                {/* Legenda Grafik + Label Acuan Regulasi */}
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 sm:justify-end">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[11px] sm:text-xs font-medium">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
+                    <span>Rata-rata Pasar Harian</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-status-warning shrink-0"></span>
-                    <span className="text-status-warning font-semibold">Proyeksi Model</span>
+
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-medium">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                    <span>Proyeksi Model</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400/80 border border-amber-500/50 shrink-0"></span>
-                    <span className="text-text-secondary">
-                      {chartMetrics?.hasSpread ? "Rentang Batas Toleransi" : "Varians Proyeksi Stabil"}
+
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50/60 border border-amber-200/60 text-amber-900/80 text-[11px] sm:text-xs font-medium">
+                    <span className="w-2.5 h-1.5 rounded-xs bg-amber-300/50 border border-amber-400 shrink-0"></span>
+                    <span>
+                      {chartMetrics?.hasSpread ? "Rentang Toleransi" : "Varians Stabil"}
                     </span>
                   </div>
-                  {chartMetrics?.benchmarkPrice && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-status-critical shrink-0"></span>
-                      <span className="text-status-critical font-bold">
-                        {chartMetrics.benchmarkLabel}
-                      </span>
+
+                  {chartMetrics?.benchmarkLabel && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-800 text-[11px] sm:text-xs font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
+                      <span>{chartMetrics.benchmarkLabel}</span>
                     </div>
                   )}
                 </div>
@@ -785,11 +801,22 @@ export default function ForecastingPage() {
                 aria-label="Grafik Tren dan Proyeksi Harga Pangan"
                 onMouseLeave={() => setHoveredPoint(null)}
               >
+                {/* Mobile Swipe Affordance */}
+                <div className="sm:hidden flex items-center justify-between text-text-muted text-[11px] font-medium mb-2 pb-2 border-b border-border-subtle/50">
+                  <span className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[15px] text-primary">swipe</span> Geser grafik untuk melihat detail 14 hari proyeksi
+                  </span>
+                  <span className="text-primary font-bold text-xs">&rarr;</span>
+                </div>
+
+                {/* Scrollable Container on Mobile to prevent squishing */}
+                <div className="w-full overflow-x-auto no-scrollbar pb-1">
+                  <div className="min-w-[720px] sm:min-w-full relative">
 
                 {/* Tooltip Hover Display Dinamis Mengikuti Titik */}
                 {hoveredPoint && (
                   <div
-                    className="absolute z-30 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-xl shadow-xl border border-border-subtle text-left pointer-events-none transition-all duration-75 text-xs"
+                    className="absolute z-30 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-xl shadow-xl border border-border-subtle text-left pointer-events-none transition-opacity duration-150 will-change-transform text-xs"
                     style={{
                       left: hoveredPoint.screenX ? `${Math.min(Math.max(hoveredPoint.screenX, 100), 820)}px` : undefined,
                       top: hoveredPoint.screenY ? `${Math.max(hoveredPoint.screenY - 70, 10)}px` : undefined,
@@ -883,7 +910,7 @@ export default function ForecastingPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative w-full h-[240px] sm:h-[260px]">
+                  <div className="relative w-full aspect-[920/270]">
                     {/* 1. Vector Graph Canvas */}
                     <svg
                       className="w-full h-full overflow-visible"
@@ -922,16 +949,29 @@ export default function ForecastingPage() {
 
                         {/* Garis Acuan Regulasi Pemerintah (HAP / HET Bapanas) */}
                         {chartMetrics.benchmarkY !== null && chartMetrics.benchmarkPrice && (
-                          <line
-                            x1={chartMetrics.padX}
-                            x2={chartMetrics.svgWidth - chartMetrics.padX}
-                            y1={chartMetrics.benchmarkY}
-                            y2={chartMetrics.benchmarkY}
-                            stroke="#DC2626"
-                            strokeDasharray="6 4"
-                            strokeWidth="1.6"
-                            opacity="0.85"
-                          />
+                          <g>
+                            <line
+                              x1={chartMetrics.padX}
+                              x2={chartMetrics.svgWidth - chartMetrics.padX}
+                              y1={chartMetrics.benchmarkY}
+                              y2={chartMetrics.benchmarkY}
+                              stroke="#DC2626"
+                              strokeDasharray="6 4"
+                              strokeWidth="1.6"
+                              opacity="0.85"
+                            />
+                            <text
+                              x={chartMetrics.svgWidth - chartMetrics.padX + 5}
+                              y={chartMetrics.benchmarkY + 3.5}
+                              fill="#DC2626"
+                              fontSize="10"
+                              fontWeight="bold"
+                              textAnchor="start"
+                              className="select-none font-sans"
+                            >
+                              {chartMetrics.benchmarkLabel.split(" ")[0]}
+                            </text>
+                          </g>
                         )}
 
                         {/* Shading Rentang Batas Toleransi (hanya jika ada spread variasi) */}
@@ -1048,22 +1088,9 @@ export default function ForecastingPage() {
                         </div>
                       ))}
 
-                      {/* Label Garis Acuan Regulasi Pemerintah (HAP / HET) */}
-                      {chartMetrics.benchmarkY !== null && chartMetrics.benchmarkPrice && (
-                        <div
-                          className="absolute -translate-y-full -mt-1 text-[11px] font-bold text-status-critical pointer-events-none select-none font-sans"
-                          style={{
-                            right: `${(chartMetrics.padX / chartMetrics.svgWidth) * 100}%`,
-                            top: `${(chartMetrics.benchmarkY / chartMetrics.svgHeight) * 100}%`,
-                          }}
-                        >
-                          Garis {chartMetrics.benchmarkLabel}: Rp {chartMetrics.benchmarkPrice.toLocaleString("id-ID")}/{activeCommodityMeta.unit}
-                        </div>
-                      )}
-
                       {/* Callout Badge: Hari Ini */}
                       <div
-                        className="absolute -translate-x-1/2 -translate-y-full -mt-2.5 pointer-events-none select-none z-10 transition-all duration-150"
+                        className="absolute -translate-x-1/2 -translate-y-full -mt-2.5 pointer-events-none select-none z-10 transition-[left,top,opacity] duration-200 ease-out will-change-transform"
                         style={{
                           left: `${(chartMetrics.todayCoord.x / chartMetrics.svgWidth) * 100}%`,
                           top: `${(chartMetrics.todayCoord.y / chartMetrics.svgHeight) * 100}%`,
@@ -1077,7 +1104,7 @@ export default function ForecastingPage() {
                       {/* Callout Badge: Titik Akhir Proyeksi */}
                       {chartMetrics.fcCoords.length > 0 && targetHorizonRow && (
                         <div
-                          className="absolute -translate-x-1/2 -translate-y-full -mt-2.5 pointer-events-none select-none z-10 transition-all duration-150"
+                          className="absolute -translate-x-1/2 -translate-y-full -mt-2.5 pointer-events-none select-none z-10 transition-[left,top,opacity] duration-200 ease-out will-change-transform"
                           style={{
                             left: `${(chartMetrics.fcCoords[chartMetrics.fcCoords.length - 1].x / chartMetrics.svgWidth) * 100}%`,
                             top: `${(chartMetrics.fcCoords[chartMetrics.fcCoords.length - 1].y / chartMetrics.svgHeight) * 100}%`,
@@ -1089,8 +1116,11 @@ export default function ForecastingPage() {
                         </div>
                       )}
 
-                      {/* Label Sumbu X Dinamis */}
-                      <div className="absolute left-0 right-0 bottom-1 pointer-events-none select-none">
+                      {/* Label Sumbu X Dinamis — dikurung di dalam pita padBottom supaya tidak terpotong overflow-x-auto */}
+                      <div
+                        className="absolute left-0 right-0 bottom-0 pointer-events-none select-none"
+                        style={{ top: `${((chartMetrics.svgHeight - chartMetrics.padBottom) / chartMetrics.svgHeight) * 100}%` }}
+                      >
                         {chartMetrics.xLabels.map((lbl, idx) => (
                           <div
                             key={`xlbl-${idx}`}
@@ -1128,6 +1158,8 @@ export default function ForecastingPage() {
                       </div>
                     </div>
                 )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1205,7 +1237,7 @@ export default function ForecastingPage() {
                   </span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed">
+                  <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed text-justify">
                     {benchmarkMeta && isDataInSync && forecastData ? (
                       <>
                         Harga rata-rata pasar saat ini berada{" "}
@@ -1224,7 +1256,7 @@ export default function ForecastingPage() {
                     <span className="material-symbols-outlined text-status-warning text-body-md shrink-0 mt-0.5">
                       policy
                     </span>
-                    <span>
+                    <span className="text-justify">
                       <strong>Rekomendasi Satgas:</strong> {satgasRecommendation}
                     </span>
                   </div>
@@ -1275,7 +1307,8 @@ export default function ForecastingPage() {
               </div>
 
               {/* Table Container */}
-              <div className="w-full overflow-x-auto">
+              {/* 1. Tampilan Desktop & Tablet: Data Table */}
+              <div className="hidden md:block w-full overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-surface-subtle font-label-caps text-label-caps text-text-secondary uppercase">
@@ -1381,6 +1414,142 @@ export default function ForecastingPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* 2. Tampilan HP (< md / < 768px): Card View List sesuai Desain Referensi Mobile */}
+              <div className="block md:hidden space-y-3">
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-surface-card border border-border-subtle/80 shadow-xs animate-pulse space-y-3"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="w-28 h-4 bg-surface-subtle rounded"></div>
+                        <div className="w-20 h-5 bg-surface-subtle rounded-full"></div>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <div className="w-36 h-6 bg-surface-subtle rounded"></div>
+                        <div className="w-14 h-4 bg-surface-subtle rounded"></div>
+                      </div>
+                      <div className="pt-2 border-t border-border-subtle/40 space-y-2">
+                        <div className="w-full h-3 bg-surface-subtle rounded"></div>
+                        <div className="w-2/3 h-3 bg-surface-subtle rounded"></div>
+                      </div>
+                    </div>
+                  ))
+                ) : displayedMobileRows.length > 0 ? (
+                  <>
+                    {displayedMobileRows.map((row) => (
+                      <div
+                        key={row.horizon}
+                        className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 transition-all shadow-xs flex flex-col gap-3"
+                      >
+                        {/* Baris Atas: Kode Horizon & Tanggal vs Status Badge */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 font-mono text-xs text-slate-500">
+                            <span className="font-bold text-slate-900 tracking-wide">H+{row.horizon}</span>
+                            <span>•</span>
+                            <span className="text-slate-600 font-medium">{row.weekday}, {row.formattedDate}</span>
+                          </div>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-label-caps text-xs font-bold tracking-wide shrink-0 ${
+                              row.status === "Tinggi"
+                                ? "bg-rose-100 text-rose-800 border border-rose-300"
+                                : row.status === "Waspada"
+                                ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                            }`}
+                          >
+                            {row.status}
+                          </span>
+                        </div>
+
+                        {/* Baris Utama: Proyeksi Rata-rata & Perubahan */}
+                        <div className="flex items-baseline justify-between gap-2 pt-1">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-slate-500 block font-label-caps font-bold">
+                              Proyeksi Rata-rata
+                            </span>
+                            <span className="text-xl font-extrabold font-headline-sm text-slate-900 tracking-tight">
+                              Rp {row.harga_prediksi.toLocaleString("id-ID")}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-500 block font-label-caps font-bold">
+                              vs Saat Ini
+                            </span>
+                            <span
+                              className={`font-bold text-sm inline-flex items-center gap-0.5 ${
+                                row.deltaPct >= 3
+                                  ? "text-rose-600"
+                                  : row.deltaPct <= -3
+                                  ? "text-emerald-600"
+                                  : "text-slate-600"
+                              }`}
+                            >
+                              {row.deltaPct >= 0 ? `+${row.deltaPct}%` : `${row.deltaPct}%`}
+                              {row.deltaPct > 0 ? " ▲" : row.deltaPct < 0 ? " ▼" : ""}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Baris Detail: Toleransi & Catatan */}
+                        <div className="pt-2 border-t border-slate-100 flex flex-col gap-2 font-body-sm text-xs">
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span className="font-medium text-slate-500">Rentang Toleransi</span>
+                            <span className="font-bold text-slate-900">
+                              Rp {row.batas_bawah.toLocaleString("id-ID")} – Rp {row.batas_atas.toLocaleString("id-ID")}
+                            </span>
+                          </div>
+
+                          {row.recom && (
+                            <div className="bg-slate-50 rounded-lg p-2.5 text-slate-700 leading-relaxed border border-slate-200/80 flex items-start gap-2">
+                              <span className="material-symbols-outlined text-[16px] text-emerald-700 shrink-0 mt-0.5">
+                                info
+                              </span>
+                              <span className="text-xs font-medium text-justify">{row.recom}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Tombol View All / Tampilkan Lebih Sedikit (Khusus Mobile) */}
+                    {hasMoreMobileCards && (
+                      <div className="pt-1 flex flex-col items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowAllMobileCards((prev) => !prev)}
+                          className="w-full py-2.5 px-4 rounded-xl bg-slate-100/90 hover:bg-slate-200 active:scale-[0.99] text-slate-800 font-bold text-xs sm:text-sm border border-slate-300/80 transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[19px] text-primary">
+                            {showAllMobileCards ? "expand_less" : "expand_more"}
+                          </span>
+                          <span>
+                            {showAllMobileCards
+                              ? `Tampilkan Lebih Sedikit (${INITIAL_MOBILE_COUNT} Hari Terdekat)`
+                              : `Lihat Semua Proyeksi (${activeForecastRows.length} Hari)`}
+                          </span>
+                          {!showAllMobileCards && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
+                              +{activeForecastRows.length - INITIAL_MOBILE_COUNT} Lagi
+                            </span>
+                          )}
+                        </button>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          {showAllMobileCards
+                            ? `Menampilkan seluruh ${activeForecastRows.length} hari proyeksi`
+                            : `Menampilkan ${INITIAL_MOBILE_COUNT} dari ${activeForecastRows.length} hari proyeksi harian`}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-6 rounded-xl bg-surface-card border border-border-subtle/60 text-center text-text-muted text-body-sm">
+                    Tidak ada baris yang memenuhi kriteria filter.
+                  </div>
+                )}
               </div>
             </div>
 

@@ -57,6 +57,7 @@ export default function SurabayaMap({
       minZoom: 11,
       maxZoom: 16,
       zoomControl: false,
+      attributionControl: false,
     });
 
     // High-performance OpenStreetMap Humanitarian (HOT) Tile Layer (Fast, reliable, free, no API key watermark)
@@ -242,78 +243,40 @@ export default function SurabayaMap({
     map.fitBounds(bounds, { padding: [40, 40], animate: true, duration: 0.8 });
   };
 
-    const activeMarket = markets.find((m) => m.id === selectedMarketId);
-    const isMin = activeMarket && activeMarket.price === minPrice && minPrice > 0;
-    const isMax = activeMarket && activeMarket.price === maxPrice && maxPrice > 0;
-    const diffVsMin = activeMarket ? activeMarket.price - minPrice : 0;
+  return (
+    <div className="relative w-full h-[320px] sm:h-[400px] lg:h-[580px] overflow-hidden select-none bg-surface-subtle rounded-2xl border border-border-subtle shadow-sm">
+      {/* Real Map Canvas */}
+      <div ref={mapContainerRef} className="w-full h-full z-10" />
 
-    return (
-      <div className="relative w-full h-[580px] overflow-hidden select-none bg-surface-subtle rounded-2xl border border-border-subtle shadow-sm">
-        {/* Real Map Canvas */}
-        <div ref={mapContainerRef} className="w-full h-full z-10" />
-
-        {/* Mobile Floating Market Inspector Banner (Apple Maps style, lg:hidden) */}
-        {activeMarket && (
-          <div className="lg:hidden absolute top-3 left-3 right-3 z-20 pointer-events-auto bg-surface-card/95 backdrop-blur-md rounded-xl p-3 border border-border-subtle shadow-md">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="material-symbols-outlined text-primary text-body-md shrink-0">storefront</span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <strong className="text-body-sm font-bold text-text-primary truncate">{activeMarket.name}</strong>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-subtle text-text-secondary font-medium shrink-0">{activeMarket.zone}</span>
-                  </div>
-                  <div className="text-[11px] text-text-secondary mt-0.5">
-                    Harga {selectedCommodityName}: <strong className="text-text-primary font-bold">Rp {activeMarket.price.toLocaleString("id-ID")}</strong>/{unit}
-                  </div>
-                </div>
-              </div>
-              <div className="shrink-0 flex flex-col items-end">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                  isMin ? "bg-status-normal-bg text-status-normal" : isMax ? "bg-status-critical-bg text-status-critical" : "bg-surface-subtle text-text-secondary"
-                }`}>
-                  {isMin ? "Termurah ⭐" : isMax ? "Tertinggi" : `+Rp ${diffVsMin.toLocaleString("id-ID")}`}
-                </span>
-                <a
-                  href="#market-inspector"
-                  className="text-[10px] text-primary hover:underline mt-1 font-semibold inline-flex items-center"
-                >
-                  Detail Pasar &darr;
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Apple-Maps Style Zoom & Reset Controls in Bottom Right */}
-        <div className="absolute bottom-5 right-5 z-20 pointer-events-auto">
-          <div className="flex flex-col bg-surface-card/95 backdrop-blur-md rounded-xl shadow-md border border-border-subtle overflow-hidden divide-y divide-border-subtle/60">
+      {/* Floating Apple-Maps Style Zoom & Reset Controls in Bottom Right */}
+      <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 z-20 pointer-events-auto">
+          <div className="flex flex-col bg-surface-card/95 backdrop-blur-md rounded-xl shadow-md border border-border-subtle overflow-hidden divide-y divide-border-subtle/60 scale-90 sm:scale-100 origin-bottom-right">
             <button
-              className="w-9 h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
               title="Perbesar Peta"
               onClick={handleZoomIn}
             >
-              <span className="material-symbols-outlined text-[19px]">add</span>
+              <span className="material-symbols-outlined text-[18px] sm:text-[19px]">add</span>
             </button>
             <button
-              className="w-9 h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
               title="Perkecil Peta"
               onClick={handleZoomOut}
             >
-              <span className="material-symbols-outlined text-[19px]">remove</span>
+              <span className="material-symbols-outlined text-[18px] sm:text-[19px]">remove</span>
             </button>
             <button
-              className="w-9 h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
               title="Reset Peta ke 6 Pasar"
               onClick={handleReset}
             >
-              <span className="material-symbols-outlined text-[18px]">near_me</span>
+              <span className="material-symbols-outlined text-[17px] sm:text-[18px]">near_me</span>
             </button>
           </div>
         </div>
 
         {/* Bottom Floating Map Legend (Minimalist Pill) */}
-        <div className="absolute bottom-5 left-5 bg-surface-card/95 backdrop-blur-md px-3.5 py-2 rounded-xl shadow-sm z-20 flex flex-col gap-1 border border-border-subtle">
+        <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 bg-surface-card/95 backdrop-blur-md px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-sm z-20 flex flex-col gap-0.5 sm:gap-1 border border-border-subtle scale-90 sm:scale-100 origin-bottom-left">
           <span className="font-label-caps text-[10px] text-text-muted uppercase tracking-wider font-semibold">
             Deviasi {selectedCommodityName}
           </span>

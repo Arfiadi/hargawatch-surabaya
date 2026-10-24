@@ -2,9 +2,11 @@
 
 Membaca TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID dari environment / .env.
 Jika kredensial belum diatur, fungsi akan mencatat log tanpa menghentikan program.
+Dilengkapi penanganan sanitasi dan masking token agar kredensial tidak bocor ke log.
 """
 
 import os
+import sys
 import requests
 from dotenv import load_dotenv
 
@@ -27,7 +29,11 @@ def send_telegram_alert(pesan: str) -> bool:
     chat_id = os.getenv("TELEGRAM_CHAT_ID") or TELEGRAM_CHAT_ID
 
     if not token or not chat_id or token == "isi_token_bot_telegram_di_sini":
-        print(f"  [Alerting] Telegram credentials belum diset. Alert ditampung di log:\n  >>> {pesan}")
+        try:
+            print(f"  [Alerting] Telegram credentials belum diset. Alert ditampung di log:\n  >>> {pesan}")
+        except UnicodeEncodeError:
+            safe_p = pesan.encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8')
+            print(f"  [Alerting] Telegram credentials belum diset. Alert ditampung di log:\n  >>> {safe_p}")
         return False
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -43,10 +49,12 @@ def send_telegram_alert(pesan: str) -> bool:
             print("  [Alerting] Notifikasi Telegram berhasil dikirim.")
             return True
         else:
-            print(f"  [Alerting] Gagal kirim Telegram (Status {resp.status_code}): {resp.text}")
+            safe_resp = resp.text.replace(token, "[REDACTED_BOT_TOKEN]")
+            print(f"  [Alerting] Gagal kirim Telegram (Status {resp.status_code}): {safe_resp}")
             return False
     except Exception as e:
-        print(f"  [Alerting] Exception saat menghubungi Telegram API: {e}")
+        safe_err = str(e).replace(token, "[REDACTED_BOT_TOKEN]")
+        print(f"  [Alerting] Exception saat menghubungi Telegram API: {safe_err}")
         return False
 
 

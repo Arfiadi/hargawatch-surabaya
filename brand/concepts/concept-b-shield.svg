@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>HargaWatch — Concept B: The Hexa-Market Shield</title>
+  <!-- Outer Hexagonal Protective Shield Frame (Perisai Ketahanan Pangan) -->
+  <path fill="#004328" fill-rule="evenodd" d="M 128 28 L 214.6 78 L 214.6 178 L 128 228 L 41.4 178 L 41.4 78 Z M 128 52 L 62.2 90 L 62.2 166 L 128 204 L 193.8 166 L 193.8 90 Z" />
+  
+  <!-- 6 Market Sentinel Nodes (6 Pasar Utama Surabaya) -->
+  <circle cx="128" cy="28" r="8" fill="#004328" />
+  <circle cx="214.6" cy="78" r="8" fill="#004328" />
+  <circle cx="214.6" cy="178" r="8" fill="#004328" />
+  <circle cx="128" cy="228" r="8" fill="#004328" />
+  <circle cx="41.4" cy="178" r="8" fill="#004328" />
+  <circle cx="41.4" cy="78" r="8" fill="#004328" />
+  
+  <!-- Core Food Equilibrium & Market Trend Arrow -->
+  <path fill="#059669" fill-rule="evenodd" d="M 128 80 L 160 135.42 L 138 135.42 L 138 176 L 118 176 L 118 135.42 L 96 135.42 Z" />
+  
+  <!-- Early Warning Alert Center Sensor -->
+  <circle cx="128" cy="120" r="5" fill="#D97706" />
+</svg>
