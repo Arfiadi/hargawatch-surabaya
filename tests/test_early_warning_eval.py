@@ -66,7 +66,7 @@ def test_early_warning_scores_with_rolling_30d_and_90d_high():
         "pasar_id": [1],
         "komoditas_id": [50],
         "price_current": [40000.0],
-        "price_lag_7": [35000.0],       # +14.28% -> Pilar 1 = 20 pt (>= 10%)
+        "price_lag_7": [34000.0],       # +17.65% -> Pilar 1 = 20 pt (>= 15% untuk komoditas volatil)
         "rolling_std_7d": [3000.0],
         "rolling_std_30d": [1500.0],     # Ratio = 2.0 >= 1.5 -> Pilar 2 = 20 pt
         "rolling_max_90d": [42000.0],
