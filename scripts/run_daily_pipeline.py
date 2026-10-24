@@ -47,7 +47,11 @@ def run_step(step_name: str, cmd: list) -> bool:
     )
 
     for line in iter(proc.stdout.readline, ""):
-        print(f"  [{step_name}] {line.rstrip()}", flush=True)
+        try:
+            print(f"  [{step_name}] {line.rstrip()}", flush=True)
+        except UnicodeEncodeError:
+            safe_line = line.rstrip().encode("ascii", errors="replace").decode("ascii")
+            print(f"  [{step_name}] {safe_line}", flush=True)
 
     proc.stdout.close()
     return_code = proc.wait()
