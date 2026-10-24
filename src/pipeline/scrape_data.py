@@ -69,9 +69,15 @@ def is_pangan(grup, komoditas):
             and komoditas.upper() not in NON_PANGAN_TERSENDIRI)
 
 
-def ambil_daftar_pasar(kabkota):
+from src.pipeline.fetcher import RobustDataFetcher
+
+_default_fetcher = RobustDataFetcher(max_retries=3, backoff_factor=1.0, timeout=30)
+
+
+def ambil_daftar_pasar(kabkota, fetcher=None):
     """Return list pasar [{psr_id, psr_nama}] untuk suatu kab/kota."""
-    r = requests.get(f"{BASE_URL}/harga/pasar.json/{kabkota}", headers=HEADERS, timeout=30)
+    client = fetcher or _default_fetcher
+    r = client.get(f"{BASE_URL}/harga/pasar.json/{kabkota}", headers=HEADERS, timeout=30)
     r.raise_for_status()
     return r.json()
 
@@ -87,19 +93,17 @@ def cari_pasar(kabkota, nama_pasar):
     return cocok[0]["psr_id"], cocok[0]["psr_nama"]
 
 
-def get_html_table(tanggal, kabkota, pasar_id, retry=3):
+def get_html_table(tanggal, kabkota, pasar_id, retry=3, fetcher=None):
+    """Fetch HTML table with RobustDataFetcher session and exponential retry."""
     payload = {"tanggal": tanggal, "kabkota": kabkota, "pasar": pasar_id}
-    for percobaan in range(1, retry + 1):
-        try:
-            resp = requests.post(f"{BASE_URL}/harga/tabel.nodesign", data=payload,
-                                 headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            return resp.text
-        except requests.RequestException as e:
-            if percobaan == retry:
-                raise
-            time.sleep(2 ** percobaan)
-    return None
+    client = fetcher or RobustDataFetcher(max_retries=retry, backoff_factor=1.0, timeout=30)
+    try:
+        resp = client.post(f"{BASE_URL}/harga/tabel.nodesign", data=payload,
+                           headers=HEADERS, timeout=30)
+        resp.raise_for_status()
+        return resp.text
+    except requests.RequestException:
+        raise
 
 
 def parse_angka(teks):

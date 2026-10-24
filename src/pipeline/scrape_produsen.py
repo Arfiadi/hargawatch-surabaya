@@ -47,19 +47,22 @@ HEADERS = {
 }
 
 
-def get_html_table(tanggal, retry=3):
+from src.pipeline.fetcher import RobustDataFetcher
+
+_default_prod_fetcher = RobustDataFetcher(max_retries=3, backoff_factor=1.0, timeout=30)
+
+
+def get_html_table(tanggal, retry=3, fetcher=None):
+    """Fetch HTML table for producer prices using RobustDataFetcher."""
     payload = {"tanggal": tanggal, "kabkota": "surabayakota", "pasar": 1}
-    for percobaan in range(1, retry + 1):
-        try:
-            resp = requests.post(f"{BASE_URL}/produsen/tabel.nodesign", data=payload,
-                                 headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            return resp.text
-        except requests.RequestException:
-            if percobaan == retry:
-                raise
-            time.sleep(2 ** percobaan)
-    return None
+    client = fetcher or RobustDataFetcher(max_retries=retry, backoff_factor=1.0, timeout=30)
+    try:
+        resp = client.post(f"{BASE_URL}/produsen/tabel.nodesign", data=payload,
+                           headers=HEADERS, timeout=30)
+        resp.raise_for_status()
+        return resp.text
+    except requests.RequestException:
+        raise
 
 
 def parse_angka(teks):
