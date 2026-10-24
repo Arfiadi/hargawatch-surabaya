@@ -1,1 +1,372 @@
-{}
+{
+  "35": {
+    "komoditas_id": 35,
+    "nama": "Indomie Kari Ayam",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.0,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Harga cetakan pabrik konstan"
+  },
+  "14": {
+    "komoditas_id": 14,
+    "nama": "Daging Ayam Kampung",
+    "klaster": "Protein Hewani",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.01,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Harga eceran sangat stabil"
+  },
+  "28": {
+    "komoditas_id": 28,
+    "nama": "Garam Beryodium Halus",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.05,
+    "champion_model": "XGBoost p50",
+    "karakteristik_pasar": "Variasi mikro kemasan tertangkap ML"
+  },
+  "21": {
+    "komoditas_id": 21,
+    "nama": "Susu Kental Indomilk",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.08,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "FMCG industri"
+  },
+  "2": {
+    "komoditas_id": 2,
+    "nama": "Beras Premium",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.1,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "HET nasional stabil"
+  },
+  "96": {
+    "komoditas_id": 96,
+    "nama": "Minyakita",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.13,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Terjaga HET pemerintah"
+  },
+  "40": {
+    "komoditas_id": 40,
+    "nama": "Ikan Asin Teri",
+    "klaster": "Perikanan",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.15,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Olahan kering tahan lama"
+  },
+  "20": {
+    "komoditas_id": 20,
+    "nama": "Susu Kental Bendera",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.2,
+    "champion_model": "Naive 7d SMA",
+    "karakteristik_pasar": "Moving average optimal"
+  },
+  "30": {
+    "komoditas_id": 30,
+    "nama": "Terigu Protein Sedang",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.21,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Terikat distributor"
+  },
+  "10": {
+    "komoditas_id": 10,
+    "nama": "Minyak Goreng Curah",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.23,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Pasokan DMO & HET"
+  },
+  "25": {
+    "komoditas_id": 25,
+    "nama": "Jagung Pipilan Kering",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.27,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Pakan ternak kering"
+  },
+  "43": {
+    "komoditas_id": 43,
+    "nama": "Ketela Pohon",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.29,
+    "champion_model": "LightGBM p50",
+    "karakteristik_pasar": "Pola lokal tertangkap ML"
+  },
+  "4": {
+    "komoditas_id": 4,
+    "nama": "Beras Medium",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.44,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "SPHP Bulog Jawa Timur"
+  },
+  "7": {
+    "komoditas_id": 7,
+    "nama": "Gula Kristal Putih",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.62,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Distribusi pabrik gula BUMN"
+  },
+  "32": {
+    "komoditas_id": 32,
+    "nama": "Kedelai Impor",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.65,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Impor Pelabuhan Perak"
+  },
+  "12": {
+    "komoditas_id": 12,
+    "nama": "Daging Sapi Paha Belakang",
+    "klaster": "Protein Hewani",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 0.69,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Terjangkar RPH Pegirikan ($r=0,75$)"
+  },
+  "41": {
+    "komoditas_id": 41,
+    "nama": "Kacang Hijau",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.02,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Biji kering tahan simpan"
+  },
+  "17": {
+    "komoditas_id": 17,
+    "nama": "Telur Ayam Kampung",
+    "klaster": "Protein Hewani",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.23,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Pasar konsumsi khusus"
+  },
+  "60": {
+    "komoditas_id": 60,
+    "nama": "Ikan Tongkol",
+    "klaster": "Perikanan",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.29,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Rantai es TPI Brondong"
+  },
+  "42": {
+    "komoditas_id": 42,
+    "nama": "Kacang Tanah",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.37,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Stok karung gudang"
+  },
+  "59": {
+    "komoditas_id": 59,
+    "nama": "Ikan Kembung",
+    "klaster": "Perikanan",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.37,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Ikan tangkapan laut umum"
+  },
+  "62": {
+    "komoditas_id": 62,
+    "nama": "Ikan Cakalang",
+    "klaster": "Perikanan",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.59,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Pasokan beku industri"
+  },
+  "92": {
+    "komoditas_id": 92,
+    "nama": "Minyak Kemasan Premium",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.7,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Brand komersial (Bimoli/Filma)"
+  },
+  "58": {
+    "komoditas_id": 58,
+    "nama": "Ikan Bandeng",
+    "klaster": "Perikanan",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.79,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Tambak lokal Sidoarjo-Gresik"
+  },
+  "61": {
+    "komoditas_id": 61,
+    "nama": "Ikan Tuna",
+    "klaster": "Perikanan",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 1.84,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Rantai dingin industri"
+  },
+  "13": {
+    "komoditas_id": 13,
+    "nama": "Daging Ayam Ras",
+    "klaster": "Protein Hewani",
+    "kategori_performa": "1. Presisi Tinggi",
+    "tier": 1,
+    "wape_benchmark_pct": 2.0,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Ayam broiler kemitraan"
+  },
+  "16": {
+    "komoditas_id": 16,
+    "nama": "Telur Ayam Ras",
+    "klaster": "Protein Hewani",
+    "kategori_performa": "2. Moderat & Musiman",
+    "tier": 2,
+    "wape_benchmark_pct": 3.04,
+    "champion_model": "XGBoost p50",
+    "karakteristik_pasar": "**ML Unggul.** Siklus pakan Blitar & Keputran"
+  },
+  "45": {
+    "komoditas_id": 45,
+    "nama": "Kentang",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "2. Moderat & Musiman",
+    "tier": 2,
+    "wape_benchmark_pct": 3.63,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Umbi tahan simpan 3–4 minggu"
+  },
+  "49": {
+    "komoditas_id": 49,
+    "nama": "Bawang Putih Honan",
+    "klaster": "Pangan Pokok & FMCG",
+    "kategori_performa": "2. Moderat & Musiman",
+    "tier": 2,
+    "wape_benchmark_pct": 4.56,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Impor kontainer Tiongkok"
+  },
+  "47": {
+    "komoditas_id": 47,
+    "nama": "Wortel",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "2. Moderat & Musiman",
+    "tier": 2,
+    "wape_benchmark_pct": 5.77,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Pasokan rutin lereng Bromo"
+  },
+  "44": {
+    "komoditas_id": 44,
+    "nama": "Kol / Kubis",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "2. Moderat & Musiman",
+    "tier": 2,
+    "wape_benchmark_pct": 7.02,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Panen Malang/Batu rutin"
+  },
+  "39": {
+    "komoditas_id": 39,
+    "nama": "Bawang Merah",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "3. Kritis & Volatil",
+    "tier": 3,
+    "wape_benchmark_pct": 8.02,
+    "champion_model": "CatBoost p50",
+    "karakteristik_pasar": "**ML Unggul.** Transmisi Keputran Nganjuk/Probolinggo"
+  },
+  "48": {
+    "komoditas_id": 48,
+    "nama": "Buncis",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "3. Kritis & Volatil",
+    "tier": 3,
+    "wape_benchmark_pct": 9.57,
+    "champion_model": "XGBoost p50",
+    "karakteristik_pasar": "**ML Unggul.** Mudah layu, kulakan harian Keputran"
+  },
+  "46": {
+    "komoditas_id": 46,
+    "nama": "Tomat Merah",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "3. Kritis & Volatil",
+    "tier": 3,
+    "wape_benchmark_pct": 11.97,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "Cepat busuk; variasi harian tinggi"
+  },
+  "37": {
+    "komoditas_id": 37,
+    "nama": "Cabe Merah Keriting",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "3. Kritis & Volatil",
+    "tier": 3,
+    "wape_benchmark_pct": 12.5,
+    "champion_model": "Naive Last Value",
+    "karakteristik_pasar": "⚠️ Batas data tercapai; pasokan Kediri liar"
+  },
+  "38": {
+    "komoditas_id": 38,
+    "nama": "Cabe Merah Besar",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "3. Kritis & Volatil",
+    "tier": 3,
+    "wape_benchmark_pct": 13.63,
+    "champion_model": "XGBoost p50",
+    "karakteristik_pasar": "⚠️ **ML Unggul.** Tren tertangkap, meleset di puncak"
+  },
+  "50": {
+    "komoditas_id": 50,
+    "nama": "Cabe Rawit Merah",
+    "klaster": "Hortikultura & Sayuran",
+    "kategori_performa": "3. Kritis & Volatil",
+    "tier": 3,
+    "wape_benchmark_pct": 14.97,
+    "champion_model": "XGBoost p50",
+    "karakteristik_pasar": "⚠️ **Komoditas Terliar.** Sensitif jamur patek & spekulasi"
+  }
+}

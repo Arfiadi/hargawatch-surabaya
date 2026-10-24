@@ -16,6 +16,11 @@ from typing import Optional, Union, List, Dict
 import numpy as np
 import pandas as pd
 
+# Cluster definitions for adaptive EWS threshold calibration
+VOLATILE_KOMODITAS_IDS = {50, 38, 37, 39, 46, 48}       # Cabai, Bawang Merah, Tomat, Buncis
+MODERATE_KOMODITAS_IDS = {16, 13, 17, 14, 49, 45, 47, 44, 58, 59, 60, 61, 62} # Unggas, Telur, Umbi, Ikan
+# All other commodities default to Staples / Administered Prices / FMCG
+
 
 def compute_early_warning_scores(
     df_current_features: pd.DataFrame,
@@ -75,72 +80,116 @@ def compute_early_warning_scores(
             how="left"
         )
     
-    # ===== PILAR 1: Skor Tren Historis (0-20) =====
-    # Mengukur momentum kenaikan harga 7 hari terakhir
+    # Identify commodity clusters
+    komoditas_ids = df["komoditas_id"] if "komoditas_id" in df.columns else pd.Series(0, index=df.index)
+    is_volatile = komoditas_ids.isin(VOLATILE_KOMODITAS_IDS)
+    is_moderate = komoditas_ids.isin(MODERATE_KOMODITAS_IDS)
+    is_staple = ~is_volatile & ~is_moderate
+
+    # ===== PILAR 1: Skor Tren Historis Adaptif (0-20) =====
+    # Ambang batas dinamis: Volatil (>=15%), Moderat (>=8%), Bahan Pokok/HET (>=4%)
     pct_change_7d = ((df["price_current"] - df["price_lag_7"]) / (df["price_lag_7"] + 1e-5)) * 100
-    skor_tren = np.select(
-        [pct_change_7d >= 10.0, pct_change_7d >= 5.0],
-        [20, 10],
-        default=0
-    )
-    
-    # ===== PILAR 2: Skor Volatilitas / Kepanikan Pasar (0-20) =====
-    # Rasio volatilitas jangka pendek (7d) terhadap jangka menengah (30d)
-    # Jika rolling_std_30d tersedia, gunakan. Jika tidak, gunakan rolling_std_14d sebagai proxy.
+    skor_tren = np.zeros(len(df), dtype=int)
+    skor_tren = np.where(is_volatile & (pct_change_7d >= 15.0), 20,
+                np.where(is_volatile & (pct_change_7d >= 8.0), 10, skor_tren))
+    skor_tren = np.where(is_moderate & (pct_change_7d >= 8.0), 20,
+                np.where(is_moderate & (pct_change_7d >= 4.0), 10, skor_tren))
+    skor_tren = np.where(is_staple & (pct_change_7d >= 4.0), 20,
+                np.where(is_staple & (pct_change_7d >= 2.0), 10, skor_tren))
+
+    # ===== PILAR 2: Skor Volatilitas & Anti-Amnesia Plateau (0-20) =====
+    # Dual-Trigger: Volatility Ratio ATAU Price-Level Z-score (mencegah amnesia saat plateau)
     if "rolling_std_30d" in df.columns:
         denominator = df["rolling_std_30d"]
-    else:
+    elif "rolling_std_14d" in df.columns:
         denominator = df["rolling_std_14d"]
-    
+    else:
+        denominator = pd.Series(1.0, index=df.index)
+
     if "rolling_std_7d" in df.columns:
         vol_ratio = df["rolling_std_7d"] / (denominator + 1e-5)
     else:
         vol_ratio = pd.Series(0.0, index=df.index)
-    
-    skor_vol = np.select(
+
+    skor_vol_ratio = np.select(
         [vol_ratio >= 1.5, vol_ratio >= 1.1],
         [20, 10],
         default=0
     )
-    
-    # ===== PILAR 3: Skor Disparitas Grosir vs Eceran (0-20) =====
-    # Pasar Keputran (pasar_id=5) adalah pasar induk grosir.
-    # Jika margin Keputran terhadap rata-rata eceran menipis, stok hulu kosong.
+
+    # Z-score level harga terhadap rata-rata 30 hari (menangkap harga plateau tinggi)
+    if "rolling_mean_30d" in df.columns and "rolling_std_30d" in df.columns:
+        r_mean = df["rolling_mean_30d"]
+        r_std = df["rolling_std_30d"]
+    elif "rolling_mean_14d" in df.columns and "rolling_std_14d" in df.columns:
+        r_mean = df["rolling_mean_14d"]
+        r_std = df["rolling_std_14d"]
+    else:
+        r_mean = df["price_current"]
+        r_std = pd.Series(1.0, index=df.index)
+
+    z_level = (df["price_current"] - r_mean) / (r_std.replace(0.0, np.nan).fillna(r_mean * 0.05) + 1e-5)
+    skor_z_level = np.select(
+        [z_level >= 2.0, z_level >= 1.2],
+        [20, 10],
+        default=0
+    )
+
+    skor_vol = np.maximum(skor_vol_ratio, skor_z_level)
+
+    # ===== PILAR 3: Skor Disparitas Spasial Universal (0-20) =====
+    # Hybrid: Marjin grosir Keputran jika ada; Disparitas Spasial Surabaya jika non-Keputran
     KEPUTRAN_ID = 5
-    
     group_cols = ["komoditas_id"]
     if "tanggal" in df.columns:
         group_cols = ["tanggal", "komoditas_id"]
-    
-    is_keputran = df["pasar_id"] == KEPUTRAN_ID
-    keputran_price = df.where(is_keputran).groupby(group_cols)["price_current"].transform("first")
-    eceran_price = df.where(~is_keputran).groupby(group_cols)["price_current"].transform("mean")
-    
-    has_both = keputran_price.notna() & eceran_price.notna()
-    margin_series = pd.Series(15.0, index=df.index)
-    margin_series[has_both] = ((eceran_price[has_both] - keputran_price[has_both]) / (eceran_price[has_both] + 1e-5)) * 100
-    
-    skor_anomali = np.select(
+
+    # A. Cek margin Pasar Keputran vs Eceran
+    keputran_sub = df[df["pasar_id"] == KEPUTRAN_ID].groupby(group_cols)["price_current"].first().rename("kep_p")
+    eceran_sub = df[df["pasar_id"] != KEPUTRAN_ID].groupby(group_cols)["price_current"].mean().rename("ece_p")
+    m_calc = pd.concat([keputran_sub, eceran_sub], axis=1)
+    m_calc["calc_margin"] = ((m_calc["ece_p"] - m_calc["kep_p"]) / (m_calc["ece_p"] + 1e-5)) * 100
+
+    # B. Cek Spread Harga Antar-Pasar Surabaya (Spatial Dispersion)
+    p_max = df.groupby(group_cols)["price_current"].transform("max")
+    p_min = df.groupby(group_cols)["price_current"].transform("min")
+    p_mean = df.groupby(group_cols)["price_current"].transform("mean")
+    spatial_spread_pct = ((p_max - p_min) / (p_mean + 1e-5)) * 100
+
+    df_temp = df[group_cols].merge(m_calc[["calc_margin", "kep_p"]], on=group_cols, how="left")
+    has_keputran = df_temp["kep_p"].notna() & (df_temp["kep_p"] > 0)
+    margin_series = df_temp["calc_margin"].fillna(15.0).values
+
+    skor_keputran = np.select(
         [margin_series < 5.0, margin_series <= 10.0],
         [20, 10],
         default=0
     )
-    
+    skor_spread = np.select(
+        [spatial_spread_pct >= 15.0, spatial_spread_pct >= 8.0],
+        [20, 10],
+        default=0
+    )
+    skor_anomali = np.where(has_keputran, skor_keputran, skor_spread)
+
     # ===== PILAR 4: Skor Proyeksi Bahaya Masa Depan (0-40) =====
-    # Logika A (20 poin): Median prediksi H+7 naik >= 15%
+    # Logika A: Kenaikan Median Forecast H+7 terkalibrasi per klaster
     pred_increase_pct = ((df["harga_prediksi"] - df["price_current"]) / (df["price_current"] + 1e-5)) * 100
-    skor_pred_a = np.where(pred_increase_pct >= 15.0, 20, 0)
-    
-    # Logika B (20 poin): Batas atas (Kuantil 90) menembus rekor harga 90 hari terakhir
+    skor_pred_a = np.zeros(len(df), dtype=int)
+    skor_pred_a = np.where(is_volatile & (pred_increase_pct >= 15.0), 20,
+                  np.where(is_volatile & (pred_increase_pct >= 8.0), 10, skor_pred_a))
+    skor_pred_a = np.where(is_moderate & (pred_increase_pct >= 8.0), 20,
+                  np.where(is_moderate & (pred_increase_pct >= 4.0), 10, skor_pred_a))
+    skor_pred_a = np.where(is_staple & (pred_increase_pct >= 4.0), 20,
+                  np.where(is_staple & (pred_increase_pct >= 2.0), 10, skor_pred_a))
+
+    # Logika B: Batas Atas Kuantil 90 Menembus Rekor Tertinggi 90 Hari (Tail Risk)
     skor_pred_b = np.zeros(len(df), dtype=int)
     if "batas_atas" in df.columns and "rolling_max_90d" in df.columns:
-        skor_pred_b = np.where(
-            df["batas_atas"] > df["rolling_max_90d"], 20, 0
-        )
+        skor_pred_b = np.where(df["batas_atas"] > df["rolling_max_90d"], 20, 0)
     elif "batas_atas" in df.columns:
-        # Fallback: jika rolling_max_90d belum tersedia, skip Logika B (0 poin)
         pass
-    
+
     skor_pred = skor_pred_a + skor_pred_b
     
     total_skor = skor_tren + skor_vol + skor_anomali + skor_pred

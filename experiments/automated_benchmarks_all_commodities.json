@@ -1,0 +1,2249 @@
+[
+  {
+    "komoditas_id": 38,
+    "commodity": "Cabe Merah Besar",
+    "cluster": "A",
+    "cluster_name": "Klaster A: Hortikultura Sayuran Volatil",
+    "status": "SUCCESS",
+    "elapsed_seconds": 344.6434464454651,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 13.91,
+    "mae_rp": 5111.11,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 13.91%) selected. GBDT (CatBoost p50, WAPE 13.54%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -192.59259259259258,
+      "mae_rp": 5111.111111111111,
+      "std_error_rp": 7574.319474427117,
+      "tail_risk_gt_20pct": 20.74074074074074,
+      "directional_accuracy_pct": 26.296296296296294,
+      "residual_autocorr_lag1": 0.21354610725948256
+    },
+    "ceiling_reached": true,
+    "ceiling_diagnosis": "Batas Performa Tercapai: WAPE (13.91%) melebihi ambang batas wajar klaster (12.0%). Ketiadaan data volume fisik (truk masuk/stok) membatasi akurasi lebih lanjut.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 13.91,
+        "MAE (Rp)": 5111.11,
+        "RMSE (Rp)": 7576.77,
+        "sMAPE (%)": 13.69,
+        "Directional Accuracy (%)": 26.3,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 16.48,
+        "MAE (Rp)": 6054.76,
+        "RMSE (Rp)": 8159.98,
+        "sMAPE (%)": 16.14,
+        "Directional Accuracy (%)": 49.26,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 13.71,
+        "MAE (Rp)": 5038.39,
+        "RMSE (Rp)": 6945.01,
+        "sMAPE (%)": 13.68,
+        "Directional Accuracy (%)": 47.04,
+        "PICP (%)": 84.81
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 13.88,
+        "MAE (Rp)": 5099.55,
+        "RMSE (Rp)": 7014.06,
+        "sMAPE (%)": 13.84,
+        "Directional Accuracy (%)": 45.19,
+        "PICP (%)": 73.7
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 13.78,
+        "MAE (Rp)": 5062.66,
+        "RMSE (Rp)": 6986.67,
+        "sMAPE (%)": 13.77,
+        "Directional Accuracy (%)": 48.52,
+        "PICP (%)": 77.41
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 13.54,
+        "MAE (Rp)": 4972.92,
+        "RMSE (Rp)": 6861.23,
+        "sMAPE (%)": 13.51,
+        "Directional Accuracy (%)": 47.78,
+        "PICP (%)": 79.26
+      }
+    ]
+  },
+  {
+    "komoditas_id": 96,
+    "commodity": "Minyak Goreng MINYAKITA",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 538.2383148670197,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.13,
+    "mae_rp": 20.83,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.13%) selected. GBDT (CatBoost p50, WAPE 0.23%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 1.1363636363636365,
+      "mae_rp": 20.833333333333332,
+      "std_error_rp": 145.70439006339703,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 96.96969696969697,
+      "residual_autocorr_lag1": -6.129036651639153e-05
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.13,
+        "MAE (Rp)": 20.83,
+        "RMSE (Rp)": 145.71,
+        "sMAPE (%)": 0.13,
+        "Directional Accuracy (%)": 96.97,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.15,
+        "MAE (Rp)": 23.43,
+        "RMSE (Rp)": 146.95,
+        "sMAPE (%)": 0.14,
+        "Directional Accuracy (%)": 94.7,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.28,
+        "MAE (Rp)": 43.99,
+        "RMSE (Rp)": 155.34,
+        "sMAPE (%)": 0.27,
+        "Directional Accuracy (%)": 20.45,
+        "PICP (%)": 96.97
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 0.27,
+        "MAE (Rp)": 43.27,
+        "RMSE (Rp)": 180.46,
+        "sMAPE (%)": 0.26,
+        "Directional Accuracy (%)": 23.48,
+        "PICP (%)": 81.06
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 0.97,
+        "MAE (Rp)": 153.97,
+        "RMSE (Rp)": 404.64,
+        "sMAPE (%)": 0.95,
+        "Directional Accuracy (%)": 25.0,
+        "PICP (%)": 83.33
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.23,
+        "MAE (Rp)": 36.58,
+        "RMSE (Rp)": 181.73,
+        "sMAPE (%)": 0.22,
+        "Directional Accuracy (%)": 23.48,
+        "PICP (%)": 79.55
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 14,
+    "commodity": "Daging Ayam Kampung",
+    "cluster": "B",
+    "cluster_name": "Klaster B: Protein Hewani & Musiman Lebaran",
+    "status": "SUCCESS",
+    "elapsed_seconds": 657.5404543876648,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.01,
+    "mae_rp": 7.87,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.01%) selected. GBDT (CatBoost p50, WAPE 0.65%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 7.874015748031496,
+      "mae_rp": 7.874015748031496,
+      "std_error_rp": 88.38560756158917,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 99.21259842519686,
+      "residual_autocorr_lag1": 0.0
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.01,
+        "MAE (Rp)": 7.87,
+        "RMSE (Rp)": 88.74,
+        "sMAPE (%)": 0.01,
+        "Directional Accuracy (%)": 99.21,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.11,
+        "MAE (Rp)": 69.74,
+        "RMSE (Rp)": 548.76,
+        "sMAPE (%)": 0.13,
+        "Directional Accuracy (%)": 97.64,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.61,
+        "MAE (Rp)": 395.15,
+        "RMSE (Rp)": 553.81,
+        "sMAPE (%)": 0.64,
+        "Directional Accuracy (%)": 0.79,
+        "PICP (%)": 100.0
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 2.27,
+        "MAE (Rp)": 1464.06,
+        "RMSE (Rp)": 2662.65,
+        "sMAPE (%)": 2.06,
+        "Directional Accuracy (%)": 12.6,
+        "PICP (%)": 91.34
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 2.56,
+        "MAE (Rp)": 1651.21,
+        "RMSE (Rp)": 2884.24,
+        "sMAPE (%)": 2.41,
+        "Directional Accuracy (%)": 11.81,
+        "PICP (%)": 90.55
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.65,
+        "MAE (Rp)": 418.92,
+        "RMSE (Rp)": 726.23,
+        "sMAPE (%)": 0.63,
+        "Directional Accuracy (%)": 0.79,
+        "PICP (%)": 91.34
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3",
+      "target_bulan",
+      "target_is_libur_nasional",
+      "target_is_ramadan",
+      "target_is_pra_ramadan",
+      "target_hari_ke_idulfitri"
+    ]
+  },
+  {
+    "komoditas_id": 4,
+    "commodity": "Beras Medium",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 667.8946666717529,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.44,
+    "mae_rp": 56.5,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.44%) selected. GBDT (CatBoost p50, WAPE 1.30%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -40.74803149606299,
+      "mae_rp": 56.496062992125985,
+      "std_error_rp": 242.48149433420727,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 92.1259842519685,
+      "residual_autocorr_lag1": 0.07868850498418394
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.44,
+        "MAE (Rp)": 56.5,
+        "RMSE (Rp)": 245.88,
+        "sMAPE (%)": 0.42,
+        "Directional Accuracy (%)": 92.13,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.46,
+        "MAE (Rp)": 59.81,
+        "RMSE (Rp)": 246.39,
+        "sMAPE (%)": 0.44,
+        "Directional Accuracy (%)": 92.13,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.72,
+        "MAE (Rp)": 92.72,
+        "RMSE (Rp)": 269.79,
+        "sMAPE (%)": 0.7,
+        "Directional Accuracy (%)": 2.36,
+        "PICP (%)": 94.49
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 2.8,
+        "MAE (Rp)": 361.07,
+        "RMSE (Rp)": 686.32,
+        "sMAPE (%)": 2.73,
+        "Directional Accuracy (%)": 26.77,
+        "PICP (%)": 83.46
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 1.75,
+        "MAE (Rp)": 225.87,
+        "RMSE (Rp)": 499.43,
+        "sMAPE (%)": 1.7,
+        "Directional Accuracy (%)": 14.96,
+        "PICP (%)": 91.34
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 1.3,
+        "MAE (Rp)": 168.22,
+        "RMSE (Rp)": 349.34,
+        "sMAPE (%)": 1.27,
+        "Directional Accuracy (%)": 17.32,
+        "PICP (%)": 85.04
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 17,
+    "commodity": "Telur Ayam Kampung",
+    "cluster": "B",
+    "cluster_name": "Klaster B: Protein Hewani & Musiman Lebaran",
+    "status": "SUCCESS",
+    "elapsed_seconds": 672.6330347061157,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.23,
+    "mae_rp": 568.12,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.23%) selected. GBDT (LightGBM p50, WAPE 1.29%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 405.7971014492754,
+      "mae_rp": 568.1159420289855,
+      "std_error_rp": 1858.1496217482577,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 89.85507246376811,
+      "residual_autocorr_lag1": -0.1555511965476659
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.23,
+        "MAE (Rp)": 568.12,
+        "RMSE (Rp)": 1901.94,
+        "sMAPE (%)": 1.32,
+        "Directional Accuracy (%)": 89.86,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.66,
+        "MAE (Rp)": 765.22,
+        "RMSE (Rp)": 2126.46,
+        "sMAPE (%)": 1.75,
+        "Directional Accuracy (%)": 86.23,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 2.13,
+        "MAE (Rp)": 980.57,
+        "RMSE (Rp)": 1772.41,
+        "sMAPE (%)": 2.2,
+        "Directional Accuracy (%)": 9.42,
+        "PICP (%)": 92.03
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 1.29,
+        "MAE (Rp)": 595.21,
+        "RMSE (Rp)": 1826.73,
+        "sMAPE (%)": 1.38,
+        "Directional Accuracy (%)": 15.22,
+        "PICP (%)": 89.86
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 1.29,
+        "MAE (Rp)": 595.75,
+        "RMSE (Rp)": 1762.39,
+        "sMAPE (%)": 1.36,
+        "Directional Accuracy (%)": 13.77,
+        "PICP (%)": 89.86
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 1.34,
+        "MAE (Rp)": 617.3,
+        "RMSE (Rp)": 1858.49,
+        "sMAPE (%)": 1.42,
+        "Directional Accuracy (%)": 15.94,
+        "PICP (%)": 90.58
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3",
+      "target_bulan",
+      "target_is_libur_nasional",
+      "target_is_ramadan",
+      "target_is_pra_ramadan",
+      "target_hari_ke_idulfitri"
+    ]
+  },
+  {
+    "komoditas_id": 92,
+    "commodity": "Minyak Goreng Kemasan Premium",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 793.3651514053345,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.7,
+    "mae_rp": 313.04,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.70%) selected. GBDT (CatBoost p50, WAPE 1.95%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -305.7971014492754,
+      "mae_rp": 313.04347826086956,
+      "std_error_rp": 2069.8585023382016,
+      "tail_risk_gt_20pct": 2.1739130434782608,
+      "directional_accuracy_pct": 92.7536231884058,
+      "residual_autocorr_lag1": 0.24528538607509842
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.7,
+        "MAE (Rp)": 313.04,
+        "RMSE (Rp)": 2092.33,
+        "sMAPE (%)": 1.36,
+        "Directional Accuracy (%)": 92.75,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.77,
+        "MAE (Rp)": 325.47,
+        "RMSE (Rp)": 2099.84,
+        "sMAPE (%)": 1.43,
+        "Directional Accuracy (%)": 92.03,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 2.16,
+        "MAE (Rp)": 397.81,
+        "RMSE (Rp)": 2096.21,
+        "sMAPE (%)": 1.79,
+        "Directional Accuracy (%)": 5.8,
+        "PICP (%)": 94.2
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 2.56,
+        "MAE (Rp)": 471.49,
+        "RMSE (Rp)": 2124.1,
+        "sMAPE (%)": 2.19,
+        "Directional Accuracy (%)": 39.86,
+        "PICP (%)": 82.61
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 2.19,
+        "MAE (Rp)": 402.53,
+        "RMSE (Rp)": 2110.66,
+        "sMAPE (%)": 1.79,
+        "Directional Accuracy (%)": 41.3,
+        "PICP (%)": 89.86
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 1.95,
+        "MAE (Rp)": 359.86,
+        "RMSE (Rp)": 2096.46,
+        "sMAPE (%)": 1.59,
+        "Directional Accuracy (%)": 53.62,
+        "PICP (%)": 92.03
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 28,
+    "commodity": "Garam Beryodium Halus",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 708.0318167209625,
+    "champion_model": "XGBoost p50",
+    "is_ml_model": true,
+    "wape_pct": 0.05,
+    "mae_rp": 4.6,
+    "picp_pct": 100.0,
+    "selection_rationale": "GBDT (XGBoost p50) outperformed Baseline (Naive Last Value) with 68.8% relative WAPE improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -4.166666666666667,
+      "mae_rp": 4.601449275362318,
+      "std_error_rp": 29.76053785680914,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 57.971014492753625,
+      "residual_autocorr_lag1": -0.003926044339379927
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Normal predictable dynamics.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.16,
+        "MAE (Rp)": 14.49,
+        "RMSE (Rp)": 170.25,
+        "sMAPE (%)": 0.16,
+        "Directional Accuracy (%)": 99.28,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.16,
+        "MAE (Rp)": 14.49,
+        "RMSE (Rp)": 130.98,
+        "sMAPE (%)": 0.15,
+        "Directional Accuracy (%)": 99.28,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.27,
+        "MAE (Rp)": 23.51,
+        "RMSE (Rp)": 123.41,
+        "sMAPE (%)": 0.25,
+        "Directional Accuracy (%)": 28.26,
+        "PICP (%)": 98.55
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 0.19,
+        "MAE (Rp)": 16.7,
+        "RMSE (Rp)": 171.25,
+        "sMAPE (%)": 0.18,
+        "Directional Accuracy (%)": 57.25,
+        "PICP (%)": 98.55
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 0.05,
+        "MAE (Rp)": 4.6,
+        "RMSE (Rp)": 30.05,
+        "sMAPE (%)": 0.05,
+        "Directional Accuracy (%)": 57.97,
+        "PICP (%)": 100.0
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.2,
+        "MAE (Rp)": 17.99,
+        "RMSE (Rp)": 162.88,
+        "sMAPE (%)": 0.19,
+        "Directional Accuracy (%)": 57.97,
+        "PICP (%)": 98.55
+      }
+    ],
+    "saved_model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\xgboost_28_h7.pkl",
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 20,
+    "commodity": "Susu Kental Manis Merk Bendera",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 774.0872566699982,
+    "champion_model": "Naive 7d SMA",
+    "is_ml_model": false,
+    "wape_pct": 0.2,
+    "mae_rp": 25.36,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive 7d SMA, WAPE 0.20%) selected. GBDT (LightGBM p50, WAPE 0.29%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 0.5175983436853078,
+      "mae_rp": 25.36231884057971,
+      "std_error_rp": 114.88468068428344,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 94.92753623188406,
+      "residual_autocorr_lag1": -0.0001762357444792331
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.25,
+        "MAE (Rp)": 32.61,
+        "RMSE (Rp)": 229.21,
+        "sMAPE (%)": 0.25,
+        "Directional Accuracy (%)": 96.38,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.2,
+        "MAE (Rp)": 25.36,
+        "RMSE (Rp)": 114.89,
+        "sMAPE (%)": 0.2,
+        "Directional Accuracy (%)": 94.93,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.34,
+        "MAE (Rp)": 44.09,
+        "RMSE (Rp)": 189.16,
+        "sMAPE (%)": 0.33,
+        "Directional Accuracy (%)": 2.17,
+        "PICP (%)": 96.38
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 0.29,
+        "MAE (Rp)": 37.99,
+        "RMSE (Rp)": 196.4,
+        "sMAPE (%)": 0.28,
+        "Directional Accuracy (%)": 37.68,
+        "PICP (%)": 86.96
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 1.14,
+        "MAE (Rp)": 148.78,
+        "RMSE (Rp)": 360.61,
+        "sMAPE (%)": 1.09,
+        "Directional Accuracy (%)": 31.88,
+        "PICP (%)": 88.41
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.61,
+        "MAE (Rp)": 79.07,
+        "RMSE (Rp)": 234.23,
+        "sMAPE (%)": 0.59,
+        "Directional Accuracy (%)": 37.68,
+        "PICP (%)": 89.86
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 30,
+    "commodity": "Terigu Protein Sedang (Kemasan)",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 789.2030737400055,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.21,
+    "mae_rp": 25.36,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.21%) selected. GBDT (LightGBM p50, WAPE 0.24%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 3.6231884057971016,
+      "mae_rp": 25.36231884057971,
+      "std_error_rp": 153.41967651985598,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 97.10144927536231,
+      "residual_autocorr_lag1": -0.0005617977528089916
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.21,
+        "MAE (Rp)": 25.36,
+        "RMSE (Rp)": 153.46,
+        "sMAPE (%)": 0.2,
+        "Directional Accuracy (%)": 97.1,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.32,
+        "MAE (Rp)": 39.34,
+        "RMSE (Rp)": 179.35,
+        "sMAPE (%)": 0.32,
+        "Directional Accuracy (%)": 94.93,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.31,
+        "MAE (Rp)": 37.8,
+        "RMSE (Rp)": 151.16,
+        "sMAPE (%)": 0.3,
+        "Directional Accuracy (%)": 29.71,
+        "PICP (%)": 97.1
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 0.24,
+        "MAE (Rp)": 29.34,
+        "RMSE (Rp)": 152.73,
+        "sMAPE (%)": 0.23,
+        "Directional Accuracy (%)": 50.72,
+        "PICP (%)": 94.93
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 0.37,
+        "MAE (Rp)": 45.82,
+        "RMSE (Rp)": 160.36,
+        "sMAPE (%)": 0.36,
+        "Directional Accuracy (%)": 47.83,
+        "PICP (%)": 93.48
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.25,
+        "MAE (Rp)": 31.09,
+        "RMSE (Rp)": 153.76,
+        "sMAPE (%)": 0.25,
+        "Directional Accuracy (%)": 60.87,
+        "PICP (%)": 95.65
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 21,
+    "commodity": "Susu Kental Manis Merk Indomilk",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 563.7799355983734,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.08,
+    "mae_rp": 10.87,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.08%) selected. GBDT (CatBoost p50, WAPE 0.30%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 3.6231884057971016,
+      "mae_rp": 10.869565217391305,
+      "std_error_rp": 73.63188924964341,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 97.82608695652173,
+      "residual_autocorr_lag1": -0.006011130897782882
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.08,
+        "MAE (Rp)": 10.87,
+        "RMSE (Rp)": 73.72,
+        "sMAPE (%)": 0.09,
+        "Directional Accuracy (%)": 97.83,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.08,
+        "MAE (Rp)": 10.87,
+        "RMSE (Rp)": 73.72,
+        "sMAPE (%)": 0.09,
+        "Directional Accuracy (%)": 97.83,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.2,
+        "MAE (Rp)": 25.3,
+        "RMSE (Rp)": 76.7,
+        "sMAPE (%)": 0.2,
+        "Directional Accuracy (%)": 4.35,
+        "PICP (%)": 97.83
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 0.31,
+        "MAE (Rp)": 40.37,
+        "RMSE (Rp)": 147.05,
+        "sMAPE (%)": 0.31,
+        "Directional Accuracy (%)": 13.04,
+        "PICP (%)": 79.71
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 2.07,
+        "MAE (Rp)": 265.24,
+        "RMSE (Rp)": 441.87,
+        "sMAPE (%)": 2.06,
+        "Directional Accuracy (%)": 5.07,
+        "PICP (%)": 81.88
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.3,
+        "MAE (Rp)": 38.41,
+        "RMSE (Rp)": 91.28,
+        "sMAPE (%)": 0.3,
+        "Directional Accuracy (%)": 7.97,
+        "PICP (%)": 77.54
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 32,
+    "commodity": "Kedelai Impor",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 575.3328442573547,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.65,
+    "mae_rp": 101.45,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.65%) selected. GBDT (CatBoost p50, WAPE 0.98%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -14.492753623188406,
+      "mae_rp": 101.44927536231884,
+      "std_error_rp": 496.15196430793304,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 94.92753623188406,
+      "residual_autocorr_lag1": 0.0
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.65,
+        "MAE (Rp)": 101.45,
+        "RMSE (Rp)": 496.36,
+        "sMAPE (%)": 0.63,
+        "Directional Accuracy (%)": 94.93,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.04,
+        "MAE (Rp)": 163.56,
+        "RMSE (Rp)": 640.26,
+        "sMAPE (%)": 0.99,
+        "Directional Accuracy (%)": 93.48,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.98,
+        "MAE (Rp)": 153.8,
+        "RMSE (Rp)": 521.38,
+        "sMAPE (%)": 0.94,
+        "Directional Accuracy (%)": 2.17,
+        "PICP (%)": 92.75
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 2.36,
+        "MAE (Rp)": 370.33,
+        "RMSE (Rp)": 920.72,
+        "sMAPE (%)": 2.06,
+        "Directional Accuracy (%)": 46.38,
+        "PICP (%)": 81.16
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 2.07,
+        "MAE (Rp)": 325.05,
+        "RMSE (Rp)": 810.12,
+        "sMAPE (%)": 1.82,
+        "Directional Accuracy (%)": 34.06,
+        "PICP (%)": 83.33
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.98,
+        "MAE (Rp)": 153.92,
+        "RMSE (Rp)": 535.91,
+        "sMAPE (%)": 0.93,
+        "Directional Accuracy (%)": 36.23,
+        "PICP (%)": 82.61
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 42,
+    "commodity": "KACANG TANAH",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 583.7987864017487,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.37,
+    "mae_rp": 405.8,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.37%) selected. GBDT (CatBoost p50, WAPE 2.07%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -115.94202898550725,
+      "mae_rp": 405.7971014492754,
+      "std_error_rp": 1351.716374118347,
+      "tail_risk_gt_20pct": 0.7246376811594203,
+      "directional_accuracy_pct": 86.95652173913044,
+      "residual_autocorr_lag1": 0.23066500807222046
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.37,
+        "MAE (Rp)": 405.8,
+        "RMSE (Rp)": 1356.68,
+        "sMAPE (%)": 1.23,
+        "Directional Accuracy (%)": 86.96,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.73,
+        "MAE (Rp)": 514.49,
+        "RMSE (Rp)": 1460.26,
+        "sMAPE (%)": 1.56,
+        "Directional Accuracy (%)": 80.43,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 1.79,
+        "MAE (Rp)": 531.67,
+        "RMSE (Rp)": 1393.33,
+        "sMAPE (%)": 1.65,
+        "Directional Accuracy (%)": 7.97,
+        "PICP (%)": 86.23
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 4.28,
+        "MAE (Rp)": 1270.57,
+        "RMSE (Rp)": 2591.73,
+        "sMAPE (%)": 4.01,
+        "Directional Accuracy (%)": 38.41,
+        "PICP (%)": 88.41
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 3.53,
+        "MAE (Rp)": 1048.92,
+        "RMSE (Rp)": 2101.95,
+        "sMAPE (%)": 3.34,
+        "Directional Accuracy (%)": 36.23,
+        "PICP (%)": 90.58
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 2.07,
+        "MAE (Rp)": 615.73,
+        "RMSE (Rp)": 1627.09,
+        "sMAPE (%)": 1.85,
+        "Directional Accuracy (%)": 39.13,
+        "PICP (%)": 88.41
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 41,
+    "commodity": "KACANG HIJAU",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 489.0237171649933,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.02,
+    "mae_rp": 253.62,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.02%) selected. GBDT (CatBoost p50, WAPE 2.35%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -79.71014492753623,
+      "mae_rp": 253.6231884057971,
+      "std_error_rp": 799.1081460149903,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 88.40579710144928,
+      "residual_autocorr_lag1": 0.061191999224659226
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.02,
+        "MAE (Rp)": 253.62,
+        "RMSE (Rp)": 803.07,
+        "sMAPE (%)": 1.0,
+        "Directional Accuracy (%)": 88.41,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.84,
+        "MAE (Rp)": 455.49,
+        "RMSE (Rp)": 1309.98,
+        "sMAPE (%)": 1.8,
+        "Directional Accuracy (%)": 81.16,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 1.63,
+        "MAE (Rp)": 404.75,
+        "RMSE (Rp)": 865.93,
+        "sMAPE (%)": 1.58,
+        "Directional Accuracy (%)": 7.97,
+        "PICP (%)": 88.41
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 3.69,
+        "MAE (Rp)": 914.61,
+        "RMSE (Rp)": 1809.36,
+        "sMAPE (%)": 3.24,
+        "Directional Accuracy (%)": 28.99,
+        "PICP (%)": 74.64
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 2.63,
+        "MAE (Rp)": 650.17,
+        "RMSE (Rp)": 1333.84,
+        "sMAPE (%)": 2.32,
+        "Directional Accuracy (%)": 28.99,
+        "PICP (%)": 79.71
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 2.35,
+        "MAE (Rp)": 581.07,
+        "RMSE (Rp)": 1294.35,
+        "sMAPE (%)": 2.1,
+        "Directional Accuracy (%)": 14.49,
+        "PICP (%)": 78.99
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 43,
+    "commodity": "KETELA POHON",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 474.84530377388,
+    "champion_model": "LightGBM p50",
+    "is_ml_model": true,
+    "wape_pct": 0.29,
+    "mae_rp": 17.9,
+    "picp_pct": 78.86,
+    "selection_rationale": "GBDT (LightGBM p50) outperformed Baseline (Naive Last Value) with 12.1% relative WAPE improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -14.845528455284553,
+      "mae_rp": 17.902439024390244,
+      "std_error_rp": 107.85152640689871,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 38.21138211382114,
+      "residual_autocorr_lag1": -0.02127222445610267
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Normal predictable dynamics.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.33,
+        "MAE (Rp)": 20.33,
+        "RMSE (Rp)": 135.25,
+        "sMAPE (%)": 0.34,
+        "Directional Accuracy (%)": 97.56,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.36,
+        "MAE (Rp)": 22.07,
+        "RMSE (Rp)": 120.49,
+        "sMAPE (%)": 0.34,
+        "Directional Accuracy (%)": 95.93,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.68,
+        "MAE (Rp)": 42.27,
+        "RMSE (Rp)": 125.04,
+        "sMAPE (%)": 0.67,
+        "Directional Accuracy (%)": 2.44,
+        "PICP (%)": 97.56
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 0.29,
+        "MAE (Rp)": 17.9,
+        "RMSE (Rp)": 108.87,
+        "sMAPE (%)": 0.28,
+        "Directional Accuracy (%)": 38.21,
+        "PICP (%)": 78.86
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 7.74,
+        "MAE (Rp)": 478.18,
+        "RMSE (Rp)": 684.87,
+        "sMAPE (%)": 7.76,
+        "Directional Accuracy (%)": 35.77,
+        "PICP (%)": 78.86
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.32,
+        "MAE (Rp)": 19.54,
+        "RMSE (Rp)": 117.22,
+        "sMAPE (%)": 0.32,
+        "Directional Accuracy (%)": 36.59,
+        "PICP (%)": 78.86
+      }
+    ],
+    "saved_model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\lightgbm_43_h7.pkl",
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 49,
+    "commodity": "Bawang Putih Sinco/Honan",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 487.93272256851196,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 4.56,
+    "mae_rp": 1572.46,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 4.56%) selected. GBDT (CatBoost p50, WAPE 4.52%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 224.63768115942028,
+      "mae_rp": 1572.463768115942,
+      "std_error_rp": 2864.116111579472,
+      "tail_risk_gt_20pct": 3.6231884057971016,
+      "directional_accuracy_pct": 54.347826086956516,
+      "residual_autocorr_lag1": 0.010587947021575724
+    },
+    "ceiling_reached": true,
+    "ceiling_diagnosis": "Batas Performa Tercapai: WAPE (4.56%) melebihi ambang batas wajar klaster (3.0%). Ketiadaan data volume fisik (truk masuk/stok) membatasi akurasi lebih lanjut.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 4.56,
+        "MAE (Rp)": 1572.46,
+        "RMSE (Rp)": 2872.91,
+        "sMAPE (%)": 4.52,
+        "Directional Accuracy (%)": 54.35,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 4.97,
+        "MAE (Rp)": 1714.29,
+        "RMSE (Rp)": 2810.17,
+        "sMAPE (%)": 4.94,
+        "Directional Accuracy (%)": 54.35,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 4.82,
+        "MAE (Rp)": 1662.17,
+        "RMSE (Rp)": 2734.3,
+        "sMAPE (%)": 4.81,
+        "Directional Accuracy (%)": 28.26,
+        "PICP (%)": 81.16
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 4.65,
+        "MAE (Rp)": 1604.28,
+        "RMSE (Rp)": 2613.55,
+        "sMAPE (%)": 4.64,
+        "Directional Accuracy (%)": 29.71,
+        "PICP (%)": 71.01
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 4.64,
+        "MAE (Rp)": 1599.99,
+        "RMSE (Rp)": 2638.26,
+        "sMAPE (%)": 4.62,
+        "Directional Accuracy (%)": 31.16,
+        "PICP (%)": 73.19
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 4.52,
+        "MAE (Rp)": 1561.07,
+        "RMSE (Rp)": 2585.53,
+        "sMAPE (%)": 4.51,
+        "Directional Accuracy (%)": 34.78,
+        "PICP (%)": 76.09
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  },
+  {
+    "komoditas_id": 58,
+    "commodity": "Ikan Bandeng",
+    "cluster": "D",
+    "cluster_name": "Klaster D: Perikanan & Hasil Laut",
+    "status": "SUCCESS",
+    "elapsed_seconds": 486.12635684013367,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.79,
+    "mae_rp": 727.94,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.79%) selected. GBDT (CatBoost p50, WAPE 2.35%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 110.29411764705883,
+      "mae_rp": 727.9411764705883,
+      "std_error_rp": 1998.7966751995882,
+      "tail_risk_gt_20pct": 2.2058823529411766,
+      "directional_accuracy_pct": 81.61764705882352,
+      "residual_autocorr_lag1": -0.024731800312053902
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.79,
+        "MAE (Rp)": 727.94,
+        "RMSE (Rp)": 2001.84,
+        "sMAPE (%)": 1.9,
+        "Directional Accuracy (%)": 81.62,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 2.07,
+        "MAE (Rp)": 843.49,
+        "RMSE (Rp)": 2087.92,
+        "sMAPE (%)": 2.22,
+        "Directional Accuracy (%)": 81.62,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 2.36,
+        "MAE (Rp)": 959.76,
+        "RMSE (Rp)": 1805.87,
+        "sMAPE (%)": 2.46,
+        "Directional Accuracy (%)": 13.97,
+        "PICP (%)": 86.03
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 4.29,
+        "MAE (Rp)": 1745.52,
+        "RMSE (Rp)": 3104.01,
+        "sMAPE (%)": 4.22,
+        "Directional Accuracy (%)": 13.24,
+        "PICP (%)": 75.74
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 3.66,
+        "MAE (Rp)": 1487.1,
+        "RMSE (Rp)": 2639.59,
+        "sMAPE (%)": 3.59,
+        "Directional Accuracy (%)": 11.76,
+        "PICP (%)": 79.41
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 2.35,
+        "MAE (Rp)": 955.28,
+        "RMSE (Rp)": 2081.03,
+        "sMAPE (%)": 2.43,
+        "Directional Accuracy (%)": 12.5,
+        "PICP (%)": 78.68
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d"
+    ]
+  },
+  {
+    "komoditas_id": 40,
+    "commodity": "Ikan Asin Teri",
+    "cluster": "D",
+    "cluster_name": "Klaster D: Perikanan & Hasil Laut",
+    "status": "SUCCESS",
+    "elapsed_seconds": 446.89751386642456,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.15,
+    "mae_rp": 130.0,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.15%) selected. GBDT (CatBoost p50, WAPE 0.78%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 30.0,
+      "mae_rp": 130.0,
+      "std_error_rp": 942.9209935090003,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 98.0,
+      "residual_autocorr_lag1": -0.001022494887525563
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.15,
+        "MAE (Rp)": 130.0,
+        "RMSE (Rp)": 943.4,
+        "sMAPE (%)": 0.14,
+        "Directional Accuracy (%)": 98.0,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.65,
+        "MAE (Rp)": 572.14,
+        "RMSE (Rp)": 2819.98,
+        "sMAPE (%)": 0.6,
+        "Directional Accuracy (%)": 94.0,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.73,
+        "MAE (Rp)": 641.52,
+        "RMSE (Rp)": 1368.95,
+        "sMAPE (%)": 0.67,
+        "Directional Accuracy (%)": 2.0,
+        "PICP (%)": 96.0
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 1.02,
+        "MAE (Rp)": 890.46,
+        "RMSE (Rp)": 1811.3,
+        "sMAPE (%)": 1.0,
+        "Directional Accuracy (%)": 8.0,
+        "PICP (%)": 58.0
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 2.62,
+        "MAE (Rp)": 2293.28,
+        "RMSE (Rp)": 3992.29,
+        "sMAPE (%)": 2.73,
+        "Directional Accuracy (%)": 11.0,
+        "PICP (%)": 64.0
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.78,
+        "MAE (Rp)": 686.48,
+        "RMSE (Rp)": 1916.45,
+        "sMAPE (%)": 0.71,
+        "Directional Accuracy (%)": 26.0,
+        "PICP (%)": 70.0
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d"
+    ]
+  },
+  {
+    "komoditas_id": 60,
+    "commodity": "Ikan Tongkol",
+    "cluster": "D",
+    "cluster_name": "Klaster D: Perikanan & Hasil Laut",
+    "status": "SUCCESS",
+    "elapsed_seconds": 460.49303364753723,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.29,
+    "mae_rp": 533.33,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.29%) selected. GBDT (CatBoost p50, WAPE 2.66%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -66.66666666666667,
+      "mae_rp": 533.3333333333334,
+      "std_error_rp": 1671.9914938645938,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 87.5,
+      "residual_autocorr_lag1": -0.002016984326541006
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.29,
+        "MAE (Rp)": 533.33,
+        "RMSE (Rp)": 1673.32,
+        "sMAPE (%)": 1.35,
+        "Directional Accuracy (%)": 87.5,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.51,
+        "MAE (Rp)": 625.0,
+        "RMSE (Rp)": 1626.58,
+        "sMAPE (%)": 1.59,
+        "Directional Accuracy (%)": 84.17,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 2.08,
+        "MAE (Rp)": 863.07,
+        "RMSE (Rp)": 1592.31,
+        "sMAPE (%)": 2.12,
+        "Directional Accuracy (%)": 10.0,
+        "PICP (%)": 87.5
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 4.3,
+        "MAE (Rp)": 1786.07,
+        "RMSE (Rp)": 3279.55,
+        "sMAPE (%)": 4.11,
+        "Directional Accuracy (%)": 24.17,
+        "PICP (%)": 84.17
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 4.06,
+        "MAE (Rp)": 1686.11,
+        "RMSE (Rp)": 3168.18,
+        "sMAPE (%)": 3.89,
+        "Directional Accuracy (%)": 21.67,
+        "PICP (%)": 90.83
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 2.66,
+        "MAE (Rp)": 1103.39,
+        "RMSE (Rp)": 2110.21,
+        "sMAPE (%)": 2.57,
+        "Directional Accuracy (%)": 24.17,
+        "PICP (%)": 86.67
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d"
+    ]
+  },
+  {
+    "komoditas_id": 61,
+    "commodity": "Ikan Tuna",
+    "cluster": "D",
+    "cluster_name": "Klaster D: Perikanan & Hasil Laut",
+    "status": "SUCCESS",
+    "elapsed_seconds": 393.0587091445923,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.84,
+    "mae_rp": 869.57,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.84%) selected. GBDT (CatBoost p50, WAPE 2.28%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -86.95652173913044,
+      "mae_rp": 869.5652173913044,
+      "std_error_rp": 2272.9609778448225,
+      "tail_risk_gt_20pct": 2.1739130434782608,
+      "directional_accuracy_pct": 82.6086956521739,
+      "residual_autocorr_lag1": -0.0007540292866261757
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.84,
+        "MAE (Rp)": 869.57,
+        "RMSE (Rp)": 2274.62,
+        "sMAPE (%)": 1.84,
+        "Directional Accuracy (%)": 82.61,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 2.33,
+        "MAE (Rp)": 1105.59,
+        "RMSE (Rp)": 2587.42,
+        "sMAPE (%)": 2.31,
+        "Directional Accuracy (%)": 80.43,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 2.55,
+        "MAE (Rp)": 1208.33,
+        "RMSE (Rp)": 2222.51,
+        "sMAPE (%)": 2.54,
+        "Directional Accuracy (%)": 10.87,
+        "PICP (%)": 82.61
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 2.95,
+        "MAE (Rp)": 1398.39,
+        "RMSE (Rp)": 2665.78,
+        "sMAPE (%)": 2.93,
+        "Directional Accuracy (%)": 30.43,
+        "PICP (%)": 73.91
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 3.38,
+        "MAE (Rp)": 1600.39,
+        "RMSE (Rp)": 2785.88,
+        "sMAPE (%)": 3.29,
+        "Directional Accuracy (%)": 13.04,
+        "PICP (%)": 71.74
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 2.28,
+        "MAE (Rp)": 1080.89,
+        "RMSE (Rp)": 2196.51,
+        "sMAPE (%)": 2.26,
+        "Directional Accuracy (%)": 30.43,
+        "PICP (%)": 67.39
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d"
+    ]
+  },
+  {
+    "komoditas_id": 59,
+    "commodity": "Ikan Kembung",
+    "cluster": "D",
+    "cluster_name": "Klaster D: Perikanan & Hasil Laut",
+    "status": "SUCCESS",
+    "elapsed_seconds": 422.25781512260437,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.37,
+    "mae_rp": 652.17,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.37%) selected. GBDT (CatBoost p50, WAPE 2.55%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 0.0,
+      "mae_rp": 652.1739130434783,
+      "std_error_rp": 2331.2620206007846,
+      "tail_risk_gt_20pct": 2.1739130434782608,
+      "directional_accuracy_pct": 91.30434782608695,
+      "residual_autocorr_lag1": 0.0
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.37,
+        "MAE (Rp)": 652.17,
+        "RMSE (Rp)": 2331.26,
+        "sMAPE (%)": 1.56,
+        "Directional Accuracy (%)": 91.3,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.59,
+        "MAE (Rp)": 760.87,
+        "RMSE (Rp)": 2246.46,
+        "sMAPE (%)": 1.86,
+        "Directional Accuracy (%)": 89.13,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 2.49,
+        "MAE (Rp)": 1187.87,
+        "RMSE (Rp)": 2354.04,
+        "sMAPE (%)": 2.66,
+        "Directional Accuracy (%)": 6.52,
+        "PICP (%)": 91.3
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 13.47,
+        "MAE (Rp)": 6426.54,
+        "RMSE (Rp)": 10236.59,
+        "sMAPE (%)": 12.98,
+        "Directional Accuracy (%)": 4.35,
+        "PICP (%)": 73.91
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 5.3,
+        "MAE (Rp)": 2528.54,
+        "RMSE (Rp)": 5170.56,
+        "sMAPE (%)": 4.75,
+        "Directional Accuracy (%)": 8.7,
+        "PICP (%)": 76.09
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 2.55,
+        "MAE (Rp)": 1216.11,
+        "RMSE (Rp)": 2692.53,
+        "sMAPE (%)": 2.58,
+        "Directional Accuracy (%)": 23.91,
+        "PICP (%)": 78.26
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d"
+    ]
+  },
+  {
+    "komoditas_id": 62,
+    "commodity": "Ikan Cakalang",
+    "cluster": "D",
+    "cluster_name": "Klaster D: Perikanan & Hasil Laut",
+    "status": "SUCCESS",
+    "elapsed_seconds": 294.52452969551086,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 1.59,
+    "mae_rp": 717.39,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 1.59%) selected. GBDT (CatBoost p50, WAPE 1.97%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -65.21739130434783,
+      "mae_rp": 717.3913043478261,
+      "std_error_rp": 2130.5456936524547,
+      "tail_risk_gt_20pct": 2.1739130434782608,
+      "directional_accuracy_pct": 86.95652173913044,
+      "residual_autocorr_lag1": -0.0009578544061302651
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 1.59,
+        "MAE (Rp)": 717.39,
+        "RMSE (Rp)": 2131.54,
+        "sMAPE (%)": 1.62,
+        "Directional Accuracy (%)": 86.96,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.64,
+        "MAE (Rp)": 736.02,
+        "RMSE (Rp)": 2063.43,
+        "sMAPE (%)": 1.64,
+        "Directional Accuracy (%)": 84.78,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 1.92,
+        "MAE (Rp)": 864.2,
+        "RMSE (Rp)": 2002.79,
+        "sMAPE (%)": 1.93,
+        "Directional Accuracy (%)": 54.35,
+        "PICP (%)": 84.78
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 2.25,
+        "MAE (Rp)": 1010.63,
+        "RMSE (Rp)": 2190.79,
+        "sMAPE (%)": 2.26,
+        "Directional Accuracy (%)": 10.87,
+        "PICP (%)": 69.57
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 2.25,
+        "MAE (Rp)": 1010.35,
+        "RMSE (Rp)": 2217.73,
+        "sMAPE (%)": 2.24,
+        "Directional Accuracy (%)": 10.87,
+        "PICP (%)": 73.91
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 1.97,
+        "MAE (Rp)": 886.93,
+        "RMSE (Rp)": 2040.42,
+        "sMAPE (%)": 1.98,
+        "Directional Accuracy (%)": 13.04,
+        "PICP (%)": 76.09
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d"
+    ]
+  },
+  {
+    "komoditas_id": 25,
+    "commodity": "Jagung Pipilan Kering",
+    "cluster": "D",
+    "cluster_name": "Klaster D: Perikanan & Hasil Laut",
+    "status": "SUCCESS",
+    "elapsed_seconds": 315.8469669818878,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.27,
+    "mae_rp": 30.0,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.27%) selected. GBDT (CatBoost p50, WAPE 0.81%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": -20.0,
+      "mae_rp": 30.0,
+      "std_error_rp": 186.01075237738274,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 97.0,
+      "residual_autocorr_lag1": -0.22846715328467088
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.27,
+        "MAE (Rp)": 30.0,
+        "RMSE (Rp)": 187.08,
+        "sMAPE (%)": 0.3,
+        "Directional Accuracy (%)": 97.0,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 1.47,
+        "MAE (Rp)": 160.0,
+        "RMSE (Rp)": 561.16,
+        "sMAPE (%)": 1.45,
+        "Directional Accuracy (%)": 89.0,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 1.0,
+        "MAE (Rp)": 109.29,
+        "RMSE (Rp)": 203.52,
+        "sMAPE (%)": 1.02,
+        "Directional Accuracy (%)": 3.0,
+        "PICP (%)": 98.0
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 1.18,
+        "MAE (Rp)": 128.57,
+        "RMSE (Rp)": 422.38,
+        "sMAPE (%)": 1.15,
+        "Directional Accuracy (%)": 56.0,
+        "PICP (%)": 94.0
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 0.94,
+        "MAE (Rp)": 102.65,
+        "RMSE (Rp)": 323.4,
+        "sMAPE (%)": 0.91,
+        "Directional Accuracy (%)": 53.0,
+        "PICP (%)": 93.0
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.81,
+        "MAE (Rp)": 87.95,
+        "RMSE (Rp)": 277.69,
+        "sMAPE (%)": 0.8,
+        "Directional Accuracy (%)": 54.0,
+        "PICP (%)": 95.0
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d"
+    ]
+  },
+  {
+    "komoditas_id": 35,
+    "commodity": "Indomie Rasa Kari Ayam",
+    "cluster": "C",
+    "cluster_name": "Klaster C: Pangan Pokok & Olahan Terpatok (Administered/HET)",
+    "status": "SUCCESS",
+    "elapsed_seconds": 208.6769244670868,
+    "champion_model": "Naive Last Value",
+    "is_ml_model": false,
+    "wape_pct": 0.0,
+    "mae_rp": 0.0,
+    "picp_pct": null,
+    "selection_rationale": "Parsimony Rule: Baseline (Naive Last Value, WAPE 0.00%) selected. GBDT (CatBoost p50, WAPE 0.02%) did not show meaningful improvement.",
+    "residual_diagnostics": {
+      "mean_bias_rp": 0.0,
+      "mae_rp": 0.0,
+      "std_error_rp": 0.0,
+      "tail_risk_gt_20pct": 0.0,
+      "directional_accuracy_pct": 100.0,
+      "residual_autocorr_lag1": 0.0
+    },
+    "ceiling_reached": false,
+    "ceiling_diagnosis": "Karakteristik inersial / HET regulasi: variasi harga minimal sehingga baseline Naive optimal.",
+    "benchmark_summary": [
+      {
+        "Model": "Naive Last Value",
+        "WAPE (%)": 0.0,
+        "MAE (Rp)": 0.0,
+        "RMSE (Rp)": 0.0,
+        "sMAPE (%)": 0.0,
+        "Directional Accuracy (%)": 100.0,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Naive 7d SMA",
+        "WAPE (%)": 0.0,
+        "MAE (Rp)": 0.0,
+        "RMSE (Rp)": 0.0,
+        "sMAPE (%)": 0.0,
+        "Directional Accuracy (%)": 100.0,
+        "PICP (%)": NaN
+      },
+      {
+        "Model": "Ridge Regression",
+        "WAPE (%)": 0.08,
+        "MAE (Rp)": 2.46,
+        "RMSE (Rp)": 2.66,
+        "sMAPE (%)": 0.08,
+        "Directional Accuracy (%)": 0.72,
+        "PICP (%)": 100.0
+      },
+      {
+        "Model": "LightGBM p50",
+        "WAPE (%)": 1.28,
+        "MAE (Rp)": 40.58,
+        "RMSE (Rp)": 101.44,
+        "sMAPE (%)": 1.22,
+        "Directional Accuracy (%)": 83.33,
+        "PICP (%)": 92.75
+      },
+      {
+        "Model": "XGBoost p50",
+        "WAPE (%)": 0.68,
+        "MAE (Rp)": 21.6,
+        "RMSE (Rp)": 50.68,
+        "sMAPE (%)": 0.64,
+        "Directional Accuracy (%)": 54.35,
+        "PICP (%)": 92.75
+      },
+      {
+        "Model": "CatBoost p50",
+        "WAPE (%)": 0.02,
+        "MAE (Rp)": 0.54,
+        "RMSE (Rp)": 2.97,
+        "sMAPE (%)": 0.02,
+        "Directional Accuracy (%)": 86.96,
+        "PICP (%)": 91.3
+      }
+    ],
+    "saved_model_path": null,
+    "feature_cols": [
+      "pasar_id",
+      "price_current",
+      "price_lag_1",
+      "price_lag_2",
+      "price_lag_3",
+      "price_lag_7",
+      "price_lag_14",
+      "rolling_mean_7d",
+      "rolling_std_7d",
+      "rolling_mean_14d",
+      "rolling_std_14d",
+      "pct_change_1d",
+      "pct_change_7d",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3"
+    ]
+  }
+]

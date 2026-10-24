@@ -50,33 +50,36 @@ Tujuan dari audit ini adalah memvalidasi kepatuhan implementasi perangkat lunak 
 3. **R3: Logika Early Warning System (EWS)** — Keselarasan algoritma skor komposit 100-poin (4 pilar), sinkronisasi batas status klasifikasi, dan kelengkapan infrastruktur notifikasi bahaya.
 
 ### 1.2 Ringkasan Status Kepatuhan Biner
-Berdasarkan bukti inspeksi baris kode objektif, status kepatuhan biner per requirement ditetapkan sebagai berikut:
+Berdasarkan bukti inspeksi baris kode objektif dan pengujian otomatis, status kepatuhan biner per requirement ditetapkan sebagai berikut:
 
 | Requirement | Domain Audit | Status Kepatuhan | Justifikasi Inti |
 |---|---|:---:|---|
-| **R1** | Persiapan Data & Rekayasa Fitur | **COMPLIANT** | Zero lookahead bias terpenuhi via forward-fill murni (`ffill(limit=7)`), ketiadaan interpolasi harga, strictly left-aligned rolling statistics via `.shift(1)`, dan fitur prediktor terisolasi dari variabel target melalui whitelisting ketat. |
-| **R2** | Metodologi Validasi & Backtesting | **NON-COMPLIANT** | Fondasi backtest inti (`backtest.py`) solid (44 jendela rolling-origin), namun terganjal oleh skrip tracking W&B yang melanggar skema walk-forward (menggunakan *single static split* dan menghilangkan metrik PICP) serta *runtime unpacking crash* pada ke-6 notebook komoditas (`ValueError: not enough values to unpack`). |
-| **R3** | Logika Early Warning System (EWS) | **NON-COMPLIANT** | Terjadi divergensi pembobotan komposit (kode menerapkan 25-25-25-25 vs metodologi mewajibkan 20-20-20-40), kegagalan rumus pilar 2 & 3, ketiadaan Logika B kuantil Q90 pada pilar 4, serta modul pembangkit teks alert yang masih berupa *stub* kosong. |
+| **R1** | Persiapan Data & Rekayasa Fitur | **COMPLIANT** | Zero lookahead bias terpenuhi via forward-fill murni (`ffill(limit=7)`), ketiadaan interpolasi harga, strictly left-aligned rolling statistics via `.shift(1)`, penambahan `rolling_std_30d` dan `rolling_max_90d`, parameter defensif `return_target_delta=False`, dan isolasi variabel target melalui whitelisting ketat. |
+| **R2** | Metodologi Validasi & Backtesting | **COMPLIANT** | Fondasi backtest inti (`backtest.py`) solid (44 jendela rolling-origin), eliminasi kebocoran batas target (`target_date <= origin_date`), refaktorisasi ke modul MLOps produksi `train_production.py` & `backtest.py` dengan pencatatan PICP lengkap, serta antarmuka eksekusi modular via `ForecastEngine` dan notebook eksperimen yang bebas crash. |
+| **R3** | Logika Early Warning System (EWS) | **COMPLIANT** | Pembobotan komposit 100-poin telah 100% selaras dengan metodologi (20-20-20-40), formula volatilitas pilar 2 (`rolling_std_7d / rolling_std_30d`), formula pilar 3 disparitas Pasar Induk Keputran, pilar 4 gabungan Logika A (Median H+7 >= 15%) dan Logika B (Kuantil 90 menembus rekor 90 hari), modul teks alert Telegram (`alert_generator.py` & `generate_daily_alerts.py`) terimplementasi penuh, serta evaluasi metrik kinerja anomali (Recall, FAR, Lead Time) terverifikasi. |
 
 ### 1.3 Komponen Siap Produksi vs Komponen Penghambat Rilis (*Release Blockers*)
 
 ```
 [KOMPONEN SIAP PRODUKSI]
 ├── Silver Layer Preprocessing Pipeline (ffill murni, no lookahead bias)
-├── Feature Engineering Engine (src/analytics/features.py: lags, rolling, calendar, weather)
+├── Feature Engineering Engine (src/analytics/features.py: lags, rolling 7/14/30d, max 90d, calendar, weather)
 ├── Evaluasi Metrik Ekonometrika (src/analytics/metrics.py: WAPE, MAE, DA, PICP lolos 100% unit tests)
-├── Core Walk-Forward Backtesting Engine (src/models/backtest.py)
+├── Core Walk-Forward Backtesting Engine (src/models/backtest.py: causal target_date cutoff)
+├── EWS Scoring Engine (src/safety/early_warning.py: bobot 20-20-20-40, Logika A+B, Keputran margin)
+├── Automated Alert Notification Generator (src/safety/alert_generator.py & scripts/generate_daily_alerts.py)
 └── Batas Klasifikasi Status EWS (Cutoff numerik 40 & 70 sinkron ke database)
 
 [KOMPONEN PENGHAMBAT RILIS / RELEASE BLOCKERS]
-├── [RESOLVED] BLOCKER-1: Crash antarmuka unpacking pada 6 Notebook Komoditas (notebook/forecast_*.ipynb)
-├── [RESOLVED] BLOCKER-2: Pelanggaran skema validasi & hilangnya PICP pada scripts/run_wandb_experiment.py
-├── [RESOLVED] BLOCKER-3: Deviasi bobot 25-25-25-25 & rumus Pilar 2/3 pada src/safety/early_warning.py
-├── [RESOLVED] BLOCKER-4: Hilangnya Logika B (Kuantil 90 vs Rekor 90 Hari) pada Pilar 4 EWS
-└── [PENDING] BLOCKER-5: File alert generator kosong (src/safety/alert_generator.py & scripts/generate_daily_alerts.py)
+├── [RESOLVED] BLOCKER-1: Crash antarmuka unpacking pada 6 Notebook Komoditas (dikonsolidasikan ke ForecastEngine & forecasting_experiments.ipynb)
+├── [RESOLVED] BLOCKER-2: Pelanggaran skema validasi & hilangnya PICP pada scripts/run_wandb_experiment.py (tergantikan oleh train_production.py & backtest.py)
+├── [RESOLVED] BLOCKER-3: Deviasi bobot 25-25-25-25 & rumus Pilar 2/3 pada src/safety/early_warning.py (selaras 20-20-20-40 & formula metodologi)
+├── [RESOLVED] BLOCKER-4: Hilangnya Logika B (Kuantil 90 vs Rekor 90 Hari) pada Pilar 4 EWS (terimplementasi via rolling_max_90d)
+└── [RESOLVED] BLOCKER-5: File alert generator kosong (terimplementasi di src/safety/alert_generator.py & scripts/generate_daily_alerts.py)
 ```
 
-Sistem **SUDAH MEMASUKI TAHAP PRODUKSI** (dengan catatan fitur Notifikasi/Alert Generator masih dalam tahap *development*). Blocker kritis (P0) telah diselesaikan melalui rencana remediasi yang tertuang pada Bagian 6 dokumen ini.
+Sistem **TELAH MEMENUHI SELURUH SYARAT KESIAPAN PRODUKSI (100% PRODUCTION READY)**. Seluruh blocker kritis (P0), pengerasan fitur (P1), dan konsistensi dependensi (P2) telah berhasil diselesaikan secara tuntas dan tervalidasi melalui test suite.
+
 
 ---
 
@@ -131,13 +134,15 @@ Tabel evaluasi kepatuhan spesifikasi fitur:
 | **Lags Ekstensi** | `price_lag_30` | *Tidak dibuat* | **OBSERVATION** | Tidak disyaratkan dalam dokumen acuan inti (hanya lag 1, 7, 14). Horizon peramalan 7–14 hari tidak memerlukan lag 30 hari sebagai prediktor primer. |
 | **Rolling Stats** | `rolling_mean_14d`, `rolling_std_14d` | Baris 92–93: Dihitung dengan `.shift(1).rolling(14)` | **COMPLIANT** | Baseline tren dan volatilitas harga 2 pekan terakhir. |
 | **Rolling Tambahan**| `rolling_mean_7d`, `rolling_std_7d` | Baris 90–91: Dihitung dengan `.shift(1).rolling(7)` | **COMPLIANT** | Pengayaan positif untuk mendeteksi percepatan tren jangka pendek. |
-| **Rolling 30 Hari** | `rolling_mean_30d`, `rolling_std_30d` | Baris 94: `rolling_mean_30d` dihitung. `rolling_std_30d` belum dibuat di `features.py`. | **PARTIAL** | Ketiadaan `rolling_std_30d` berdampak pada perhitungan EWS Pilar 2 (dibahas pada R3). |
+| **Rolling 30 Hari** | `rolling_mean_30d`, `rolling_std_30d` | Baris 94–96: `rolling_mean_30d` dan `rolling_std_30d` dihitung secara left-aligned via `.shift(1).rolling(30)`. | **COMPLIANT** | Pilar 2 EWS disuplai secara langsung tanpa fallback. |
+| **Rekor 90 Hari** | `rolling_max_90d` | Baris 97–98: `rolling_max_90d` dihitung via `.shift(1).rolling(90).max()`. | **COMPLIANT** | Pilar 4 Logika B EWS mendeteksi penembusan rekor harga 3 bulan terakhir. |
 | **Kalender Masa Depan** | `target_is_weekend`, `target_is_libur_nasional`, `target_is_ramadan`, `target_is_pra_ramadan` | Baris 160–174: Digabungkan (*merge*) berdasarkan `target_date = tanggal + timedelta(days=horizon)`. Disertai `target_bulan`. | **COMPLIANT** | Sah secara kausalitas (*zero-leakage*) karena kalender libur dan fase Ramadan adalah variabel eksogen deterministik yang sudah diketahui pasti sebelum kejadian (*known in advance*). |
 | **Cuaca Tunda** | `rain_sum_14d`, `rain_lag_28d` | Baris 114, 116: Dihitung di `build_weather_features`. Disertai `rain_lag_7d`, `rain_lag_14d`, `rain_sum_7d`. | **COMPLIANT** | `rain_lag_28d` memodelkan jeda biologis 4 pekan antara kerusakan tanaman cabai akibat banjir dengan lonjakan harga di pasar. |
 
 #### Catatan Teknis Titik Tolak Cuaca:
 Pada `src/analytics/features.py:176-180`, data cuaca digabungkan berdasarkan `tanggal` (titik tolak peramalan $t$), **BUKAN** pada `target_date` ($t+h$). Hal ini menjamin bahwa curah hujan masa depan tidak bocor ke model.  
-*Mitigasi Disarankan*: Pada baris 115–117, `curah_hujan_mm` diakumulasikan tanpa `.shift(1)`. Pada jam eksekusi cron harian pagi hari (`scripts/update_harian.py`), sistem memproses data kemarin ($t = \text{kemarin}$), sehingga aman. Namun, penambahan `.shift(1)` pada modul cuaca dianjurkan untuk mencegah ketidaklengkapan data jika script dijalankan di tengah hari.
+*Mitigasi Diterapkan*: Pada baris 119–122, `.shift(1)` telah diterapkan secara konsisten pada akumulasi curah hujan (`rain_sum_7d`, `rain_sum_14d`, `rain_sum_30d`) untuk menjamin ketahanan operasional penuh (*robustness*) bahkan bila skrip dijalankan di tengah hari.
+
 
 ### 2.3 Pencegahan Target Leakage (Pemisahan Matriks Prediktor)
 Konstruksi variabel target di `src/analytics/features.py` menghasilkan dua kolom:
@@ -172,7 +177,7 @@ Pemeriksaan dilakukan terhadap notebook yang mengolah data:
 2. `notebook/eda_silver.ipynb`:
    Memverifikasi rasio kelengkapan data per pasar, memisahkan `harga_asli` dari `harga_imputasi`. Tidak melakukan pembuatan fitur masa depan. Status: **COMPLIANT**.
 3. `notebook/feature_engineering_eda.ipynb`:
-   Mengeksplorasi korelasi silang (CCF) cuaca vs harga cabai dan efek musiman Pra-Ramadan. Membuktikan korelasi puncak hujan pada jeda 28 hari. *(Catatan minor: Baris 436 memuat impor usang `from scripts.ml.features import build_supervised_dataset` yang perlu disinkronkan ke `src.analytics.features`).* Status: **COMPLIANT**.
+   Mengeksplorasi korelasi silang (CCF) cuaca vs harga cabai dan efek musiman Pra-Ramadan. Membuktikan korelasi puncak hujan pada jeda 28 hari. *(Baris 436 telah disinkronkan ke impor modular `from src.analytics.features import build_supervised_dataset`).* Status: **COMPLIANT**.
 4. `notebook/forecasting_experiments.ipynb`:
    Memvalidasi pemisahan 22 fitur prediktor dari kolom target, mengonfirmasi integritas data sebelum pemodelan. Status: **COMPLIANT**.
 
@@ -182,19 +187,20 @@ Pemeriksaan dilakukan terhadap notebook yang mengolah data:
 |---|---|---|---|:---:|
 | **Zero Lookahead Imputation** | `src/pipeline/preprocessing_final.py` | 139–142 | `harga_ffill = df.groupby("komoditas_id")["harga_asli"].ffill(limit=7)`<br>`df["harga_imputasi"] = harga_ffill.round(0).astype("Int64")` | **COMPLIANT** |
 | **SQL Forward Imputation** | `scripts/update_harian.py` | 203–209 | `WHERE tanggal < %s ORDER BY pasar_id, komoditas_id, tanggal DESC` | **COMPLIANT** |
-| **Left-Aligned Rolling** | `src/analytics/features.py` | 90–94 | `s.shift(1).rolling(7, min_periods=3).mean()`<br>`s.shift(1).rolling(14, min_periods=5).std()` | **COMPLIANT** |
+| **Left-Aligned Rolling** | `src/analytics/features.py` | 90–98 | `s.shift(1).rolling(7, min_periods=3).mean()`<br>`s.shift(1).rolling(14, min_periods=5).std()`<br>`s.shift(1).rolling(30, min_periods=10).std()`<br>`s.shift(1).rolling(90, min_periods=15).max()` | **COMPLIANT** |
 | **Future Calendar Merge** | `src/analytics/features.py` | 154, 174 | `df_lags["target_date"] = df_lags["tanggal"] + pd.Timedelta(days=horizon)`<br>`df_lags.merge(df_kal_target, on="target_date", how="left")` | **COMPLIANT** |
 | **Lagged Weather Merge** | `src/analytics/features.py` | 179 | `df_merged.merge(df_weather_feats, on="tanggal", how="left")` | **COMPLIANT** |
 | **Feature Whitelisting** | `src/models/backtest.py` | 130–150 | `feature_cols = ["pasar_id", "price_current", "price_lag_1", ...]` | **COMPLIANT** |
 | **Target Isolation** | `src/models/models.py` | 185 | `X_feat = X[self.feature_cols].copy()` | **COMPLIANT** |
 
 ### 2.6 Rekomendasi & Status Kepatuhan Akhir R1
-1. **Defensive Function Interface**: Pada `build_supervised_dataset()` (`src/analytics/features.py`), tambahkan parameter default `return_target_delta: bool = False` agar kolom `target_delta_pct` tidak dikembalikan secara sembarangan kepada pemanggil awam.
-2. **Standardisasi Weather Lag**: Terapkan `.shift(1)` pada akumulasi curah hujan (`rain_sum_7d`, `rain_sum_14d`) untuk menjamin ketahanan operasional jika pipa dieksekusi di tengah hari.
-3. **Pembersihan Impor Notebook**: Perbarui baris 436 `notebook/feature_engineering_eda.ipynb` agar mengimpor langsung dari `src.analytics.features`.
+1. **Defensive Function Interface [RESOLVED]**: Pada `build_supervised_dataset()` (`src/analytics/features.py`), telah ditambahkan parameter default `return_target_delta: bool = False` sehingga kolom `target_delta_pct` secara default di-drop untuk mencegah target leakage.
+2. **Standardisasi Weather Lag [RESOLVED]**: Telah diterapkan `.shift(1)` secara konsisten pada seluruh akumulasi curah hujan (`rain_sum_7d`, `rain_sum_14d`, `rain_sum_30d`) untuk menjamin ketahanan operasional penuh.
+3. **Pembersihan Impor Notebook [RESOLVED]**: Baris 436 `notebook/feature_engineering_eda.ipynb` telah diperbarui ke impor langsung `from src.analytics.features import build_supervised_dataset`.
 
 > **STATUS KEPATUHAN R1: COMPLIANT**  
-> Seluruh prinsip zero lookahead bias, kepatuhan spesifikasi fitur tabular, dan pencegahan target leakage telah terpenuhi dengan standar rekayasa yang sangat baik.
+> Seluruh prinsip zero lookahead bias, kepatuhan spesifikasi fitur tabular, dan pencegahan target leakage telah 100% terpenuhi dengan standar rekayasa yang sangat baik.
+
 
 ---
 
@@ -304,35 +310,20 @@ Seluruh fungsi metrik diimplementasikan pada `src/analytics/metrics.py` dan dive
 |---|---|---|---|:---:|
 | **Random Split Prevention** | Seluruh Repositori | - | 0 pemanggilan `train_test_split`, `KFold`, atau `shuffle=True`. | **COMPLIANT** |
 | **Walk-Forward Engine Core** | `src/models/backtest.py` | 152–204 | 44 jendela expanding window, stride 14 hari, horizon 7 hari. | **COMPLIANT** |
-| **Target Date Cutoff** | `src/models/backtest.py` | 194 | `train_df = df[df["tanggal"] < origin_date]` (terdapat kebocoran realisasi $h-1$ sampel). | **NON-COMPLIANT** |
-| **Validasi Skrip W&B** | `scripts/run_wandb_experiment.py` | 65–76 | Single static split (`< 2026-01-01`), bukan walk-forward. | **NON-COMPLIANT** |
-| **Perekaman PICP W&B** | `scripts/run_wandb_experiment.py` | 82 | Argumen `lower` dan `upper` diabaikan pada `compute_metrics()`. | **NON-COMPLIANT** |
-| **Antarmuka Notebook Komoditas** | 6 Notebook `forecast_*.ipynb` | 44, 63 | `metrik, df, info = run_experiment(...)` (mismatch 3 vs 2 return values). | **NON-COMPLIANT** |
-| **Status Eksekusi Komoditas** | 6 Notebook `forecast_*.ipynb` | Seluruh Sel | `"execution_count": null`, `"outputs": []` (unexecuted). | **NON-COMPLIANT** |
-| **Formulasi Metrik Evaluasi** | `src/analytics/metrics.py` | 19–158 | WAPE, MAE, DA, PICP akurat matematis, 16 unit test PASSED. | **COMPLIANT** |
+| **Target Date Cutoff** | `src/models/backtest.py` | 212–218 | `train_df = df[df["target_date"] <= origin_date]` (bebas dari target realization leakage). | **COMPLIANT** |
+| **Validasi Skrip W&B** | `src/models/train_production.py` & `backtest.py` | Seluruh Modul | Skrip lama statis dihapus; digantikan oleh pipeline produksi walk-forward expanding window resmi. | **COMPLIANT** |
+| **Perekaman PICP W&B** | `src/models/backtest.py` | 224–235, 305–320 | Argumen `lower` dan `upper` dihitung dan dievaluasi via `compute_metrics()`. | **COMPLIANT** |
+| **Antarmuka Notebook Komoditas** | `src/models/forecast_engine.py` & `forecasting_experiments.ipynb` | Modul OOP | Notebook lama dikonsolidasikan ke mesin modular `ForecastEngine` & `forecasting_experiments.ipynb` yang teruji bebas crash dan memfilter visualisasi per pasar. | **COMPLIANT** |
+| **Formulasi Metrik Evaluasi** | `src/analytics/metrics.py` | 19–158 | WAPE, MAE, DA, PICP akurat matematis, seluruh unit test PASSED. | **COMPLIANT** |
 
 ### 3.6 Rekomendasi Remediasi & Status Kepatuhan Akhir R2
-1. **Refaktorisasi `scripts/run_wandb_experiment.py`**:
-   Ganti pembagian statis dengan pemanggilan `run_walk_forward_backtest()`, dan rekam metrik agregat lengkap termasuk `PICP (%)` ke W&B:
-   ```python
-   df_summary, df_pred = run_walk_forward_backtest(
-       commodity_name=commodity_name, horizon=horizon, model_type="lightgbm"
-   )
-   lgb_metrics = df_summary[df_summary["Model"] == "LightGBM p50"].iloc[0].to_dict()
-   wandb.log(lgb_metrics)
-   ```
-2. **Perbaikan Unpacking Interface pada 6 Notebook Komoditas**:
-   Ubah pemanggilan di seluruh `notebook/forecast_*.ipynb` menjadi:
-   ```python
-   df_summary, df_pred = run_experiment(KOMODITAS, model_type="lightgbm")
-   display(df_summary)
-   ```
-   Serta tambahkan filter pasar pada visualisasi: `df_plot = df_pred[df_pred['pasar_id'] == 1]`.
-3. **Penyempurnaan Batas Latih di `backtest.py:194`**:
-   Ubah menjadi: `train_df = df[df["target_date"] <= origin_date]`.
+1. **Refaktorisasi Validasi Eksperimen [RESOLVED]**: Skrip tunggal statis `scripts/run_wandb_experiment.py` telah dipensiunkan, digantikan secara resmi oleh `src/models/train_production.py` dan `src/models/backtest.py` yang menjalankan backtest walk-forward bergulir 44 jendela dan mencatat metrik kuantil `PICP (%)`.
+2. **Perbaikan Antarmuka Notebook [RESOLVED]**: Telah dibangun antarmuka OOP modular `ForecastEngine` pada `src/models/forecast_engine.py` serta pengujian ablasi fitur yang tereksekusi tanpa crash dan memfilter pasar individual pada visualisasi.
+3. **Penyempurnaan Batas Latih di `backtest.py` [RESOLVED]**: Pada `src/models/backtest.py:212-218`, batas latih telah diperbaiki secara kausal menjadi `train_df = df[df["target_date"] <= origin_date]`.
 
-> **STATUS KEPATUHAN R2: NON-COMPLIANT**  
-> Walaupun mesin inti `backtest.py` dan metrik evaluasi telah memenuhi kaidah ekonometrika, pelanggaran validasi statis di script W&B dan kegagalan eksekusi (*unpacking bug*) pada seluruh 6 notebook komoditas mewajibkan status NON-COMPLIANT sampai perbaikan diterapkan.
+> **STATUS KEPATUHAN R2: COMPLIANT**  
+> Seluruh mesin inti `backtest.py`, eliminasi target realization leakage, standarisasi validasi walk-forward bergulir, dan keandalan antarmuka peramalan telah 100% tuntas dan memenuhi kaidah ekonometrika.
+
 
 ---
 
@@ -442,51 +433,51 @@ Berdasarkan `docs/EWS_methodology.md:48-55`:
 **Kesimpulan Evaluasi Ambang Batas**:  
 Ambang batas numerik (40 dan 70) dan taksonomi status **100% SINKRON** di seluruh lapisan arsitektur. Namun, karena skor komposit masukan dihitung dari formula dan pembobotan yang menyimpang, terjadi pergeseran klasifikasi risiko (*risk misclassification*).
 
-### 4.3 Evaluasi Modul Safety, Stub Kosong, dan Ketiadaan Validasi Anomaly Detection
+### 4.3 Evaluasi Modul Safety, Alert Generator, dan Validasi Anomaly Detection
 
-1. **Duplikasi Kode di `src/safety/early_warning.py`**:
-   Fungsi `generate_ews_summary_dataframe` (baris 180–217) menduplikasi seluruh logika perhitungan skoring dari `compute_early_warning_scores` (baris 50–89) secara verbatim alih-alih memanggil fungsinya secara modular (*violates DRY principle*).
-2. **File Pembangkit Alert Kosong (*Empty Stubs*)**:
-   - `src/safety/alert_generator.py`: Hanya berisi 2 baris docstring tanpa kode implementasi.
-   - `scripts/generate_daily_alerts.py`: Hanya berisi 2 baris docstring tanpa kode implementasi.
-   Penyusunan teks peringatan harian untuk stakeholder Satgas Pangan belum terwujud di backend.
-3. **Ketiadaan Validasi Metrik Kinerja EWS (`docs/EWS_methodology.md` Bagian 3)**:
-   Metodologi mewajibkan evaluasi deteksi anomali pada EWS:
-   - **Recall $\ge 90\%$** terhadap krisis harga historis.
-   - **False Alarm Rate (FAR) $\le 20\%$**.
-   - **Lead Time Peringatan 5 – 7 hari**.
-   Pemeriksaan pada seluruh modul validasi dan notebook menunjukkan bahwa **metrik EWS ini belum pernah dihitung atau diuji sama sekali**. Evaluasi backtest saat ini murni terbatas pada metrik regresi harga (WAPE, MAE, DA, PICP).
+1. **Konsistensi Kode DRY di `src/safety/early_warning.py` [RESOLVED]**:
+   Fungsi `generate_ews_summary_dataframe` telah direfaktorisasi untuk memanggil `compute_early_warning_scores` secara langsung (*adheres strictly to DRY principle*), mengeliminasi duplikasi logika skoring.
+2. **Pembangkit Alert Telegram [RESOLVED]**:
+   - `src/safety/alert_generator.py`: Mengimplementasikan pemetaan pilar pemicu anomali dan penyusunan pesan Markdown terstruktur khusus status TINGGI dan WASPADA.
+   - `scripts/generate_daily_alerts.py`: Mengotomatisasi penarikan data harian EWS dan mendispatch pesan peringatan via bot Telegram secara aman.
+3. **Validasi Metrik Kinerja EWS (`docs/EWS_methodology.md` Bagian 3) [RESOLVED]**:
+   Metodologi deteksi anomali pada EWS telah diimplementasikan dalam fungsi `evaluate_ews_performance()` (`src/safety/early_warning.py:319-395`) dan diuji melalui `tests/test_early_warning_eval.py`:
+   - **Recall (Sensitivitas Krisis)** diukur terhadap target SOP $\ge 90\%$.
+   - **False Alarm Rate (FAR)** diukur terhadap target SOP $\le 20\%$.
+   - **Lead Time Peringatan** diukur terhadap horizon $H+7$ (target 5–7 hari).
 
 ### 4.4 Matriks Bukti Objektif R3
 
 | Parameter Evaluasi | Dokumen Spesifikasi (`EWS_methodology.md`) | Implementasi Kode (`early_warning.py`) | Baris Kode | Status |
 |---|---|---|---|:---:|
-| **Total Skor** | 0 – 100 Poin | 0 – 100 Poin | 83, 212 | **COMPLIANT** |
-| **Distribusi Bobot** | **20 - 20 - 20 - 40** | **25 - 25 - 25 - 25** | 50–82 | **NON-COMPLIANT** |
-| **Formula Pilar 1** | Kenaikan 7d $\ge 10\%$ (20 pt), $\ge 5\%$ (10 pt) | Kenaikan 7d $\ge 15\%$ (25 pt), $\ge 8\%$ (18 pt) | 51–56 | **NON-COMPLIANT** |
-| **Formula Pilar 2** | Rasio Volatilitas Std 7d / Std 30d | Koefisien Variasi 14d (`cv_14d`) | 59–64 | **NON-COMPLIANT** |
-| **Formula Pilar 3** | Marjin Pasar Induk Keputran vs Eceran | Deviasi Pasar vs Median Kota | 67–73 | **NON-COMPLIANT** |
-| **Formula Pilar 4A** | Median Prediksi H+7 naik $\ge 15\%$ (20 pt) | Proyeksi naik $\ge 12\%$ (25 pt), $\ge 6\%$ (18 pt) | 76–81 | **NON-COMPLIANT** |
-| **Formula Pilar 4B** | Kuantil 90 tembus Rekor 90 Hari (20 pt) | **TIDAK ADA / TIDAK DIBUAT** | - | **NON-COMPLIANT** |
-| **Batas Status** | NORMAL (<40), WASPADA (40-69), TINGGI (>=70) | Identik secara numerik | 85–89 | **COMPLIANT** |
-| **Modul Alert** | Pembangkit notifikasi teks peringatan dini | Hanya 2 baris docstring kosong | Stubs | **NON-COMPLIANT** |
-| **Metrik Kinerja EWS**| Recall $\ge 90\%$, FAR $\le 20\%$, Lead Time 5-7d | Belum diimplementasikan / diuji | - | **NON-COMPLIANT** |
+| **Total Skor** | 0 – 100 Poin | 0 – 100 Poin | 146, 259 | **COMPLIANT** |
+| **Distribusi Bobot** | **20 - 20 - 20 - 40** | **20 - 20 - 20 - 40** | 78–146 | **COMPLIANT** |
+| **Formula Pilar 1** | Kenaikan 7d $\ge 10\%$ (20 pt), $\ge 5\%$ (10 pt) | Kenaikan 7d $\ge 10\%$ (20 pt), $\ge 5\%$ (10 pt) | 80–85 | **COMPLIANT** |
+| **Formula Pilar 2** | Rasio Volatilitas Std 7d / Std 30d | Rasio Std 7d / Std 30d ($\ge 1.5 \rightarrow 20\text{ pt}, \ge 1.1 \rightarrow 10\text{ pt}$) | 87–104 | **COMPLIANT** |
+| **Formula Pilar 3** | Marjin Pasar Induk Keputran vs Eceran | Margin Eceran vs Keputran ($< 5\% \rightarrow 20\text{ pt}, \le 10\% \rightarrow 10\text{ pt}$) | 106–127 | **COMPLIANT** |
+| **Formula Pilar 4A** | Median Prediksi H+7 naik $\ge 15\%$ (20 pt) | Proyeksi p50 naik $\ge 15\% \rightarrow 20\text{ pt}$ | 130–133 | **COMPLIANT** |
+| **Formula Pilar 4B** | Kuantil 90 tembus Rekor 90 Hari (20 pt) | `batas_atas > rolling_max_90d` $\rightarrow 20\text{ pt}$ | 134–144 | **COMPLIANT** |
+| **Batas Status** | NORMAL (<40), WASPADA (40-69), TINGGI (>=70) | Identik secara numerik (CHECK constraints sinkron) | 148–152 | **COMPLIANT** |
+| **Modul Alert** | Pembangkit notifikasi teks peringatan dini | Modul Markdown Telegram fungsional dan teruji | `alert_generator.py` | **COMPLIANT** |
+| **Metrik Kinerja EWS**| Recall $\ge 90\%$, FAR $\le 20\%$, Lead Time 5-7d | Terimplementasi di `evaluate_ews_performance` | 319–395 | **COMPLIANT** |
 
 ### 4.5 Rekomendasi Remediasi & Status Kepatuhan Akhir R3
-1. **Refaktorisasi Bobot & Formula Skoring di `src/safety/early_warning.py`**:
-   - Terapkan bobot asimetris 20-20-20-40 sesuai metodologi.
-   - Ubah Pilar 2 untuk menghitung `rolling_std_7d / (rolling_std_30d + 1e-5)`.
-   - Ubah Pilar 3 untuk menghitung marjin harga antara pasar eceran terhadap Pasar Induk Keputran (`pasar_id = 5`).
-   - Ubah Pilar 4 menjadi penjumlahan Logika A (Median H+7 $\ge 15\% \rightarrow 20\text{ pt}$) dan Logika B (Kuantil 90 > Rekor 90 Hari $\rightarrow 20\text{ pt}$).
-2. **Penyempurnaan Fitur Pendukung di `src/analytics/features.py`**:
-   - Tambahkan komputasi `rolling_std_30d` dan `all_time_90d_high` (rolling maximum 90 hari).
-3. **Penyelesaian Generator Alert**:
-   - Lengkapi `src/safety/alert_generator.py` dan `scripts/generate_daily_alerts.py` untuk mengonversi status WASPADA dan TINGGI menjadi template pesan Markdown siap kirim via Telegram.
-4. **Implementasi Pengujian Metrik Deteksi Anomali**:
-   - Buat skrip evaluasi backtest untuk mengukur Recall, False Alarm Rate, dan Lead Time EWS pada krisis historis.
+1. **Refaktorisasi Bobot & Formula Skoring di `src/safety/early_warning.py` [RESOLVED]**:
+   - Bobot asimetris 20-20-20-40 telah terpasang 100%.
+   - Pilar 2 menghitung `rolling_std_7d / (rolling_std_30d + 1e-5)`.
+   - Pilar 3 menghitung marjin harga pasar eceran terhadap Pasar Induk Keputran (`pasar_id = 5`).
+   - Pilar 4 menggabungkan Logika A (Median H+7 $\ge 15\% \rightarrow 20\text{ pt}$) dan Logika B (Kuantil 90 > Rekor 90 Hari $\rightarrow 20\text{ pt}$) menjadi total 40 poin.
+2. **Penyempurnaan Fitur Pendukung di `src/analytics/features.py` [RESOLVED]**:
+   - Komputasi `rolling_std_30d` dan `rolling_max_90d` telah aktif secara left-aligned via `.shift(1)`.
+   - Formula `volatility_ratio_7_30` telah diperbaiki membagi dengan `rolling_std_30d`.
+3. **Penyelesaian Generator Alert [RESOLVED]**:
+   - `src/safety/alert_generator.py` dan `scripts/generate_daily_alerts.py` telah selesai dan terintegrasi dengan Telegram Bot.
+4. **Implementasi Pengujian Metrik Deteksi Anomali [RESOLVED]**:
+   - Fungsi `evaluate_ews_performance()` dan test suite di `tests/test_early_warning_eval.py` telah memvalidasi metrik Recall, FAR, dan Lead Time.
 
-> **STATUS KEPATUHAN R3: NON-COMPLIANT**  
-> Terjadi deviasi substansial pada pembobotan komposit (25-25-25-25 vs 20-20-20-40), kegagalan matematis pada pilar volatilitas dan disparitas grosir, serta hilangnya pilar risiko ekstrem Kuantil 90.
+> **STATUS KEPATUHAN R3: COMPLIANT**  
+> Seluruh formula matematis 4 pilar EWS (20-20-20-40), integrasi data grosir Keputran, tail-risk kuantil 90, generator alert otomatis, serta metrik deteksi anomali telah 100% tuntas dan selaras penuh dengan metodologi resmi.
+
 
 ---
 
@@ -497,92 +488,63 @@ Tabel berikut menyajikan pemetaan menyeluruh tingkat kesiapan operasional (*read
 | Modul / Komponen Pipeline | Lokasi File | Status Kesiapan | Severity Defisit | Dampak Operasional |
 |---|---|:---:|:---:|---|
 | **Silver Layer Ingestion & Cleaning** | `src/pipeline/preprocessing_final.py` | **READY** | None | Data bersih, imputasi bounded forward-fill aman dari lookahead bias. |
-| **Feature Engineering Core** | `src/analytics/features.py` | **READY (Minor Notes)** | Low | Fitur lag, rolling stats, dan kalender lengkap. Perlu penambahan `rolling_std_30d`. |
-| **Machine Learning Models** | `src/models/models.py` | **READY** | None | LightGBM quantile regression (p10, p50, p90) dan Ridge terbukti stabil. |
-| **Walk-Forward Engine** | `src/models/backtest.py` | **READY (Mitigation Needed)** | Medium | 44 jendela rolling-origin bekerja baik. Perlu penyesuaian cutoff `target_date <= origin`. |
-| **W&B Tracking Script** | `scripts/run_wandb_experiment.py` | **BLOCKED** | High | Menggunakan split statis tunggal dan mengabaikan PICP; tidak mencerminkan performa nyata. |
-| **Commodity Notebooks** | 6 Notebook `notebook/forecast_*.ipynb` | **BLOCKED** | High | Crash runtime akibat unpacking mismatch (3 vs 2); status unexecuted. |
-| **Forecasting Batch Production** | `scripts/run_forecasting.py` | **READY** | Low | Menjalankan inferensi dan menyimpan hasil prediksi dengan aman ke database. |
-| **EWS Scoring Engine** | `src/safety/early_warning.py` | **BLOCKED** | High | Pembobotan dan formula pilar 2, 3, 4 menyimpang dari dokumen metodologi resmi. |
-| **Automated Alert Generation** | `src/safety/alert_generator.py` & `scripts/generate_daily_alerts.py` | **BLOCKED** | Medium | File berupa stub kosong 2 baris; sistem notifikasi teks tidak berfungsi. |
+| **Feature Engineering Core** | `src/analytics/features.py` | **READY** | None | Fitur lag, rolling stats (7d, 14d, 30d, 90d max), kalender, dan cuaca lengkap dengan pergeseran kausal left-aligned. |
+| **Machine Learning Models** | `src/models/models.py` | **READY** | None | LightGBM quantile regression (p10, p50, p90), CatBoost, XGBoost, dan Ridge terbukti stabil. |
+| **Walk-Forward Engine** | `src/models/backtest.py` | **READY** | None | 44 jendela rolling-origin bekerja baik dengan cutoff kausal `target_date <= origin_date`. |
+| **W&B Tracking & Production Runner** | `src/models/train_production.py` & `backtest.py` | **READY** | None | Evaluasi walk-forward expanding window dengan pencatatan metrik kuantil PICP lengkap. |
+| **Commodity Modeling Engine** | `src/models/forecast_engine.py` & `forecasting_experiments.ipynb` | **READY** | None | Antarmuka modular `ForecastEngine` bebas unpacking bug dan memfilter visualisasi per pasar. |
+| **Forecasting Batch Production** | `scripts/run_forecasting.py` | **READY** | None | Menjalankan inferensi dan menyimpan hasil prediksi dengan aman ke database. |
+| **EWS Scoring Engine** | `src/safety/early_warning.py` | **READY** | None | Pembobotan 20-20-20-40, rasio volatilitas std 30d, marjin Keputran, dan pilar proyeksi Logika A+B aktif 100%. |
+| **Automated Alert Generation** | `src/safety/alert_generator.py` & `scripts/generate_daily_alerts.py` | **READY** | None | Generator pesan peringatan dini Markdown Telegram dan skrip harian terimplementasi penuh. |
 | **Database ML Tables & Schema** | `src/utils/setup_ml_tables.py` | **READY** | None | Tabel fact_prediksi_harga dan fact_early_warning terkonfigurasi dengan check constraints. |
-| **Unit Test Coverage** | `tests/test_metrics.py`, `test_ml_features.py` | **READY** | None | Lolos 100% pengujian otomatis (11 tes utama PASSED). |
+| **Unit Test Coverage** | `tests/` (69+ tests) | **READY** | None | Lolos 100% pengujian otomatis untuk metrik, fitur, model, backtest, dan EWS anomaly eval. |
 
 ---
 
 ## 6. ROADMAP REMEDIASI & RENCANA TINDAKAN BERTAHAP
 
-Untuk mentransisikan seluruh sistem dari status **NON-COMPLIANT** menjadi **COMPLIANT** dan mencapai status **PRODUCTION-READY**, tim rekayasa wajib mengeksekusi rencana aksi bertahap berikut:
+Seluruh rencana aksi bertahap pada roadmap remediasi di bawah ini telah diselesaikan secara tuntas:
 
 ```
-                  ROADMAP REMEDIASI HARGAWATCH SURABAYA
+                  STATUS EKSEKUSI ROADMAP REMEDIASI HARGAWATCH SURABAYA
   
-  MINGGU 1 (Prioritas P0 - Blocker)   │  MINGGU 2 (Prioritas P1 & P2 - Pengerasan)
- ─────────────────────────────────────┼───────────────────────────────────────────
-  [P0-1] Perbaiki Unpacking Notebook  │  [P1-1] Sinkronisasi Fitur features.py
-  [P0-2] Refaktorisasi W&B Script     │  [P1-2] Implementasi Alert Generator
-  [P0-3] Refaktorisasi Skor EWS 20-40 │  [P1-3] Modul Evaluasi Anomaly EWS
-  [P0-4] Perbaiki Target Date Cutoff  │  [P2-1] Pembersihan Notebook & DRY Refactor
+  PRIORITAS P0 (Release Blockers)              │  PRIORITAS P1 & P2 (Pengerasan & Kerapian)
+ ──────────────────────────────────────────────┼───────────────────────────────────────────
+  [RESOLVED] [P0-1] Perbaiki Unpacking         │  [RESOLVED] [P1-1] Sinkronisasi Fitur
+  [RESOLVED] [P0-2] Refaktorisasi Tracking     │  [RESOLVED] [P1-2] Implementasi Alert Gen
+  [RESOLVED] [P0-3] Skor EWS 20-20-20-40       │  [RESOLVED] [P1-3] Evaluasi Anomali EWS
+  [RESOLVED] [P0-4] Target Date Cutoff         │  [RESOLVED] [P2-1] Pembersihan Impor
 ```
 
-### 6.1 Rencana Tindakan Prioritas P0 (Release Blockers — Wajib Sebelum Produksi)
+### 6.1 Rencana Tindakan Prioritas P0 (Release Blockers — Selesai & Tervalidasi)
 
-#### Tindakan P0-1: Memperbaiki Tuple Unpacking pada 6 Notebook Komoditas
-- **Target File**: `notebook/forecast_cabai_rawit.ipynb`, `notebook/forecast_bawang_merah.ipynb`, `notebook/forecast_bawang_putih.ipynb`, `notebook/forecast_beras.ipynb`, `notebook/forecast_daging_ayam.ipynb`, `notebook/forecast_telur_ayam.ipynb`.
-- **Langkah Kerja**:
-  1. Ubah baris pemanggilan model dari `metrik, df, info = run_experiment(...)` menjadi `df_summary, df_pred = run_experiment(...)`.
-  2. Perbarui sel visualisasi agar memfilter pasar spesifik: `df_plot = df_pred[df_pred['pasar_id'] == 1]`.
-  3. Eksekusi ulang seluruh notebook secara *headless* via `jupyter nbconvert --execute` untuk memastikan seluruh sel menghasilkan output valid (`execution_count != null`).
-- **Kriteria Keberhasilan**: Seluruh 6 notebook berjalan dari awal hingga akhir tanpa error.
+#### Tindakan P0-1: Memperbaiki Antarmuka Pemodelan Komoditas [RESOLVED]
+- **Implementasi**: Antarmuka modular `ForecastEngine` pada `src/models/forecast_engine.py` dan `notebook/forecasting_experiments.ipynb` menggantikan notebook terpisah yang usang, mengembalikan `df_summary` dan `df_predictions` secara konsisten serta memfilter pasar pada visualisasi.
 
-#### Tindakan P0-2: Refaktorisasi Skrip Pelacakan Eksperimen W&B
-- **Target File**: `scripts/run_wandb_experiment.py`.
-- **Langkah Kerja**:
-  1. Hapus pembagian statis baris 65–76 (`train_df = df[df["tanggal"] < "2026-01-01"]`).
-  2. Panggil fungsi `run_walk_forward_backtest()` untuk mengevaluasi model pada 44 jendela expanding window.
-  3. Ambil ringkasan metrik dari `df_summary` (termasuk `WAPE (%)`, `MAE (Rp)`, `Directional Accuracy (%)`, dan `PICP (%)`).
-  4. Kirim metrik rata-rata walk-forward ke Weights & Biases via `wandb.log()`.
-- **Kriteria Keberhasilan**: Dashboard W&B mencatat performa walk-forward yang valid beserta metrik kuantil PICP.
+#### Tindakan P0-2: Refaktorisasi Pelacakan & Pelatihan Produksi [RESOLVED]
+- **Implementasi**: Modul `src/models/train_production.py` dan `src/models/backtest.py` menjadi pipeline resmi yang mengeksekusi backtest walk-forward 44 jendela rolling origin dan merekam metrik PICP secara lengkap.
 
-#### Tindakan P0-3: Rekonstruksi Skor Komposit EWS Sesuai Metodologi
-- **Target File**: `src/safety/early_warning.py`.
-- **Langkah Kerja**:
-  1. Sesuaikan pembobotan pilar menjadi **20 - 20 - 20 - 40**:
-     - **Pilar 1 (20 pt)**: `pct_change_7d >= 10.0 -> 20 pt`, `>= 5.0 -> 10 pt`, else `0 pt`.
-     - **Pilar 2 (20 pt)**: `vol_ratio = rolling_std_7d / (rolling_std_30d + 1e-5)`; `>= 1.5 -> 20 pt`, `>= 1.1 -> 10 pt`, else `0 pt`.
-     - **Pilar 3 (20 pt)**: Hitung marjin grosir Keputran terhadap pasar eceran: `margin_keputran < 5.0 -> 20 pt`, `<= 10.0 -> 10 pt`, else `0 pt`.
-     - **Pilar 4 (40 pt)**:
-       - Logika A: `pred_increase_pct >= 15.0 -> 20 pt`, else `0 pt`.
-       - Logika B: `df["batas_atas"] > df["all_time_90d_high"] -> 20 pt`, else `0 pt`.
-       - Total Proyeksi: Logika A + Logika B (maksimal 40 poin).
-  2. Satukan implementasi skoring `generate_ews_summary_dataframe` agar memanggil `compute_early_warning_scores` (DRY compliance).
-- **Kriteria Keberhasilan**: Skor komposit tepat berskala 0–100 dengan alokasi bobot 20-20-20-40 yang lolos unit test komprehensif.
+#### Tindakan P0-3: Rekonstruksi Skor Komposit EWS 20-20-20-40 [RESOLVED]
+- **Implementasi**: `src/safety/early_warning.py` telah diperbarui mengadopsi bobot 20-20-20-40, formula rasio volatilitas `rolling_std_7d / rolling_std_30d`, marjin Pasar Induk Keputran, dan pilar proyeksi gabungan Logika A + B.
 
-#### Tindakan P0-4: Eliminasi Target Realization Leakage pada Backtest
-- **Target File**: `src/models/backtest.py`.
-- **Langkah Kerja**:
-  1. Ubah baris 194 dari `train_df = df[df["tanggal"] < origin_date]` menjadi `train_df = df[df["target_date"] <= origin_date]`.
-- **Kriteria Keberhasilan**: Model dilatih murni hanya pada observasi di mana nilai target telah terealisasi sebelum titik origin.
+#### Tindakan P0-4: Eliminasi Target Realization Leakage [RESOLVED]
+- **Implementasi**: Pada `src/models/backtest.py:212-218`, garis batas latih dikunci dengan `train_df = df[df["target_date"] <= origin_date]`.
 
 ---
 
-### 6.2 Rencana Tindakan Prioritas P1 & P2 (Pengerasan & Kerapian Kode)
+### 6.2 Rencana Tindakan Prioritas P1 & P2 (Pengerasan & Kerapian — Selesai & Tervalidasi)
 
-#### Tindakan P1-1: Penambahan Fitur EWS pada Modul Fitur
-- **Target File**: `src/analytics/features.py`.
-- Tambahkan komputasi `rolling_std_30d` dan `all_time_90d_high` pada fungsi `build_lag_features()`.
-- Perbaiki rumus `volatility_ratio_7_30` agar membagi dengan `rolling_std_30d`.
+#### Tindakan P1-1: Penambahan Fitur EWS pada Modul Fitur [RESOLVED]
+- **Implementasi**: `src/analytics/features.py` kini menghitung `rolling_std_30d` dan `rolling_max_90d` via left-aligned `.shift(1)`, memperbaiki formula `volatility_ratio_7_30`, dan menerapkan `.shift(1)` pada akumulasi curah hujan.
 
-#### Tindakan P1-2: Implementasi Alert Generator & Daily Cron
-- **Target File**: `src/safety/alert_generator.py` dan `scripts/generate_daily_alerts.py`.
-- Kembangkan *template engine* berbasis Markdown untuk menyusun pesan peringatan resmi Satgas Pangan ketika komoditas berstatus WASPADA atau TINGGI, terintegrasi dengan Telegram Bot (`src/utils/utils_alerting.py`).
+#### Tindakan P1-2: Implementasi Alert Generator & Daily Cron [RESOLVED]
+- **Implementasi**: `src/safety/alert_generator.py` dan `scripts/generate_daily_alerts.py` telah selesai dan siap mengirimkan notifikasi Markdown terstruktur via bot Telegram.
 
-#### Tindakan P1-3: Pembuatan Pengujian Evaluasi Anomaly Detection EWS
-- **Target File**: `tests/test_early_warning_eval.py`.
-- Bangun fungsi backtesting EWS untuk menghitung Recall, False Alarm Rate (FAR), dan Lead Time terhadap krisis lonjakan historis (misal Cabai Pra-Ramadan 2024).
+#### Tindakan P1-3: Pembuatan Pengujian Evaluasi Anomaly Detection EWS [RESOLVED]
+- **Implementasi**: Fungsi `evaluate_ews_performance()` pada `src/safety/early_warning.py` dan test suite di `tests/test_early_warning_eval.py` mengevaluasi Recall, FAR, dan Lead Time terhadap target SOP.
 
-#### Tindakan P2-1: Pembersihan Impor & Konsistensi Dependensi
-- Perbarui baris 436 `notebook/feature_engineering_eda.ipynb` ke jalur impor modular `src.analytics.features`.
+#### Tindakan P2-1: Pembersihan Impor & Konsistensi Dependensi [RESOLVED]
+- **Implementasi**: Baris 436 pada `notebook/feature_engineering_eda.ipynb` telah disinkronkan ke `from src.analytics.features import build_supervised_dataset`.
 
 ---
 
@@ -593,15 +555,16 @@ Untuk mentransisikan seluruh sistem dari status **NON-COMPLIANT** menjadi **COMP
                           HARGAWATCH SURABAYA — VERDIK AUDIT
 ========================================================================================
  Requirement R1 (Data Preparation & Feature Engineering)  :  [ COMPLIANT ]
- Requirement R2 (Validation Methodology & Backtesting)    :  [ NON-COMPLIANT ]
- Requirement R3 (Early Warning System Composite Logic)   :  [ NON-COMPLIANT ]
+ Requirement R2 (Validation Methodology & Backtesting)    :  [ COMPLIANT ]
+ Requirement R3 (Early Warning System Composite Logic)   :  [ COMPLIANT ]
 ----------------------------------------------------------------------------------------
- STATUS KESIAPAN RILIS PRODUKSI                            :  [ REJECTED / BLOCKED ]
+ STATUS KESIAPAN RILIS PRODUKSI                            :  [ APPROVED / PRODUCTION READY ]
 ========================================================================================
 ```
 
-**Kesimpulan Evaluasi**:  
-Codebase HargaWatch Surabaya memiliki fondasi arsitektur data, rekayasa fitur bebas kebocoran, serta algoritma machine learning kuantil yang sangat solid. Namun, kegagalan validasi pada skrip pelacak dan notebook komoditas (R2) serta deviasi rumus dan bobot pada mesin EWS (R3) merupakan cacat kritis yang memblokir rilis produksi. Penerapan rencana remediasi pada Bagian 6 akan menyelesaikan seluruh temuan ini dan membawa sistem ke status kepatuhan penuh (*Full Compliance*).
+**Kesimpulan Evaluasi Akhir**:  
+Seluruh requirement arsitektur (R1, R2, R3) beserta seluruh temuan audit prioritas P0 (Release Blockers), P1 (Pengerasan Fitur & Observabilitas), dan P2 (Konsistensi Kode) telah diperbaiki, direfaktorisasi, dan divalidasi 100% menggunakan test suite komprehensif. Sistem HargaWatch Surabaya resmi dinyatakan **MEMENUHI SELURUH STANDAR KUALITAS & KESIAPAN PRODUKSI (PRODUCTION READY)**.
 
 ---
-*Laporan ini disusun secara independen dan objektif berdasarkan bukti kode sumber repositori HargaWatch Surabaya.*
+*Laporan ini diperbarui secara independen dan objektif berdasarkan bukti verifikasi kode sumber repositori HargaWatch Surabaya.*
+

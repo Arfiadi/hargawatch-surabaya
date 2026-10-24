@@ -47,34 +47,37 @@ HEADERS = {
 }
 
 
-def get_html_table(tanggal, retry=3):
+from src.pipeline.fetcher import RobustDataFetcher
+
+_default_prod_fetcher = RobustDataFetcher(max_retries=3, backoff_factor=1.0, timeout=30)
+
+
+def get_html_table(tanggal, retry=3, fetcher=None):
+    """Fetch HTML table for producer prices using RobustDataFetcher."""
     payload = {"tanggal": tanggal, "kabkota": "surabayakota", "pasar": 1}
-    for percobaan in range(1, retry + 1):
-        try:
-            resp = requests.post(f"{BASE_URL}/produsen/tabel.nodesign", data=payload,
-                                 headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            return resp.text
-        except requests.RequestException:
-            if percobaan == retry:
-                raise
-            time.sleep(2 ** percobaan)
-    return None
+    client = fetcher or RobustDataFetcher(max_retries=retry, backoff_factor=1.0, timeout=30)
+    try:
+        resp = client.post(f"{BASE_URL}/produsen/tabel.nodesign", data=payload,
+                           headers=HEADERS, timeout=30)
+        resp.raise_for_status()
+        return resp.text
+    except requests.RequestException:
+        raise
 
 
 def parse_angka(teks):
-    """'16.500' -> 16500 ; '-' / '' -> 0"""
+    """'16.500' -> 16500 ; '-' / '' / '0' -> None"""
     if teks is None:
-        return 0
+        return None
     bersih = teks.strip()
-    if not bersih or bersih in ("-", "--"):
-        return 0
+    if not bersih or bersih in ("-", "--", "0", "0,00", "Rp 0"):
+        return None
     bersih = bersih.replace("Rp", "").replace(" ", "").replace(".", "").replace(",", ".")
     try:
         nilai = float(bersih)
-        return int(nilai) if nilai.is_integer() else nilai
+        return None if nilai <= 0 else (int(nilai) if nilai.is_integer() else nilai)
     except ValueError:
-        return 0
+        return None
 
 
 def parse_tabel(html, kota_filter=None):

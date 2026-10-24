@@ -1,2 +1,113 @@
-# HargaWatch System Configuration
-# Database, model parameters, and warning thresholds
+# ==============================================================================
+# HargaWatch Surabaya — Master System Configuration
+# ==============================================================================
+
+system:
+  project_name: "HargaWatch Surabaya"
+  version: "2.0.0"
+  timezone: "Asia/Jakarta"
+  environment: "production"
+
+data_pipeline:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  interim_dir: "data/interim"
+  ffill_limit: 7
+  min_valid_observations: 30
+  scraping_timeout_seconds: 30
+  max_retries: 3
+  backoff_factor: 1.5
+
+feature_engineering:
+  lag_days: [1, 2, 3, 7, 14]
+  rolling_windows: [7, 14, 30, 90]
+  keputran_market_id: 5
+  include_weather_default: false
+  calendar_features:
+    - "target_bulan"
+    - "target_is_weekend"
+    - "target_is_libur_nasional"
+    - "target_is_ramadan"
+    - "target_is_pra_ramadan"
+    - "target_hari_ke_idulfitri"
+
+early_warning_system:
+  weights:
+    trend_score: 20
+    volatility_score: 20
+    disparity_score: 20
+    forecast_score: 40
+  thresholds:
+    normal_max: 39
+    waspada_min: 40
+    tinggi_min: 70
+  trend_criteria:
+    surge_high_pct: 10.0   # 20 pts
+    surge_medium_pct: 5.0  # 10 pts
+  volatility_criteria:
+    ratio_high: 1.5        # 20 pts (std_7d / std_30d)
+    ratio_medium: 1.1      # 10 pts
+  disparity_criteria:
+    margin_tight_pct: 5.0  # 20 pts (Keputran vs Retail margin < 5%)
+    margin_medium_pct: 10.0 # 10 pts
+  forecast_criteria:
+    median_increase_pct: 15.0 # 20 pts (p50 forecast >= +15%)
+    extreme_p90_breakout: true # 20 pts (p90 > 90-day high)
+
+markets:
+  - id: 1
+    name: "Pasar Tambahrejo"
+    type: "ritel"
+    district: "Surabaya Utara"
+    latitude: -7.2415
+    longitude: 112.7562
+  - id: 2
+    name: "Pasar Wonokromo"
+    type: "ritel"
+    district: "Surabaya Selatan"
+    latitude: -7.2978
+    longitude: 112.7380
+  - id: 3
+    name: "Pasar Genteng"
+    type: "ritel"
+    district: "Surabaya Pusat"
+    latitude: -7.2575
+    longitude: 112.7427
+  - id: 4
+    name: "Pasar Pucang Anom"
+    type: "ritel"
+    district: "Surabaya Timur"
+    latitude: -7.2831
+    longitude: 112.7533
+  - id: 5
+    name: "Pasar Keputran"
+    type: "induk_grosir"
+    district: "Surabaya Pusat"
+    latitude: -7.2796
+    longitude: 112.7441
+  - id: 146
+    name: "Pasar Soponyono"
+    type: "ritel"
+    district: "Surabaya Timur"
+    latitude: -7.3242
+    longitude: 112.7758
+
+models:
+  default_quantiles: [0.10, 0.50, 0.90]
+  forecast_horizons: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  champion_horizon_anchor: 7
+  lightgbm:
+    n_estimators: 150
+    learning_rate: 0.05
+    num_leaves: 31
+    random_state: 42
+  xgboost:
+    n_estimators: 150
+    learning_rate: 0.05
+    max_depth: 5
+    random_state: 42
+  catboost:
+    iterations: 150
+    learning_rate: 0.05
+    depth: 6
+    random_seed: 42

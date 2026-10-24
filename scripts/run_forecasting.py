@@ -25,7 +25,9 @@ sys.path.insert(0, str(BASE_DIR))
 
 from src.analytics.features import (
     load_raw_datasets, prepare_base_series, build_lag_features,
-    build_weather_features, build_supervised_dataset, DATA_PROCESSED
+    build_weather_features, build_supervised_dataset,
+    build_keputran_lead_features, calculate_days_to_idulfitri,
+    DATA_PROCESSED
 )
 from src.models.models import (
     LightGBMForecaster, CatBoostForecaster, XGBoostForecaster,
@@ -75,13 +77,35 @@ def load_champion_from_registry(
         return "naive", None, features
 
     model_obj = None
-    if model_path_str and Path(model_path_str).exists():
+    resolved_path = None
+    if model_path_str:
+        p = Path(model_path_str)
+        if p.exists():
+            resolved_path = p.resolve()
+        elif (MODEL_DIR / p.name).exists():
+            resolved_path = (MODEL_DIR / p.name).resolve()
+
+    if resolved_path and resolved_path.exists():
         try:
-            with open(model_path_str, "rb") as f:
+            # Security: Path traversal containment check
+            base_resolved = BASE_DIR.resolve()
+            if not str(resolved_path).startswith(str(base_resolved)):
+                raise PermissionError(f"Security violation: model path {resolved_path} outside {base_resolved}")
+
+            # Security: SHA-256 integrity validation if digest is provided in registry
+            expected_sha256 = entry.get("sha256")
+            if expected_sha256:
+                import hashlib
+                with open(resolved_path, "rb") as f:
+                    actual_sha256 = hashlib.sha256(f.read()).hexdigest()
+                if actual_sha256 != expected_sha256:
+                    raise ValueError(f"Integrity check failed for {resolved_path.name}: expected {expected_sha256}, got {actual_sha256}")
+
+            with open(resolved_path, "rb") as f:
                 model_obj = pickle.load(f)
             return model_name, model_obj, features
         except Exception as e:
-            print(f"  [WARN] Failed to load local model {model_path_str}: {e}")
+            print(f"  [WARN] Failed to load local model {resolved_path}: {e}")
 
     # Fallback to W&B Model Registry if available
     try:
@@ -93,7 +117,11 @@ def load_champion_from_registry(
         download_dir = artifact.download()
         pkl_files = list(Path(download_dir).glob("*.pkl"))
         if pkl_files:
-            with open(pkl_files[0], "rb") as f:
+            target_pkl = pkl_files[0].resolve()
+            # Security: Path containment check for downloaded artifact
+            if not str(target_pkl).startswith(str(Path(download_dir).resolve())):
+                raise PermissionError(f"Security violation: artifact path {target_pkl} outside download directory")
+            with open(target_pkl, "rb") as f:
                 model_obj = pickle.load(f)
             return model_name, model_obj, features
     except Exception:
@@ -113,6 +141,8 @@ def train_and_forecast_commodity(
     df_harga, df_kal, df_cuaca = load_raw_datasets(force_db=force_db)
     df_base = prepare_base_series(df_harga, komoditas_id=komoditas_id)
     df_lags = build_lag_features(df_base)
+    # Ensure wholesale lead features from Pasar Induk Keputran are present (eliminates feature skew)
+    df_lags = build_keputran_lead_features(df_lags)
 
     origin_date = df_lags["tanggal"].max()
     slice_origin = df_lags[df_lags["tanggal"] == origin_date].copy()
@@ -150,20 +180,52 @@ def train_and_forecast_commodity(
     # If stable commodity with Naive champion strategy (Beras, Bawang Putih, Daging Ayam)
     # or if commodity is strategic staple known to be Naive-dominated
     is_naive_champion = (champ_name and "naive" in champ_name.lower()) or (
-        komoditas_id in [2, 13, 3] and not is_cabai
+        komoditas_id in [2, 13, 49] and not is_cabai
     )
 
     all_forecasts = []
-
     origin_dt = pd.to_datetime(origin_date)
+
+    # Pre-compute H=7 anchor forecast if champion ML model is available
+    preds_h7 = None
+    if not is_naive_champion and champ_model_h7 is not None:
+        inf_slice_h7 = slice_origin.copy()
+        target_h7_dt = origin_dt + pd.Timedelta(days=7)
+        kal_target_7 = df_kal[df_kal["tanggal"] == target_h7_dt]
+        if kal_target_7.empty:
+            inf_slice_h7["target_bulan"] = target_h7_dt.month
+            inf_slice_h7["target_is_weekend"] = int(target_h7_dt.weekday() >= 5)
+            inf_slice_h7["target_is_libur_nasional"] = 0
+            inf_slice_h7["target_is_ramadan"] = 0
+            inf_slice_h7["target_is_pra_ramadan"] = 0
+        else:
+            inf_slice_h7["target_bulan"] = kal_target_7["bulan"].iloc[0]
+            inf_slice_h7["target_is_weekend"] = kal_target_7["is_weekend"].iloc[0]
+            inf_slice_h7["target_is_libur_nasional"] = kal_target_7["is_libur_nasional"].iloc[0]
+            inf_slice_h7["target_is_ramadan"] = kal_target_7["is_ramadan"].iloc[0]
+            inf_slice_h7["target_is_pra_ramadan"] = kal_target_7["is_pra_ramadan"].iloc[0]
+
+        inf_slice_h7["target_hari_ke_idulfitri"] = calculate_days_to_idulfitri(pd.Series([target_h7_dt])).iloc[0]
+
+        # Defensive feature column alignment: ensure all expected features exist
+        expected_cols = getattr(champ_model_h7, "feature_cols", champ_features or base_feature_cols)
+        for col in expected_cols:
+            if col not in inf_slice_h7.columns:
+                inf_slice_h7[col] = 0
+
+        try:
+            preds_h7 = champ_model_h7.predict(inf_slice_h7)
+        except Exception as e:
+            print(f"  [WARN] Inference error with champion model for {commodity_name}: {e}. Falling back to Naive.")
+            preds_h7 = None
+
     for h in range(1, horizon_days + 1):
         target_date = origin_dt + pd.Timedelta(days=int(h))
 
-        if is_naive_champion:
+        if is_naive_champion or preds_h7 is None:
             # Naive Last Value Persistence baseline with 80% CI based on rolling std
             p_curr = slice_origin["price_current"].values
             std_7d = slice_origin["rolling_std_7d"].fillna(slice_origin["price_current"] * 0.02).values
-            # 80% CI: z ~ 1.28
             p50 = np.round(p_curr).astype(int)
             p10 = np.maximum(0, np.round(p_curr - 1.28 * std_7d)).astype(int)
             p90 = np.round(p_curr + 1.28 * std_7d).astype(int)
@@ -173,45 +235,28 @@ def train_and_forecast_commodity(
                 "batas_atas": p90
             }
         else:
-            # If horizon is 7 and we have pre-trained champion model loaded
-            if h == 7 and champ_model_h7 is not None:
-                model = champ_model_h7
-                use_cols = champ_features or base_feature_cols
-            else:
-                # Train direct forecasting model for step h using champion architecture
-                df_train_h = build_supervised_dataset(horizon=h, komoditas_id=komoditas_id, include_weather=include_weather)
-                if df_train_h.empty:
-                    continue
+            # Multi-horizon trajectory projection via champion H=7 anchor & Brownian cone of uncertainty
+            p_curr = slice_origin["price_current"].values
+            p50_7 = preds_h7["harga_prediksi"]
+            p10_7 = preds_h7["batas_bawah"]
+            p90_7 = preds_h7["batas_atas"]
 
-                use_cols = [c for c in base_feature_cols if c in df_train_h.columns]
-                y_train = df_train_h["target_price"]
+            ratio = h / 7.0
+            sqrt_ratio = np.sqrt(ratio)
 
-                # Architecture selection: CatBoost for Bawang Merah/Telur, LightGBM for others
-                if ("bawang merah" in c_lower or "telur" in c_lower) and HAS_CATBOOST:
-                    model = CatBoostForecaster(feature_cols=use_cols, categorical_cols=["pasar_id"])
-                else:
-                    model = LightGBMForecaster(feature_cols=use_cols, categorical_cols=["pasar_id"])
+            p50_h = np.round(p_curr + ratio * (p50_7 - p_curr)).astype(int)
+            p10_h = np.maximum(0, np.round(p50_h - sqrt_ratio * (p50_7 - p10_7))).astype(int)
+            p90_h = np.round(p50_h + sqrt_ratio * (p90_7 - p50_7)).astype(int)
 
-                model.fit(df_train_h, y_train)
+            # Monotonic non-crossing guardrail
+            p10_h = np.minimum(p10_h, p50_h)
+            p90_h = np.maximum(p90_h, p50_h)
 
-            # Inference slice preparation
-            inf_slice = slice_origin.copy()
-            if is_cabai:
-                kal_target = df_kal[df_kal["tanggal"] == target_date]
-                if kal_target.empty:
-                    inf_slice["target_bulan"] = target_date.month
-                    inf_slice["target_is_weekend"] = int(target_date.weekday() >= 5)
-                    inf_slice["target_is_libur_nasional"] = 0
-                    inf_slice["target_is_ramadan"] = 0
-                    inf_slice["target_is_pra_ramadan"] = 0
-                else:
-                    inf_slice["target_bulan"] = kal_target["bulan"].iloc[0]
-                    inf_slice["target_is_weekend"] = kal_target["is_weekend"].iloc[0]
-                    inf_slice["target_is_libur_nasional"] = kal_target["is_libur_nasional"].iloc[0]
-                    inf_slice["target_is_ramadan"] = kal_target["is_ramadan"].iloc[0]
-                    inf_slice["target_is_pra_ramadan"] = kal_target["is_pra_ramadan"].iloc[0]
-
-            preds = model.predict(inf_slice)
+            preds = {
+                "harga_prediksi": p50_h,
+                "batas_bawah": p10_h,
+                "batas_atas": p90_h
+            }
 
         step_df = pd.DataFrame({
             "tanggal": target_date.strftime("%Y-%m-%d"),
@@ -231,22 +276,11 @@ def train_and_forecast_commodity(
 
 def upsert_to_supabase(df_forecast: pd.DataFrame, df_ews: pd.DataFrame):
     """Upserts forecasts and early warning scores to Supabase."""
-    load_dotenv(BASE_DIR / ".env")
-    host = os.getenv("SUPABASE_HOST")
-    if not host or host == "aws-0-ap-northeast-1.pooler.supabase.com":
-        print("[WARN] Supabase credentials not found or placeholder in .env. Skipping cloud ingest.")
-        return
-
     try:
-        import psycopg2
+        from src.utils.ingest_supabase import koneksi
         from psycopg2.extras import execute_values
 
-        port = os.getenv("SUPABASE_PORT", "6543")
-        conn = psycopg2.connect(
-            host=host, port=port, dbname=os.getenv("SUPABASE_DB", "postgres"),
-            user=os.getenv("SUPABASE_USER"), password=os.getenv("SUPABASE_PASSWORD"),
-            sslmode="require", connect_timeout=15
-        )
+        conn = koneksi()
         cur = conn.cursor()
 
         # 1. Upsert fact_forecast
