@@ -89,11 +89,8 @@ Agar proses forecasting harian berjalan instan tanpa perlu melatih ulang dari no
 
 Jika ingin melatih ulang atau memperbarui model champion untuk seluruh **38 komoditas**:
 ```powershell
-# Mode Cepat (Paralel Multi-Core 16 Worker):
+# Jalankan retraining & benchmark paralel multi-core:
 .\.venv\Scripts\python scripts/run_parallel_commodity_experiments.py --workers 4
-
-# Atau ekspor champion prioritas strategis:
-.\.venv\Scripts\python scripts/export_champion_models.py
 ```
 Perintah ini akan secara otomatis:
 1. Melatih arsitektur champion terpilih (*LightGBM*, *CatBoost*, *XGBoost*, atau *Naive Last Value / SMA*) pada data historis lengkap.
