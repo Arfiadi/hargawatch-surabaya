@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>HargaWatch — Concept A: The Sentinel Pulse</title>
+  <!-- Outer Monitoring Radar Ring -->
+  <path fill="#004328" fill-rule="evenodd" d="M 128 24 C 70.56 24 24 70.56 24 128 C 24 185.44 70.56 232 128 232 C 185.44 232 232 185.44 232 128 C 232 70.56 185.44 24 128 24 Z M 128 44 C 174.39 44 212 81.61 212 128 C 212 174.39 174.39 212 128 212 C 81.61 212 44 174.39 44 128 C 44 81.61 81.61 44 128 44 Z" />
+  
+  <!-- Central Food Grain Silhouette (Bulir Padi / Pangan) -->
+  <path fill="#004328" fill-rule="evenodd" d="M 128 72 C 146 92 156 116 150 140 C 144 162 128 178 128 178 C 128 178 112 162 106 140 C 100 116 110 92 128 72 Z M 128 116 C 132.4 116 136 119.6 136 124 C 136 128.4 132.4 132 128 132 C 123.6 132 120 128.4 120 124 C 120 119.6 123.6 116 128 116 Z" />
+  
+  <!-- Dynamic Real-time Market Trend Pulse -->
+  <path fill="#059669" d="M 68 152 C 86 152 96 112 116 112 C 130 112 138 132 150 132 C 162 132 172 96 188 96 C 192.4 96 196 99.6 196 104 C 196 108.4 192.4 112 188 112 C 178 112 170 148 150 148 C 136 148 128 126 116 126 C 98 126 90 166 68 166 C 63.6 166 60 162.4 60 158 C 60 153.6 63.6 152 68 152 Z" />
+
+  <!-- Amber Early-Warning Focus Node -->
+  <circle cx="128" cy="124" r="5.5" fill="#D97706" />
+</svg>

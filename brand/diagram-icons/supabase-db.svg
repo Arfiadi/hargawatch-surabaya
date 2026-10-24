@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Clean PostgreSQL / Relational Database Node -->
+  <rect width="64" height="64" rx="14" fill="#0D9488" fill-opacity="0.08"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" stroke="#0D9488" stroke-width="1.5" stroke-opacity="0.3"/>
+  <!-- Top Cylinder -->
+  <ellipse cx="32" cy="22" rx="16" ry="6" stroke="#0D9488" stroke-width="2.8"/>
+  <!-- Mid Layer -->
+  <path d="M 16 22 L 16 32 C 16 35.3 23.2 38 32 38 C 40.8 38 48 35.3 48 32 L 48 22" stroke="#0D9488" stroke-width="2.8"/>
+  <!-- Bottom Layer -->
+  <path d="M 16 32 L 16 42 C 16 45.3 23.2 48 32 48 C 40.8 48 48 45.3 48 42 L 48 32" stroke="#0D9488" stroke-width="2.8"/>
+</svg>

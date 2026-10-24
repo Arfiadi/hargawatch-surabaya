@@ -57,6 +57,7 @@ export default function SurabayaMap({
       minZoom: 11,
       maxZoom: 16,
       zoomControl: false,
+      attributionControl: false,
     });
 
     // High-performance OpenStreetMap Humanitarian (HOT) Tile Layer (Fast, reliable, free, no API key watermark)
@@ -121,9 +122,9 @@ export default function SurabayaMap({
       const scale = isSelected ? "scale(1.15)" : "scale(1)";
 
       const html = `
-        <div class="nike-pin-item" style="opacity: ${opacity}; transform: translate(-50%, -100%); cursor: pointer; display: flex; flex-direction: column; align-items: center; width: max-content; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+        <div class="nike-pin-item" style="opacity: ${opacity}; transform: translate(-50%, -100%); cursor: pointer; display: flex; flex-direction: column; align-items: center; width: max-content; transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);">
           <!-- Sleek Teardrop Pin -->
-          <div style="position: relative; width: 34px; height: 42px; transform: ${scale}; filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.28)); transition: transform 0.2s ease;">
+          <div style="position: relative; width: 34px; height: 42px; transform: ${scale}; filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.28)); transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);">
             <svg width="34" height="42" viewBox="0 0 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M17 0C7.611 0 0 7.611 0 17C0 28.5 17 42 17 42C17 42 34 28.5 34 17C34 7.611 26.389 0 17 0Z" fill="${pinColor}"/>
               <circle cx="17" cy="17" r="13.5" fill="${pinColor}"/>
@@ -221,7 +222,7 @@ export default function SurabayaMap({
       const filtered = markets.filter((m) => m.zone === selectedZone);
       if (filtered.length > 0) {
         const bounds = L.latLngBounds(filtered.map((m) => [m.latitude, m.longitude]));
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true, duration: 0.8 });
         return;
       }
     }
@@ -229,67 +230,67 @@ export default function SurabayaMap({
     // If a market is clicked, pan smoothly to it
     const active = markets.find((m) => m.id === selectedMarketId);
     if (active) {
-      map.panTo([active.latitude, active.longitude], { animate: true });
+      map.panTo([active.latitude, active.longitude], { animate: true, duration: 0.8 });
     }
   }, [selectedZone, selectedMarketId, markets]);
 
-  const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
-  const handleZoomOut = () => mapInstanceRef.current?.zoomOut();
+  const handleZoomIn = () => mapInstanceRef.current?.zoomIn(1, { animate: true });
+  const handleZoomOut = () => mapInstanceRef.current?.zoomOut(1, { animate: true });
   const handleReset = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
     const bounds = L.latLngBounds(markets.map((m) => [m.latitude, m.longitude]));
-    map.fitBounds(bounds, { padding: [40, 40] });
+    map.fitBounds(bounds, { padding: [40, 40], animate: true, duration: 0.8 });
   };
 
   return (
-    <div className="relative w-full h-[580px] overflow-hidden select-none bg-surface-subtle rounded-2xl border border-border-subtle shadow-sm">
+    <div className="relative w-full h-[320px] sm:h-[400px] lg:h-[580px] overflow-hidden select-none bg-surface-subtle rounded-2xl border border-border-subtle shadow-sm">
       {/* Real Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 
       {/* Floating Apple-Maps Style Zoom & Reset Controls in Bottom Right */}
-      <div className="absolute bottom-5 right-5 z-20 pointer-events-auto">
-        <div className="flex flex-col bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/90 overflow-hidden divide-y divide-slate-100">
-          <button
-            className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-700 active:scale-90 transition-all cursor-pointer"
-            title="Perbesar Peta"
-            onClick={handleZoomIn}
-          >
-            <span className="material-symbols-outlined text-[19px]">add</span>
-          </button>
-          <button
-            className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-700 active:scale-90 transition-all cursor-pointer"
-            title="Perkecil Peta"
-            onClick={handleZoomOut}
-          >
-            <span className="material-symbols-outlined text-[19px]">remove</span>
-          </button>
-          <button
-            className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-700 active:scale-90 transition-all cursor-pointer"
-            title="Reset Peta ke 6 Pasar"
-            onClick={handleReset}
-          >
-            <span className="material-symbols-outlined text-[18px]">near_me</span>
-          </button>
+      <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 z-20 pointer-events-auto">
+          <div className="flex flex-col bg-surface-card/95 backdrop-blur-md rounded-xl shadow-md border border-border-subtle overflow-hidden divide-y divide-border-subtle/60 scale-90 sm:scale-100 origin-bottom-right">
+            <button
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
+              title="Perbesar Peta"
+              onClick={handleZoomIn}
+            >
+              <span className="material-symbols-outlined text-[18px] sm:text-[19px]">add</span>
+            </button>
+            <button
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
+              title="Perkecil Peta"
+              onClick={handleZoomOut}
+            >
+              <span className="material-symbols-outlined text-[18px] sm:text-[19px]">remove</span>
+            </button>
+            <button
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-surface-subtle text-text-primary active:scale-90 transition-all cursor-pointer"
+              title="Reset Peta ke 6 Pasar"
+              onClick={handleReset}
+            >
+              <span className="material-symbols-outlined text-[17px] sm:text-[18px]">near_me</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Bottom Floating Map Legend (Minimalist Pill) */}
-      <div className="absolute bottom-5 left-5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl shadow-sm z-20 flex flex-col gap-1 border border-slate-200/90">
-        <span className="font-label-caps text-[10px] text-text-muted uppercase tracking-wider font-semibold">
-          Deviasi {selectedCommodityName}
-        </span>
-        <div className="flex items-center gap-2 text-[11px] font-medium">
-          <span className="text-status-normal font-bold">
-            Rp {minPrice.toLocaleString("id-ID")}
+        {/* Bottom Floating Map Legend (Minimalist Pill) */}
+        <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 bg-surface-card/95 backdrop-blur-md px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-sm z-20 flex flex-col gap-0.5 sm:gap-1 border border-border-subtle scale-90 sm:scale-100 origin-bottom-left">
+          <span className="font-label-caps text-[10px] text-text-muted uppercase tracking-wider font-semibold">
+            Deviasi {selectedCommodityName}
           </span>
-          <div className="w-16 h-1.5 rounded-full bg-gradient-to-r from-status-normal via-status-warning to-status-critical"></div>
-          <span className="text-status-critical font-bold">
-            Rp {maxPrice.toLocaleString("id-ID")}
-          </span>
+          <div className="flex items-center gap-2 text-[11px] font-medium">
+            <span className="text-status-normal font-bold">
+              Rp {minPrice.toLocaleString("id-ID")}
+            </span>
+            <div className="w-16 h-1.5 rounded-full bg-gradient-to-r from-status-normal via-status-warning to-status-critical"></div>
+            <span className="text-status-critical font-bold">
+              Rp {maxPrice.toLocaleString("id-ID")}
+            </span>
+          </div>
         </div>
-      </div>
 
-    </div>
-  );
-}
+      </div>
+    );
+  }

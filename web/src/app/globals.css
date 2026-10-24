@@ -9,6 +9,19 @@
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+
+  .page-enter {
+    animation: page-enter-reduced 120ms ease-out both;
+  }
+}
+
+@keyframes page-enter-reduced {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @theme {
@@ -186,9 +199,106 @@
   scrollbar-width: none;
 }
 
+/* Motion system: smooth scroll + one easing for all interactive feedback */
+/* Motion system: smooth scroll + hardware-accelerated micro-interactions */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(0.98) translateZ(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active,
+  a:active,
+  [role="button"]:active {
+    transform: none !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid #0d5c3a;
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #004328;
+  color: #ffffff;
+}
+
+/* Overlay + modal: GPU composited, zero filter blur for featherlight 60/120fps performance */
+.overlay-enter {
+  animation: overlay-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity;
+}
+
+@keyframes overlay-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-enter {
+  animation: modal-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+  transform: translateZ(0);
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-slide {
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* Page transition: lightning-fast 180ms opacity fade (GPU composited) */
+.page-enter {
+  animation: page-enter 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Apple-Maps look and smooth pin hover */
 .apple-maps-style-tile {
   filter: contrast(0.96) saturate(0.85) brightness(1.02);
+}
+.nike-pin-item {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .nike-pin-item:hover {
   transform: translate(-50%, -105%) scale(1.08) !important;
@@ -206,4 +316,25 @@
 .leaflet-popup-tip {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
 }
+
+/* Micro-animations & Smooth Transitions for SVG Trend Chart */
+.trend-path {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.25s ease;
+}
+.trend-dot {
+  transition: r 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.2s ease, opacity 0.25s ease, stroke-width 0.2s ease;
+}
+
+@keyframes chartPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.6); opacity: 0.15; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+.chart-pulse-ring {
+  animation: chartPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  transform-origin: center;
+}
+
+
 

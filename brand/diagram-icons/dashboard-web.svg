@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Clean Next.js Web Dashboard Cockpit Icon -->
+  <rect width="64" height="64" rx="14" fill="#004328" fill-opacity="0.08"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" stroke="#004328" stroke-width="1.5" stroke-opacity="0.3"/>
+  <!-- Cockpit Window -->
+  <rect x="15" y="16" width="34" height="26" rx="4" stroke="#004328" stroke-width="2.5"/>
+  <line x1="15" y1="23" x2="49" y2="23" stroke="#004328" stroke-width="2"/>
+  <circle cx="19" cy="19.5" r="1.5" fill="#004328"/>
+  <circle cx="23" cy="19.5" r="1.5" fill="#004328"/>
+  <!-- Stand -->
+  <path d="M 28 42 L 26 48 L 38 48 L 36 42" stroke="#004328" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>

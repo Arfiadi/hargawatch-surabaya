@@ -1,23 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { getLiveMarketComparison, getLiveMarketLocations } from "@/lib/dataService";
+import CommoditySearchSelect from "@/components/CommoditySearchSelect";
+import {
+  getLiveMarketComparison,
+  getLiveMarketComparisonForCommodity,
+  getLiveMarketLocations,
+  ALL_CATALOG_COMMODITIES,
+  MarketComparisonRow,
+  formatCommodityName,
+} from "@/lib/dataService";
 
 const SurabayaMap = dynamic(() => import("@/components/SurabayaMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[580px] bg-surface-subtle flex flex-col items-center justify-center text-text-muted gap-2">
-      <span className="material-symbols-outlined text-4xl animate-spin text-primary">sync</span>
-      <span className="text-sm font-medium">Memuat Peta Spasial Geografis Surabaya...</span>
+    <div className="w-full h-[370px] sm:h-[440px] lg:h-[580px] bg-surface-subtle rounded-xl border border-border-subtle relative overflow-hidden animate-pulse flex flex-col justify-between p-6 select-none">
+      <div className="flex items-center justify-between">
+        <div className="h-5 w-48 bg-surface-card rounded" />
+        <div className="h-8 w-32 bg-surface-card rounded-lg" />
+      </div>
+      <div className="grid grid-cols-3 gap-8 opacity-40">
+        <div className="h-24 bg-surface-card rounded-xl" />
+        <div className="h-32 bg-surface-card rounded-xl mt-6" />
+        <div className="h-20 bg-surface-card rounded-xl" />
+      </div>
+      <div className="flex items-center justify-between text-xs text-text-muted">
+        <div className="h-4 w-40 bg-surface-card rounded" />
+        <div className="h-4 w-28 bg-surface-card rounded" />
+      </div>
     </div>
   ),
 });
 
 interface ComparisonRowItem {
+  komoditas_id: number;
   komoditas: string;
+  icon: string;
+  iconBoxClass: string;
+  group: string;
   sub: string;
   satuan: string;
   keputran: number;
@@ -35,159 +58,123 @@ interface ComparisonRowItem {
   dotClass: string;
 }
 
-const DEFAULT_COMPARISON_ROWS: ComparisonRowItem[] = [
-  {
-    komoditas: "Cabai Rawit Merah",
-    sub: "Hortikultura Segar",
-    satuan: "1 kg",
-    keputran: 40000,
-    wonokromo: 65000,
-    pucang: 68000,
-    genteng: 78000,
-    tambahrejo: 62000,
-    soponyono: 70000,
-    rerata: 63833,
-    disparitasRp: 38000,
-    disparitasPct: 95.0,
-    statusClass: "text-status-critical",
-    statusBadge: "95.0% (Tinggi)",
-    badgeClass: "bg-status-critical-bg text-status-critical",
-    dotClass: "bg-status-critical",
-  },
-  {
-    komoditas: "Beras Premium",
-    sub: "Setara IR64 / Bramo",
-    satuan: "1 kg",
-    keputran: 16000,
-    wonokromo: 16500,
-    pucang: 16500,
-    genteng: 16500,
-    tambahrejo: 16250,
-    soponyono: 16500,
-    rerata: 16375,
-    disparitasRp: 500,
-    disparitasPct: 3.1,
-    statusClass: "text-status-normal",
-    statusBadge: "3.1% (Stabil)",
-    badgeClass: "bg-status-normal-bg text-status-normal",
-    dotClass: "bg-status-normal",
-  },
-  {
-    komoditas: "Gula Pasir Curah",
-    sub: "Pabrik Gula Jatim",
-    satuan: "1 kg",
-    keputran: 16800,
-    wonokromo: 17000,
-    pucang: 17500,
-    genteng: 17800,
-    tambahrejo: 17200,
-    soponyono: 17500,
-    rerata: 17300,
-    disparitasRp: 1000,
-    disparitasPct: 5.9,
-    statusClass: "text-status-normal",
-    statusBadge: "5.9% (Terkendali)",
-    badgeClass: "bg-status-normal-bg text-status-normal",
-    dotClass: "bg-status-normal",
-  },
-  {
-    komoditas: "Minyak Goreng Curah",
-    sub: "Minyak Kelapa Sawit",
-    satuan: "1 liter",
-    keputran: 15700,
-    wonokromo: 16000,
-    pucang: 16500,
-    genteng: 17200,
-    tambahrejo: 16000,
-    soponyono: 16500,
-    rerata: 16310,
-    disparitasRp: 1500,
-    disparitasPct: 9.5,
-    statusClass: "text-status-warning",
-    statusBadge: "9.5% (Waspada)",
-    badgeClass: "bg-status-warning-bg text-status-warning",
-    dotClass: "bg-status-warning",
-  },
-  {
-    komoditas: "Telur Ayam Ras",
-    sub: "Peternak Blitar / Pare",
-    satuan: "1 kg",
-    keputran: 25000,
-    wonokromo: 25500,
-    pucang: 26000,
-    genteng: 26500,
-    tambahrejo: 25500,
-    soponyono: 26000,
-    rerata: 25750,
-    disparitasRp: 1500,
-    disparitasPct: 6.0,
-    statusClass: "text-status-normal",
-    statusBadge: "6.0% (Wajar)",
-    badgeClass: "bg-status-normal-bg text-status-normal",
-    dotClass: "bg-status-normal",
-  },
-  {
-    komoditas: "Daging Sapi Murni",
-    sub: "RPH Pegirian Surabaya",
-    satuan: "1 kg",
-    keputran: 118000,
-    wonokromo: 117000,
-    pucang: 122000,
-    genteng: 126000,
-    tambahrejo: 119000,
-    soponyono: 123000,
-    rerata: 120830,
-    disparitasRp: 9000,
-    disparitasPct: 7.7,
-    statusClass: "text-status-normal",
-    statusBadge: "7.7% (Sedang)",
-    badgeClass: "bg-status-normal-bg text-status-normal",
-    dotClass: "bg-status-normal",
-  },
-  {
-    komoditas: "Bawang Merah Super",
-    sub: "Probolinggo / Nganjuk",
-    satuan: "1 kg",
-    keputran: 28000,
-    wonokromo: 31000,
-    pucang: 32000,
-    genteng: 35000,
-    tambahrejo: 29000,
-    soponyono: 32000,
-    rerata: 31167,
-    disparitasRp: 7000,
-    disparitasPct: 25.0,
-    statusClass: "text-status-critical",
-    statusBadge: "25.0% (Tinggi)",
-    badgeClass: "bg-status-critical-bg text-status-critical",
-    dotClass: "bg-status-critical",
-  },
-  {
-    komoditas: "Bawang Putih Honan",
-    sub: "Impor Pelabuhan Tj. Perak",
-    satuan: "1 kg",
-    keputran: 36000,
-    wonokromo: 37000,
-    pucang: 38000,
-    genteng: 39500,
-    tambahrejo: 37000,
-    soponyono: 38500,
-    rerata: 37660,
-    disparitasRp: 3500,
-    disparitasPct: 9.7,
-    statusClass: "text-status-warning",
-    statusBadge: "9.7% (Sedang)",
-    badgeClass: "bg-status-warning-bg text-status-warning",
-    dotClass: "bg-status-normal",
-  }
+const ORDERED_GROUPS = [
+  "Semua",
+  "Cabai & Bumbu",
+  "Beras & Gandum",
+  "Minyak & Gula",
+  "Daging & Telur",
+  "Ikan Segar",
+  "Sayur Mayur",
+  "Palawija & Lainnya",
 ];
 
+const catalogGroupOf = (komoditasId: number): string =>
+  ALL_CATALOG_COMMODITIES.find((c) => c.id === komoditasId)?.group ||
+  "Palawija & Lainnya";
+
+function getCommodityIcon(nama: string): string {
+  const n = (nama || "").toLowerCase();
+  if (n.includes("cabai") || n.includes("cabe")) return "local_fire_department";
+  if (n.includes("bawang")) return "spa";
+  if (n.includes("telur")) return "egg";
+  if (n.includes("minyak")) return "water_drop";
+  if (n.includes("gula")) return "cookie";
+  if (n.includes("garam")) return "grain";
+  if (n.includes("ayam")) return "egg_alt";
+  if (n.includes("sapi") || n.includes("daging")) return "lunch_dining";
+  if (
+    n.includes("ikan") ||
+    n.includes("bandeng") ||
+    n.includes("tongkol") ||
+    n.includes("lele") ||
+    n.includes("kembung")
+  ) {
+    return "set_meal";
+  }
+  if (
+    n.includes("tomat") ||
+    n.includes("kentang") ||
+    n.includes("wortel") ||
+    n.includes("kubis") ||
+    n.includes("sayur")
+  ) {
+    return "eco";
+  }
+  if (n.includes("susu")) return "local_cafe";
+  if (n.includes("mie") || n.includes("indomie")) return "ramen_dining";
+  if (
+    n.includes("beras") ||
+    n.includes("jagung") ||
+    n.includes("terigu") ||
+    n.includes("kedelai") ||
+    n.includes("gandum") ||
+    n.includes("kacang")
+  ) {
+    return "grain";
+  }
+  return "nutrition";
+}
+
+function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
+  const isHigh = d.disparitasPct >= 15;
+  const isMed = d.disparitasPct >= 8 && d.disparitasPct < 15;
+  const rawSatuan = d.satuan || "kg";
+  const formattedSatuan = rawSatuan.match(/^\d/) ? rawSatuan : `1 ${rawSatuan}`;
+  return {
+    komoditas_id: d.komoditas_id,
+    komoditas: formatCommodityName(d.komoditas),
+    icon: getCommodityIcon(d.komoditas),
+    iconBoxClass: isHigh
+      ? "bg-status-critical/10 text-status-critical"
+      : isMed
+      ? "bg-status-warning/10 text-status-warning"
+      : "bg-primary/10 text-primary",
+    group: catalogGroupOf(d.komoditas_id),
+    sub: "Pantauan Harian 6 Pasar",
+    satuan: formattedSatuan,
+    keputran: d.keputran,
+    wonokromo: d.wonokromo,
+    pucang: d.pucang,
+    genteng: d.genteng,
+    tambahrejo: d.tambahrejo,
+    soponyono: d.soponyono,
+    rerata: d.rerata,
+    disparitasRp: d.disparitasRp,
+    disparitasPct: d.disparitasPct,
+    statusClass: isHigh ? "text-status-critical" : isMed ? "text-status-warning" : "text-status-normal",
+    statusBadge: `${d.disparitasPct}% (${isHigh ? "Tinggi" : isMed ? "Sedang" : "Wajar"})`,
+    badgeClass: isHigh
+      ? "bg-status-critical-bg text-status-critical"
+      : isMed
+      ? "bg-status-warning-bg text-status-warning"
+      : "bg-status-normal-bg text-status-normal",
+    dotClass: isHigh ? "bg-status-critical" : isMed ? "bg-status-warning" : "bg-status-normal",
+  };
+}
+
 export default function SpatialMapPage() {
-  const [selectedCommodityIdx, setSelectedCommodityIdx] = useState<number>(0);
+  const [selectedCommodityId, setSelectedCommodityId] = useState<number>(50);
   const [selectedZone, setSelectedZone] = useState<string>("Semua");
   const [selectedMarketId, setSelectedMarketId] = useState<string>("genteng");
-  const [comparisonRows, setComparisonRows] = useState<ComparisonRowItem[]>(DEFAULT_COMPARISON_ROWS);
+  const [comparisonRows, setComparisonRows] = useState<ComparisonRowItem[]>([]);
+  const [loadingTable, setLoadingTable] = useState<boolean>(true);
+  const [errorTable, setErrorTable] = useState<boolean>(false);
+  const [latestDate, setLatestDate] = useState<string | null>(null);
   const [isSortedDesc, setIsSortedDesc] = useState<boolean>(true);
+  const [tableSearchQuery, setTableSearchQuery] = useState<string>("");
+  const [tableGroupFilter, setTableGroupFilter] = useState<string>("Semua");
+  const [tableCurrentPage, setTableCurrentPage] = useState<number>(1);
+  const [expandedCardIds, setExpandedCardIds] = useState<Record<number, boolean>>({});
+  const TABLE_ITEMS_PER_PAGE = 10;
+
+  const toggleCardExpanded = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedCardIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
   const [marketCoords, setMarketCoords] = useState<Record<number, { lat: number; lng: number }>>({
     1: { lat: -7.2472, lng: 112.7631 }, // Tambahrejo
     2: { lat: -7.3005, lng: 112.7388 }, // Wonokromo
@@ -212,43 +199,65 @@ export default function SpatialMapPage() {
     });
   }, []);
 
+  const loadTableData = () => {
+    setLoadingTable(true);
+    setErrorTable(false);
+    getLiveMarketComparison()
+      .then((data) => {
+        if (data && data.length > 0) {
+          if (data[0]?.tanggal) {
+            setLatestDate(data[0].tanggal);
+          }
+          setComparisonRows(data.map(mapApiRow));
+          setErrorTable(false);
+        } else {
+          setErrorTable(true);
+        }
+      })
+      .catch(() => setErrorTable(true))
+      .finally(() => setLoadingTable(false));
+  };
+
   useEffect(() => {
-    getLiveMarketComparison().then((data) => {
-      if (data && data.length > 0) {
-        const mapped: ComparisonRowItem[] = data.map((d) => {
-          const isHigh = d.disparitasPct >= 15;
-          const isMed = d.disparitasPct >= 8 && d.disparitasPct < 15;
-          return {
-            komoditas: d.komoditas,
-            sub: "Pantauan Harian 6 Pasar",
-            satuan: d.satuan.startsWith("1") ? d.satuan : `1 ${d.satuan}`,
-            keputran: d.keputran,
-            wonokromo: d.wonokromo,
-            pucang: d.pucang,
-            genteng: d.genteng,
-            tambahrejo: d.tambahrejo,
-            soponyono: d.soponyono,
-            rerata: d.rerata,
-            disparitasRp: d.disparitasRp,
-            disparitasPct: d.disparitasPct,
-            statusClass: isHigh ? "text-status-critical" : isMed ? "text-status-warning" : "text-status-normal",
-            statusBadge: `${d.disparitasPct}% (${isHigh ? "Tinggi" : isMed ? "Sedang" : "Wajar"})`,
-            badgeClass: isHigh ? "bg-status-critical-bg text-status-critical" : isMed ? "bg-status-warning-bg text-status-warning" : "bg-status-normal-bg text-status-normal",
-            dotClass: isHigh ? "bg-status-critical" : isMed ? "bg-status-warning" : "bg-status-normal",
-          };
-        });
-        setComparisonRows(mapped);
-      }
-    });
+    loadTableData();
   }, []);
+
+  // Ganti komoditas dari search dropdown: tarik baris riil komoditas tsb,
+  // lalu sinkronkan baris aktif di tabel + peta tanpa menimpa seluruh matriks.
+  useEffect(() => {
+    let isMounted = true;
+    getLiveMarketComparisonForCommodity(selectedCommodityId).then((row) => {
+      if (!isMounted || !row) return;
+      if (row.tanggal) setLatestDate(row.tanggal);
+      const mapped = mapApiRow(row);
+      setComparisonRows((prev) => {
+        const idx = prev.findIndex((r) => r.komoditas_id === row.komoditas_id);
+        // Komoditas baru (belum ada di matriks 8 baris) -> taruh di baris teratas
+        if (idx === -1) return [mapped, ...prev];
+        const next = [...prev];
+        next[idx] = { ...mapped, sub: prev[idx].sub };
+        return next;
+      });
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCommodityId]);
 
   const zones = ["Semua", "Pusat", "Selatan", "Timur", "Utara"];
 
-  // Active selected commodity row
-  const activeCommodity = comparisonRows[selectedCommodityIdx] || comparisonRows[0];
+  // Baris komoditas aktif mengikuti pilihan di search dropdown
+  const activeCommodity = useMemo(() => {
+    if (comparisonRows.length === 0) return null;
+    return (
+      comparisonRows.find((r) => r.komoditas_id === selectedCommodityId) ||
+      comparisonRows[0] ||
+      null
+    );
+  }, [comparisonRows, selectedCommodityId]);
 
   // Dynamic Market Pin Setup with live Supabase GPS coordinates
-  const markets = [
+  const markets = useMemo(() => [
     {
       id: "keputran",
       pasar_id: 5,
@@ -256,7 +265,7 @@ export default function SpatialMapPage() {
       shortName: "Keputran",
       zone: "Pusat",
       role: "Pasar Induk Grosir Malam",
-      price: activeCommodity.keputran,
+      price: activeCommodity?.keputran || 0,
       latitude: marketCoords[5]?.lat || -7.2753,
       longitude: marketCoords[5]?.lng || 112.7441,
       address: "Jl. Keputran No. 45, Tegalsari",
@@ -269,7 +278,7 @@ export default function SpatialMapPage() {
       shortName: "Genteng",
       zone: "Pusat",
       role: "Pasar Ritel Pusat Kota",
-      price: activeCommodity.genteng,
+      price: activeCommodity?.genteng || 0,
       latitude: marketCoords[3]?.lat || -7.2575,
       longitude: marketCoords[3]?.lng || 112.7431,
       address: "Jl. Genteng Besar, Genteng",
@@ -282,7 +291,7 @@ export default function SpatialMapPage() {
       shortName: "Wonokromo",
       zone: "Selatan",
       role: "Sentra Ritel Surabaya Selatan",
-      price: activeCommodity.wonokromo,
+      price: activeCommodity?.wonokromo || 0,
       latitude: marketCoords[2]?.lat || -7.3005,
       longitude: marketCoords[2]?.lng || 112.7388,
       address: "Jl. Wonokromo (Depan Stasiun)",
@@ -295,7 +304,7 @@ export default function SpatialMapPage() {
       shortName: "Pucang Anom",
       zone: "Timur",
       role: "Ritel Permukiman Timur",
-      price: activeCommodity.pucang,
+      price: activeCommodity?.pucang || 0,
       latitude: marketCoords[4]?.lat || -7.2831,
       longitude: marketCoords[4]?.lng || 112.7554,
       address: "Jl. Pucang Anom, Gubeng",
@@ -308,7 +317,7 @@ export default function SpatialMapPage() {
       shortName: "Tambahrejo",
       zone: "Utara",
       role: "Pasar Semi-Grosir Utara",
-      price: activeCommodity.tambahrejo,
+      price: activeCommodity?.tambahrejo || 0,
       latitude: marketCoords[1]?.lat || -7.2472,
       longitude: marketCoords[1]?.lng || 112.7631,
       address: "Jl. Kapas Krampung, Simokerto",
@@ -321,15 +330,15 @@ export default function SpatialMapPage() {
       shortName: "Soponyono",
       zone: "Timur",
       role: "Sentra Konsumsi Rungkut",
-      price: activeCommodity.soponyono,
+      price: activeCommodity?.soponyono || 0,
       latitude: marketCoords[146]?.lat || -7.3228,
       longitude: marketCoords[146]?.lng || 112.7744,
       address: "Jl. Rungkut Asri, Rungkut",
       characteristic: "Pasar ritel utama bagi sentra industri dan perumahan padat Rungkut & Tenggilis, dipengaruhi biaya angkut dari pusat kota.",
     },
-  ];
+  ], [activeCommodity, marketCoords]);
 
-  const validPrices = markets.map((m) => m.price).filter((p) => p > 0);
+  const validPrices = useMemo(() => markets.map((m) => m.price).filter((p) => p > 0), [markets]);
   const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
   const maxPrice = validPrices.length > 0 ? Math.max(...validPrices) : 0;
   const minMarket = markets.find((m) => m.price === minPrice) || markets[0];
@@ -347,10 +356,28 @@ export default function SpatialMapPage() {
     );
   };
 
+  const filteredTableRows = comparisonRows.filter((r) => {
+    const matchesGroup = tableGroupFilter === "Semua" || r.group === tableGroupFilter;
+    if (!matchesGroup) return false;
+    if (!tableSearchQuery.trim()) return true;
+    const q = tableSearchQuery.trim().toLowerCase();
+    return r.komoditas.toLowerCase().includes(q) || r.sub.toLowerCase().includes(q);
+  });
+
+  useEffect(() => {
+    setTableCurrentPage(1);
+  }, [tableGroupFilter, tableSearchQuery]);
+
+  const totalTablePages = Math.max(1, Math.ceil(filteredTableRows.length / TABLE_ITEMS_PER_PAGE));
+  const paginatedTableRows = useMemo(() => {
+    const start = (tableCurrentPage - 1) * TABLE_ITEMS_PER_PAGE;
+    return filteredTableRows.slice(start, start + TABLE_ITEMS_PER_PAGE);
+  }, [filteredTableRows, tableCurrentPage]);
+
   const handleExportCSV = () => {
     const csvContent =
       "Komoditas Pokok,Satuan,Keputran (Induk),Wonokromo,Pucang Anom,Genteng,Tambahrejo,Soponyono,Rerata Kota,Disparitas Rp,Disparitas %\n" +
-      comparisonRows
+      filteredTableRows
         .map(
           (r) =>
             `"${r.komoditas}","${r.satuan}","Rp ${r.keputran.toLocaleString("id-ID")}","Rp ${r.wonokromo.toLocaleString("id-ID")}","Rp ${r.pucang.toLocaleString("id-ID")}","Rp ${r.genteng.toLocaleString("id-ID")}","Rp ${r.tambahrejo.toLocaleString("id-ID")}","Rp ${r.soponyono.toLocaleString("id-ID")}","Rp ${r.rerata.toLocaleString("id-ID")}","Rp ${r.disparitasRp.toLocaleString("id-ID")}","${r.disparitasPct}%"`
@@ -361,7 +388,7 @@ export default function SpatialMapPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `matriks_disparitas_pasar_surabaya_${activeCommodity.komoditas.toLowerCase().replace(/\s+/g, "_")}.csv`);
+    link.setAttribute("download", `matriks_disparitas_pasar_surabaya_${activeCommodity?.komoditas ? activeCommodity.komoditas.toLowerCase().replace(/\s+/g, "_") : "pantauan"}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -377,61 +404,78 @@ export default function SpatialMapPage() {
             {/* Header Context & Dynamic Quick Metrics Strip */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-lg">
               <div>
-                <div className="flex flex-wrap items-baseline gap-space-xs">
-                  <h1 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
-                    Peta Disparitas Harga Antar-Pasar
-                  </h1>
-                </div>
+                <h1 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
+                  Peta Disparitas Harga Antar-Pasar
+                </h1>
                 <p className="font-body-sm text-body-sm text-text-secondary mt-1">
                   Pantauan spasial 6 pasar Kota Surabaya untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman.
                 </p>
               </div>
 
-
               {/* Dynamic Quick Telemetry Card */}
-              <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-xl shadow-sm border border-border-subtle/70">
-                <div className="flex flex-col pr-space-sm">
-                  <span className="font-label-caps text-label-caps text-text-muted uppercase">
-                    Disparitas {activeCommodity.komoditas}
-                  </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span
-                      className={`font-metric-display text-metric-display ${
-                        activeCommodity.disparitasPct >= 15
-                          ? "text-status-critical"
-                          : activeCommodity.disparitasPct >= 8
-                          ? "text-status-warning"
-                          : "text-status-normal"
-                      }`}
-                    >
-                      {activeCommodity.disparitasPct}%
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full font-label-caps text-label-caps ${activeCommodity.badgeClass}`}
-                    >
-                      {activeCommodity.disparitasPct >= 15 ? "Tinggi" : activeCommodity.disparitasPct >= 8 ? "Waspada" : "Wajar"}
-                    </span>
+              {loadingTable || !activeCommodity ? (
+                <div className="grid grid-cols-2 divide-x divide-border-subtle bg-surface-card px-3.5 py-2.5 sm:px-4 rounded-xl shadow-sm border border-border-subtle/70 w-full sm:w-auto shrink-0 animate-pulse">
+                  <div className="flex flex-col pr-3 space-y-1.5 min-w-0">
+                    <div className="w-20 sm:w-28 h-3 bg-surface-subtle rounded"></div>
+                    <div className="w-14 sm:w-16 h-6 bg-surface-subtle rounded"></div>
+                  </div>
+                  <div className="flex flex-col pl-3 space-y-1.5 min-w-0">
+                    <div className="w-20 sm:w-36 h-3 bg-surface-subtle rounded"></div>
+                    <div className="w-16 sm:w-28 h-5 bg-surface-subtle rounded"></div>
                   </div>
                 </div>
-                <div className="w-px h-8 bg-border-subtle"></div>
-                <div className="flex flex-col pl-space-xs">
-                  <span className="font-label-caps text-label-caps text-text-muted uppercase">
-                    Selisih Ekstrem (Max - Min)
-                  </span>
-                  <span className="font-metric-value text-metric-value text-text-primary font-bold">
-                    Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}
-                  </span>
-                  <span className="font-body-sm text-body-sm text-text-secondary">
-                    {maxMarket.shortName} vs {minMarket.shortName}
-                  </span>
+              ) : (
+                <div className="grid grid-cols-2 divide-x divide-border-subtle bg-surface-card px-3.5 py-2.5 sm:px-4 rounded-xl shadow-sm border border-border-subtle/70 w-full sm:w-auto shrink-0">
+                  <div className="flex flex-col pr-3 min-w-0">
+                    <span
+                      className="font-label-caps text-[10px] sm:text-label-caps text-text-muted uppercase truncate"
+                      title={`Disparitas ${activeCommodity.komoditas}`}
+                    >
+                      Disparitas {activeCommodity.komoditas}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span
+                        className={`font-metric-display text-2xl sm:text-metric-display font-extrabold ${
+                          activeCommodity.disparitasPct >= 15
+                            ? "text-status-critical"
+                            : activeCommodity.disparitasPct >= 8
+                            ? "text-status-warning"
+                            : "text-status-normal"
+                        }`}
+                      >
+                        {activeCommodity.disparitasPct}%
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-label-caps text-[10px] sm:text-label-caps font-semibold shrink-0 ${activeCommodity.badgeClass}`}
+                      >
+                        {activeCommodity.disparitasPct >= 15 ? "Tinggi" : activeCommodity.disparitasPct >= 8 ? "Waspada" : "Wajar"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col pl-3 min-w-0">
+                    <span className="font-label-caps text-[10px] sm:text-label-caps text-text-muted uppercase">
+                      Selisih Ekstrem
+                    </span>
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 mt-0.5 min-w-0">
+                      <span className="font-metric-value text-lg sm:text-metric-value text-text-primary font-bold whitespace-nowrap">
+                        Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")}
+                      </span>
+                      <span
+                        className="text-[11px] sm:text-xs text-text-secondary truncate mt-0.5 sm:mt-0"
+                        title={`${maxMarket.shortName} vs ${minMarket.shortName}`}
+                      >
+                        ({maxMarket.shortName} vs {minMarket.shortName})
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* 1. Spatial Control & Analytical Filter Bar */}
             <div className="bg-surface-card rounded-xl p-space-md shadow-sm mb-space-lg border border-border-subtle/70">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-space-md items-center">
-                {/* Commodity Select */}
+                {/* Commodity Search Select */}
                 <div className="md:col-span-5 flex flex-col gap-1.5">
                   <label
                     className="font-label-caps text-label-caps text-text-secondary uppercase flex items-center gap-1"
@@ -442,23 +486,15 @@ export default function SpatialMapPage() {
                     </span>
                     Pilih Komoditas Pokok:
                   </label>
-                  <div className="relative">
-                    <select
-                      className="w-full h-10 appearance-none bg-surface-subtle text-text-primary font-body-md text-body-md pl-space-sm pr-9 rounded-lg focus:outline-none focus:bg-surface-card border border-border-subtle transition-all cursor-pointer font-title-md"
-                      id="commodity-select"
-                      value={selectedCommodityIdx}
-                      onChange={(e) => setSelectedCommodityIdx(Number(e.target.value))}
-                    >
-                      {comparisonRows.map((row, idx) => (
-                        <option key={idx} value={idx}>
-                          {row.komoditas} ({row.satuan})
-                        </option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted text-body-md">
-                      expand_more
-                    </span>
-                  </div>
+                  <CommoditySearchSelect
+                    options={ALL_CATALOG_COMMODITIES}
+                    valueId={selectedCommodityId}
+                    onChange={setSelectedCommodityId}
+                    searchPlaceholder="Cari dari 38 komoditas Surabaya..."
+                    emptyNoun="komoditas"
+                    className="h-10"
+                    panelClassName="w-full sm:w-96 md:w-[26rem]"
+                  />
                 </div>
 
                 {/* Zone Selector */}
@@ -467,12 +503,12 @@ export default function SpatialMapPage() {
                     <span className="material-symbols-outlined text-body-md text-primary">hub</span>
                     Filter Wilayah Surabaya:
                   </label>
-                  <div className="flex items-center gap-1 bg-surface-subtle p-1 rounded-lg border border-border-subtle">
+                  <div className="flex items-center gap-1 bg-surface-subtle p-1 rounded-lg border border-border-subtle h-10">
                     {zones.map((zone) => (
                       <button
                         key={zone}
                         onClick={() => setSelectedZone(zone)}
-                        className={`flex-1 py-1.5 rounded-md font-label-caps text-label-caps transition-all cursor-pointer text-center ${
+                        className={`flex-1 h-full rounded-md font-label-caps text-label-caps transition-all cursor-pointer text-center flex items-center justify-center ${
                           selectedZone === zone
                             ? "bg-primary text-on-primary font-bold shadow-xs"
                             : "text-text-secondary hover:text-text-primary"
@@ -485,217 +521,370 @@ export default function SpatialMapPage() {
                 </div>
 
                 {/* Status Disparity Summary Indicator */}
-                <div
-                  className={`md:col-span-3 rounded-lg px-space-sm py-space-2xs flex items-center gap-space-2xs self-center ${
-                    activeCommodity.disparitasPct >= 15
-                      ? "bg-status-critical-bg text-status-critical border border-status-critical/30"
-                      : activeCommodity.disparitasPct >= 8
-                      ? "bg-status-warning-bg text-status-warning border border-status-warning/30"
-                      : "bg-status-normal-bg text-status-normal border border-status-normal/30"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-body-md shrink-0">
-                    {activeCommodity.disparitasPct >= 15 ? "warning" : activeCommodity.disparitasPct >= 8 ? "info" : "check_circle"}
-                  </span>
-                  <div className="flex flex-wrap items-baseline gap-x-1.5">
-                    <span className="font-headline-sm text-headline-sm text-text-primary leading-none">
-                      {activeCommodity.disparitasPct >= 15
-                        ? "Disparitas Tinggi"
-                        : activeCommodity.disparitasPct >= 8
-                        ? "Disparitas Sedang"
-                        : "Disparitas Terkendali"}
-                    </span>
-                    <span className="font-body-sm text-body-sm text-text-secondary">
-                      Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")} ({activeCommodity.disparitasPct}%).
-                    </span>
+                {loadingTable || !activeCommodity ? (
+                  <div className="md:col-span-3 rounded-lg px-3 py-2 flex items-center gap-2 self-end h-10 bg-surface-subtle animate-pulse border border-border-subtle">
+                    <div className="w-5 h-5 rounded-full bg-border-subtle shrink-0"></div>
+                    <div className="flex-1 space-y-1">
+                      <div className="w-24 h-3 bg-border-subtle rounded"></div>
+                      <div className="w-16 h-2 bg-border-subtle rounded"></div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div
+                    className={`md:col-span-3 rounded-lg px-3 py-2 flex items-center gap-2 self-end h-10 ${
+                      activeCommodity.disparitasPct >= 15
+                        ? "bg-status-critical-bg text-status-critical border border-status-critical/30"
+                        : activeCommodity.disparitasPct >= 8
+                        ? "bg-status-warning-bg text-status-warning border border-status-warning/30"
+                        : "bg-status-normal-bg text-status-normal border border-status-normal/30"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-body-md shrink-0">
+                      {activeCommodity.disparitasPct >= 15 ? "warning" : activeCommodity.disparitasPct >= 8 ? "info" : "check_circle"}
+                    </span>
+                    <div className="flex flex-wrap items-baseline gap-x-1 min-w-0">
+                      <span className="font-headline-sm text-body-sm text-text-primary font-bold leading-none truncate">
+                        {activeCommodity.disparitasPct >= 15
+                          ? "Disparitas Tinggi"
+                          : activeCommodity.disparitasPct >= 8
+                          ? "Disparitas Sedang"
+                          : "Disparitas Wajar"}
+                      </span>
+                      <span className="font-body-sm text-xs text-text-secondary font-medium">
+                        Rp {activeCommodity.disparitasRp.toLocaleString("id-ID")} ({activeCommodity.disparitasPct}%)
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* 2. Geospatial Interactive Map & Real Market Inspector Panel */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md mb-space-lg">
               {/* Real Spatial Viewport Container (Leaflet + OpenStreetMap) */}
-              <div className="lg:col-span-8 bg-surface-card rounded-xl shadow-sm overflow-hidden flex flex-col relative min-h-[580px] border border-border-subtle/70">
+              <div className="lg:col-span-8 bg-surface-card rounded-xl shadow-sm overflow-hidden flex flex-col relative min-h-[320px] sm:min-h-[400px] lg:min-h-[580px] border border-border-subtle/70">
                 <SurabayaMap
                   markets={markets}
-                  selectedCommodityName={activeCommodity.komoditas}
-                  unit={activeCommodity.satuan}
+                  selectedCommodityName={activeCommodity?.komoditas || "Komoditas Pokok"}
+                  unit={activeCommodity?.satuan || "kg"}
                   selectedMarketId={selectedMarketId}
                   onSelectMarket={setSelectedMarketId}
                   selectedZone={selectedZone}
                   minPrice={minPrice}
                   maxPrice={maxPrice}
-                  cityAvg={activeCommodity.rerata}
+                  cityAvg={activeCommodity?.rerata || 0}
                 />
               </div>
 
               {/* Real Market Inspector & Disparity Diagnostics Panel (Beside Map) */}
               <div className="lg:col-span-4 flex flex-col gap-space-md">
                 {/* Active Selected Market Inspector */}
-                <div className="bg-surface-card p-space-md rounded-xl shadow-sm border border-border-subtle/70 flex flex-col">
-                  <div className="flex items-start justify-between pb-space-sm mb-space-sm border-b border-border-subtle">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-primary text-headline-sm">
-                          storefront
-                        </span>
-                        <h2 className="font-headline-sm text-headline-sm text-text-primary">
-                          {selectedMarket.name}
-                        </h2>
+                {loadingTable || !activeCommodity ? (
+                  <div id="market-inspector" className="bg-surface-card p-space-md rounded-xl shadow-sm border border-border-subtle/70 flex flex-col scroll-mt-24 animate-pulse">
+                    <div className="flex items-start justify-between pb-space-sm mb-space-sm border-b border-border-subtle">
+                      <div className="space-y-1.5">
+                        <div className="w-36 h-5 bg-surface-subtle rounded"></div>
+                        <div className="w-48 h-3 bg-surface-subtle rounded"></div>
                       </div>
-                      <span className="text-xs text-text-secondary mt-0.5 block">
-                        {selectedMarket.address} &bull; Surabaya {selectedMarket.zone}
-                      </span>
+                      <div className="w-16 h-5 bg-surface-subtle rounded-full"></div>
                     </div>
-                    <span
-                      className={`px-2 py-0.5 rounded-full font-label-caps text-label-caps font-bold ${
-                        selectedMarket.price === minPrice
-                          ? "bg-status-normal-bg text-status-normal"
+                    <div className="space-y-space-sm mb-space-md">
+                      <div className="p-space-xs rounded-lg bg-surface-subtle h-16"></div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-space-xs rounded-lg bg-surface-subtle h-12"></div>
+                        <div className="p-space-xs rounded-lg bg-surface-subtle h-12"></div>
+                      </div>
+                    </div>
+                    <div className="bg-surface-subtle p-space-sm rounded-lg mb-space-md h-24"></div>
+                    <div className="mt-auto">
+                      <div className="w-24 h-3 bg-surface-subtle rounded mb-2"></div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                          <div key={i} className="h-7 bg-surface-subtle rounded"></div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div id="market-inspector" className="bg-surface-card p-space-md rounded-xl shadow-sm border border-border-subtle/70 flex flex-col scroll-mt-24">
+                    <div className="flex items-start justify-between pb-space-sm mb-space-sm border-b border-border-subtle gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-primary text-headline-sm shrink-0">
+                            storefront
+                          </span>
+                          <h2 className="font-headline-sm text-headline-sm text-text-primary truncate">
+                            {selectedMarket.name}
+                          </h2>
+                        </div>
+                        <span
+                          className="text-xs text-text-secondary mt-0.5 block whitespace-nowrap truncate"
+                          title={`${selectedMarket.address} • Surabaya ${selectedMarket.zone}`}
+                        >
+                          {selectedMarket.address} &bull; Surabaya {selectedMarket.zone}
+                        </span>
+                      </div>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full font-label-caps text-label-caps font-bold whitespace-nowrap shrink-0 ${
+                          selectedMarket.price === minPrice
+                            ? "bg-status-normal-bg text-status-normal"
+                            : selectedMarket.price === maxPrice
+                            ? "bg-status-critical-bg text-status-critical"
+                            : "bg-surface-subtle text-text-secondary"
+                        }`}
+                      >
+                        {selectedMarket.price === minPrice
+                          ? "Termurah"
                           : selectedMarket.price === maxPrice
-                          ? "bg-status-critical-bg text-status-critical"
-                          : "bg-surface-subtle text-text-secondary"
-                      }`}
-                    >
-                      {selectedMarket.price === minPrice
-                        ? "Termurah"
-                        : selectedMarket.price === maxPrice
-                        ? "Tertinggi"
-                        : "Rata-rata"}
-                    </span>
-                  </div>
-
-                  {/* Price Comparison Metric for Selected Commodity */}
-                  <div className="space-y-space-sm mb-space-md">
-                    <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col gap-1">
-                      <span className="text-xs text-text-secondary">
-                        Harga {activeCommodity.komoditas}:
+                          ? "Tertinggi"
+                          : "Rata-rata"}
                       </span>
-                      <div className="flex items-baseline justify-between">
-                        <span className="font-metric-value text-headline-sm text-text-primary font-bold">
-                          Rp {selectedMarket.price.toLocaleString("id-ID")}
+                    </div>
+
+                    {/* Price Comparison Metric for Selected Commodity */}
+                    <div className="space-y-space-sm mb-space-md">
+                      <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col gap-1">
+                        <span className="text-xs text-text-secondary">
+                          Harga {activeCommodity.komoditas}:
                         </span>
-                        <span className="text-xs text-text-muted">
-                          /{activeCommodity.satuan}
-                        </span>
+                        <div className="flex items-baseline justify-between">
+                          <span className="font-metric-value text-headline-sm text-text-primary font-bold">
+                            Rp {selectedMarket.price.toLocaleString("id-ID")}
+                          </span>
+                          <span className="text-xs text-text-muted">
+                            /{activeCommodity.satuan}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
+                          <span className="text-text-muted">Rerata Kota:</span>
+                          <strong className="text-text-primary mt-0.5">
+                            Rp {activeCommodity.rerata.toLocaleString("id-ID")}
+                          </strong>
+                        </div>
+                        <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
+                          <span className="text-text-muted">Selisih vs Termurah:</span>
+                          <strong
+                            className={
+                              selectedMarket.price === minPrice
+                                ? "text-status-normal mt-0.5"
+                                : "text-status-critical mt-0.5"
+                            }
+                          >
+                            {selectedMarket.price === minPrice
+                              ? "Acuan Termurah"
+                              : `+Rp ${(selectedMarket.price - minPrice).toLocaleString("id-ID")}`}
+                          </strong>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
-                        <span className="text-text-muted">Rerata Kota:</span>
-                        <strong className="text-text-primary mt-0.5">
-                          Rp {activeCommodity.rerata.toLocaleString("id-ID")}
-                        </strong>
+                    {/* Market Logistics Characteristics */}
+                    <div className="bg-surface-subtle p-space-sm rounded-lg mb-space-md">
+                      <div className="flex items-center gap-1.5 text-primary text-xs font-semibold mb-1">
+                        <span className="material-symbols-outlined text-sm">info</span>
+                        Peran Distribusi &amp; Karakter Pasar:
                       </div>
-                      <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
-                        <span className="text-text-muted">Selisih vs Termurah:</span>
-                        <strong
-                          className={
-                            selectedMarket.price === minPrice
-                              ? "text-status-normal mt-0.5"
-                              : "text-status-critical mt-0.5"
-                          }
-                        >
-                          {selectedMarket.price === minPrice
-                            ? "Acuan Termurah"
-                            : `+Rp ${(selectedMarket.price - minPrice).toLocaleString("id-ID")}`}
-                        </strong>
+                      <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed text-justify">
+                        {selectedMarket.characteristic}
+                      </p>
+                    </div>
+
+                    {/* Market Selector Quick Buttons */}
+                    <div className="mt-auto">
+                      <span className="text-xs text-text-muted block mb-1.5 font-label-caps uppercase">
+                        Pilih Pasar Lain:
+                      </span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {markets.map((m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => setSelectedMarketId(m.id)}
+                            className={`py-1 px-1.5 rounded text-xs font-medium transition-all text-center truncate ${
+                              selectedMarketId === m.id
+                                ? "bg-primary text-on-primary font-bold shadow-xs"
+                                : "bg-surface-subtle text-text-secondary hover:text-text-primary"
+                            }`}
+                          >
+                            {m.shortName}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
-
-                  {/* Market Logistics Characteristics */}
-                  <div className="bg-surface-subtle p-space-sm rounded-lg mb-space-md">
-                    <div className="flex items-center gap-1.5 text-primary text-xs font-semibold mb-1">
-                      <span className="material-symbols-outlined text-sm">info</span>
-                      Peran Distribusi &amp; Karakter Pasar:
-                    </div>
-                    <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed">
-                      {selectedMarket.characteristic}
-                    </p>
-                  </div>
-
-                  {/* Market Selector Quick Buttons */}
-                  <div className="mt-auto">
-                    <span className="text-xs text-text-muted block mb-1.5 font-label-caps uppercase">
-                      Pilih Pasar Lain:
-                    </span>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {markets.map((m) => (
-                        <button
-                          key={m.id}
-                          onClick={() => setSelectedMarketId(m.id)}
-                          className={`py-1 px-1.5 rounded text-xs font-medium transition-all text-center truncate ${
-                            selectedMarketId === m.id
-                              ? "bg-primary text-on-primary font-bold shadow-xs"
-                              : "bg-surface-subtle text-text-secondary hover:text-text-primary"
-                          }`}
-                        >
-                          {m.shortName}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
             {/* 3. Panel Matriks Komparasi Multi-Pasar (Dynamic Table) */}
             <div className="bg-surface-card rounded-xl shadow-sm overflow-hidden mb-space-lg border border-border-subtle/70">
-              <div className="p-space-md flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+              <div className="p-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-border-subtle/40">
                 <div>
                   <div className="flex items-center gap-space-xs">
                     <h2 className="font-headline-md text-headline-md text-text-primary">
                       Matriks Komparasi 6 Pasar Tradisional
                     </h2>
-                    <span className="px-space-xs py-0.5 rounded-full bg-surface-subtle text-text-secondary font-label-caps text-label-caps">
-                      {comparisonRows.length} Komoditas Pokok
-                    </span>
                   </div>
                   <p className="font-body-sm text-body-sm text-text-secondary mt-1">
-                    Warna hijau menunjukkan pasar dengan harga termurah, sedangkan oranye/merah menunjukkan pasar tertinggi.
+                    Warna hijau menunjukkan pasar dengan harga terendah, sedangkan merah menunjukkan pasar tertinggi.
                   </p>
                 </div>
-                <div className="flex items-center gap-space-xs">
-                  <button
-                    className="px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center gap-1.5 transition-colors cursor-pointer border border-border-subtle"
-                    onClick={handleExportCSV}
-                    title="Unduh seluruh data komparasi dalam format CSV"
-                  >
-                    <span className="material-symbols-outlined text-body-md">file_download</span>
-                    Export CSV
-                  </button>
-                  <button
-                    className="px-space-sm py-2 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary font-body-sm text-body-sm flex items-center gap-1.5 transition-colors cursor-pointer border border-border-subtle"
-                    onClick={handleSortDisparitas}
-                    title="Urutkan data berdasarkan disparitas persentase"
-                  >
-                    <span className="material-symbols-outlined text-body-md">sort</span>
-                    Sort Disparitas {isSortedDesc ? "↓" : "↑"}
-                  </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+                  {/* Search Filter for Table */}
+                  <div className="relative w-full sm:w-56">
+                    <input
+                      type="text"
+                      placeholder="Cari komoditas..."
+                      value={tableSearchQuery}
+                      onChange={(e) => setTableSearchQuery(e.target.value)}
+                      className="w-full h-9 bg-surface-subtle text-text-primary placeholder-text-muted text-xs sm:text-sm pl-8 pr-7 rounded-lg border border-border-subtle focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                    />
+                    <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[17px] pointer-events-none">
+                      search
+                    </span>
+                    {tableSearchQuery && (
+                      <button
+                        onClick={() => setTableSearchQuery("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-[13px] w-4 h-4 rounded-full flex items-center justify-center cursor-pointer"
+                        title="Hapus filter pencarian"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      className="h-9 px-3 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary hover:text-text-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle whitespace-nowrap shrink-0"
+                      onClick={handleExportCSV}
+                      title="Unduh seluruh data komparasi dalam format CSV"
+                    >
+                      <span className="material-symbols-outlined text-[17px]">file_download</span>
+                      <span>Export CSV</span>
+                    </button>
+                    <button
+                      className="h-9 px-3 rounded-lg bg-surface-subtle hover:bg-surface-variant text-text-secondary hover:text-text-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-border-subtle whitespace-nowrap shrink-0"
+                      onClick={handleSortDisparitas}
+                      title="Urutkan data berdasarkan disparitas persentase"
+                    >
+                      <span className="material-symbols-outlined text-[17px]">sort</span>
+                      <span>Sort {isSortedDesc ? "↓" : "↑"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Data Table Container with Horizontal Overflow */}
-              <div className="w-full overflow-x-auto">
+              {/* Group Filter Chips (pola terstruktur & rapi) */}
+              <div className="px-space-md py-3 bg-surface-subtle/30 flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-border-subtle/60 pr-8">
+                {ORDERED_GROUPS.filter((g) => g === "Semua" || comparisonRows.some((r) => r.group === g)).map((g) => {
+                  const count =
+                    g === "Semua"
+                      ? comparisonRows.length
+                      : comparisonRows.filter((r) => r.group === g).length;
+                  const isActive = tableGroupFilter === g;
+
+                  return (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setTableGroupFilter(g)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer inline-flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-primary text-white shadow-xs'
+                          : 'bg-surface-card text-text-secondary hover:text-text-primary hover:bg-surface-subtle border border-border-subtle/80'
+                      }`}
+                    >
+                      <span>{g}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-tight ${
+                          isActive
+                            ? 'bg-white/20 text-white'
+                            : 'bg-surface-subtle text-text-muted'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 1. Tampilan Desktop & Tablet: Data Table Container with Sticky Commodity Column (≥ 768px) */}
+              <div className="hidden md:block w-full overflow-x-auto">
                 <table className="w-full text-left font-body-sm text-body-sm border-collapse min-w-[1000px]">
                   <thead>
                     <tr className="bg-surface-subtle text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">
-                      <th className="py-3 px-space-md">Komoditas Pokok</th>
-                      <th className="py-3 px-space-xs">Satuan</th>
-                      <th className="py-3 px-space-sm bg-primary/5 text-primary">Keputran (Induk)</th>
-                      <th className="py-3 px-space-sm">Wonokromo</th>
-                      <th className="py-3 px-space-sm">Pucang Anom</th>
-                      <th className="py-3 px-space-sm">Genteng</th>
-                      <th className="py-3 px-space-sm">Tambahrejo</th>
-                      <th className="py-3 px-space-sm">Soponyono</th>
-                      <th className="py-3 px-space-sm">Rerata Kota</th>
-                      <th className="py-3 px-space-md text-right">Disparitas (Max-Min)</th>
+                      <th className="py-2.5 sm:py-3 px-2.5 sm:px-space-md sticky left-0 bg-surface-subtle z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[135px] sm:w-[190px] min-w-[135px] sm:min-w-[190px]">
+                        Komoditas Pokok
+                      </th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-xs text-center min-w-[55px] sm:min-w-[70px]">Satuan</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Keputran (Induk)</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Wonokromo</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Pucang Anom</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Genteng</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Tambahrejo</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Soponyono</th>
+                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Rerata Kota</th>
+                      <th className="py-2.5 sm:py-3 px-2 sm:px-space-md text-right min-w-[105px] sm:min-w-[125px]">Disparitas</th>
                     </tr>
                   </thead>
                   <tbody className="text-text-primary">
-                    {comparisonRows.map((row, idx) => {
+                    {loadingTable ? (
+                      Array.from({ length: 7 }).map((_, idx) => (
+                        <tr key={idx} className="border-b border-surface-subtle/40 animate-pulse">
+                          <td className="py-2.5 sm:py-3.5 px-2.5 sm:px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[145px] sm:w-[220px] min-w-[145px] sm:min-w-[220px]">
+                            <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-subtle shrink-0"></div>
+                              <div className="space-y-1">
+                                <div className="w-24 sm:w-32 h-3.5 sm:h-4 bg-surface-subtle rounded"></div>
+                                <div className="w-16 sm:w-20 h-2 sm:h-2.5 bg-surface-subtle rounded"></div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-space-xs">
+                            <div className="w-8 h-3.5 bg-surface-subtle rounded"></div>
+                          </td>
+                          {Array.from({ length: 6 }).map((_, cIdx) => (
+                            <td key={cIdx} className="py-3.5 px-space-sm">
+                              <div className="w-16 h-4 bg-surface-subtle rounded"></div>
+                            </td>
+                          ))}
+                          <td className="py-3.5 px-space-sm">
+                            <div className="w-16 h-4 bg-surface-subtle rounded"></div>
+                          </td>
+                          <td className="py-3.5 px-space-md text-right">
+                            <div className="w-20 h-5 bg-surface-subtle rounded ml-auto"></div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : errorTable ? (
+                      <tr>
+                        <td colSpan={10} className="py-12 text-center">
+                          <div className="max-w-md mx-auto flex flex-col items-center gap-2 text-text-secondary">
+                            <span className="material-symbols-outlined text-3xl text-status-warning">cloud_off</span>
+                            <span className="font-semibold text-text-primary">Data matriks disparitas tidak tersedia</span>
+                            <p className="text-xs text-text-secondary">Gagal memuat matriks perbandingan 6 pasar. Silakan periksa koneksi atau coba muat ulang.</p>
+                            <button
+                              onClick={() => loadTableData()}
+                              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded-lg hover:bg-primary/90 transition shadow-xs cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-sm">refresh</span>
+                              Coba Lagi
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : filteredTableRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="py-8 text-center text-text-muted">
+                          <span className="material-symbols-outlined text-title-lg block mb-1">search_off</span>
+                          Komoditas &quot;{tableSearchQuery}&quot; tidak ditemukan dalam matriks komparasi.
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedTableRows.map((row, idx) => {
                       const prices = [
                         row.keputran,
                         row.wonokromo,
@@ -712,23 +901,23 @@ export default function SpatialMapPage() {
                         const isMax = price === rowMax;
                         return (
                           <td
-                            className={`py-3.5 px-space-sm font-metric-value ${
+                            className={`py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm min-w-[95px] sm:min-w-[110px] transition-colors ${
                               isMin
-                                ? "bg-status-normal-bg text-status-normal font-semibold"
+                                ? "bg-emerald-50/70 hover:bg-emerald-100/60 text-emerald-700 font-bold"
                                 : isMax
-                                ? "bg-status-critical-bg text-status-critical font-semibold"
-                                : ""
+                                ? "bg-rose-50/70 hover:bg-rose-100/60 text-rose-700 font-bold"
+                                : "text-text-secondary"
                             }`}
                           >
-                            Rp {price.toLocaleString("id-ID")}
+                            <div>Rp {price.toLocaleString("id-ID")}</div>
                             {isMin && (
-                              <span className="text-label-caps font-label-caps block font-normal text-status-normal/80">
-                                Min
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 leading-tight mt-0.5">
+                                Terendah
                               </span>
                             )}
                             {isMax && (
-                              <span className="text-label-caps font-label-caps block font-normal text-status-critical/80">
-                                Max
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-rose-100/90 text-rose-700 border border-rose-200/80 leading-tight mt-0.5">
+                                Tertinggi
                               </span>
                             )}
                           </td>
@@ -738,24 +927,35 @@ export default function SpatialMapPage() {
                       return (
                         <tr
                           key={idx}
-                          className="hover:bg-surface-subtle/50 transition-colors border-b border-surface-subtle/40"
+                          onClick={() => setSelectedCommodityId(row.komoditas_id)}
+                          className={`transition-colors border-b border-surface-subtle/40 cursor-pointer ${
+                            row.komoditas_id === selectedCommodityId
+                              ? "bg-primary/5 hover:bg-primary/10"
+                              : "hover:bg-surface-subtle/50"
+                          }`}
+                          title="Klik untuk melihat perbandingan spasial komoditas ini pada peta"
                         >
-                          <td className="py-3.5 px-space-md">
-                            <div className="flex items-center gap-space-xs">
-                              <span
-                                className={`w-2.5 h-2.5 rounded-full shrink-0 ${row.dotClass}`}
-                              ></span>
-                              <div className="flex flex-col">
-                                <span className="font-title-md text-body-md text-text-primary font-semibold">
+                          <td className="py-2.5 sm:py-3.5 px-2.5 sm:px-space-md sticky left-0 bg-surface-card z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] w-[145px] sm:w-[220px] min-w-[145px] sm:min-w-[220px] max-w-[155px] sm:max-w-none">
+                            <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                              <div
+                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 ${row.iconBoxClass}`}
+                                title={row.komoditas}
+                              >
+                                <span className="material-symbols-outlined text-[15px] sm:text-[18px]">
+                                  {row.icon}
+                                </span>
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-title-md text-xs sm:text-body-md text-text-primary font-semibold truncate sm:whitespace-normal">
                                   {row.komoditas}
                                 </span>
-                                <span className="text-text-muted font-label-caps text-label-caps">
+                                <span className="text-text-muted font-label-caps text-[10px] sm:text-label-caps truncate sm:whitespace-normal">
                                   {row.sub}
                                 </span>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3.5 px-space-xs text-text-secondary font-label-caps">
+                          <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-xs text-text-secondary font-label-caps text-[11px] sm:text-xs text-center whitespace-nowrap min-w-[55px] sm:min-w-[70px]">
                             {row.satuan}
                           </td>
                           {renderCell(row.keputran)}
@@ -764,45 +964,317 @@ export default function SpatialMapPage() {
                           {renderCell(row.genteng)}
                           {renderCell(row.tambahrejo)}
                           {renderCell(row.soponyono)}
-                          <td className="py-3.5 px-space-sm font-metric-value text-text-secondary">
+                          <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm text-text-secondary min-w-[95px] sm:min-w-[110px]">
                             Rp {row.rerata.toLocaleString("id-ID")}
                           </td>
-                          <td className="py-3.5 px-space-md text-right">
+                          <td className="py-2.5 sm:py-3.5 px-2 sm:px-space-md text-right min-w-[105px] sm:min-w-[125px]">
                             <div className="flex flex-col items-end">
                               <span
-                                className={`font-metric-delta text-body-sm font-bold ${row.statusClass}`}
+                                className={`font-metric-delta text-xs sm:text-body-sm font-bold ${row.statusClass}`}
                               >
                                 Rp {row.disparitasRp.toLocaleString("id-ID")}
                               </span>
-                              <span
-                                className={`px-space-2xs py-0.5 rounded-full font-label-caps text-label-caps ${row.badgeClass}`}
-                              >
-                                {row.statusBadge}
+                              <span className="text-text-muted font-label-caps text-[9px] sm:text-[10px] leading-tight">
+                                {row.disparitasPct}%
                               </span>
                             </div>
                           </td>
                         </tr>
                       );
-                    })}
+                    }))}
                   </tbody>
                 </table>
               </div>
 
-              {/* Table Footer Meta */}
-              <div className="p-space-md bg-surface-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-space-xs font-body-sm text-body-sm text-text-secondary">
-                <div className="flex items-center gap-space-xs">
-                  <span className="material-symbols-outlined text-body-md text-status-normal">
-                    verified_user
-                  </span>
-                  <span>Data perbandingan harga riil 6 pasar pantauan Kota Surabaya terintegrasi dari basis data pantauan harian.</span>
-                </div>
-                <div className="flex items-center gap-space-xs font-label-caps text-label-caps">
-                  <span className="w-2.5 h-2.5 rounded-full bg-status-normal-bg border border-status-normal inline-block"></span>{" "}
-                  Harga Termurah (Acuan)
-                  <span className="w-2.5 h-2.5 rounded-full bg-status-critical-bg border border-status-critical inline-block ml-2"></span>{" "}
-                  Harga Tertinggi (Anomali)
-                </div>
+              {/* 2. Tampilan HP (< md / < 768px): Card View List Persis Seperti EWS */}
+              <div className="block md:hidden p-3.5 space-y-3.5">
+                {loadingTable ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-surface-card border border-border-subtle/80 shadow-xs animate-pulse space-y-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-surface-subtle shrink-0"></div>
+                        <div className="flex-1 space-y-1.5">
+                          <div className="w-32 h-4 bg-surface-subtle rounded"></div>
+                          <div className="w-20 h-3 bg-surface-subtle rounded"></div>
+                        </div>
+                        <div className="w-16 h-5 bg-surface-subtle rounded-full"></div>
+                      </div>
+                      <div className="h-14 bg-surface-subtle rounded-lg"></div>
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        {Array.from({ length: 6 }).map((_, cIdx) => (
+                          <div key={cIdx} className="h-12 bg-surface-subtle rounded-lg"></div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : errorTable ? (
+                  <div className="p-8 rounded-xl bg-surface-card border border-border-subtle text-center flex flex-col items-center gap-2">
+                    <span className="material-symbols-outlined text-3xl text-status-warning">cloud_off</span>
+                    <span className="font-semibold text-text-primary text-sm">Data matriks disparitas tidak tersedia</span>
+                    <p className="text-xs text-text-secondary">Gagal memuat matriks perbandingan 6 pasar.</p>
+                    <button
+                      onClick={() => loadTableData()}
+                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded-lg hover:bg-primary/90 transition shadow-xs cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-sm">refresh</span>
+                      Coba Lagi
+                    </button>
+                  </div>
+                ) : filteredTableRows.length === 0 ? (
+                  <div className="p-8 rounded-xl bg-surface-card border border-border-subtle text-center text-text-muted text-sm">
+                    <span className="material-symbols-outlined text-3xl block mb-1">search_off</span>
+                    Komoditas &quot;{tableSearchQuery}&quot; tidak ditemukan dalam matriks komparasi.
+                  </div>
+                ) : (
+                  paginatedTableRows.map((row, idx) => {
+                    const marketEntries = [
+                      { name: "Keputran (Induk)", shortName: "Keputran", price: row.keputran },
+                      { name: "Pasar Wonokromo", shortName: "Wonokromo", price: row.wonokromo },
+                      { name: "Pasar Pucang Anom", shortName: "Pucang Anom", price: row.pucang },
+                      { name: "Pasar Genteng", shortName: "Genteng", price: row.genteng },
+                      { name: "Pasar Tambahrejo", shortName: "Tambahrejo", price: row.tambahrejo },
+                      { name: "Pasar Soponyono", shortName: "Soponyono", price: row.soponyono },
+                    ];
+
+                    const validPrices = marketEntries.map((m) => m.price).filter((p) => p > 0);
+                    const rowMin = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+                    const rowMax = validPrices.length > 0 ? Math.max(...validPrices) : 0;
+                    const hasSpread = rowMin < rowMax;
+
+                    const minMarkets = marketEntries.filter((m) => m.price === rowMin);
+                    const maxMarkets = marketEntries.filter((m) => m.price === rowMax);
+                    const isSelected = row.komoditas_id === selectedCommodityId;
+                    const isExpanded = !!expandedCardIds[row.komoditas_id];
+
+                    return (
+                      <div
+                        key={row.komoditas_id || idx}
+                        onClick={() => setSelectedCommodityId(row.komoditas_id)}
+                        className={`p-3.5 rounded-xl bg-white border shadow-2xs hover:shadow-xs transition-[box-shadow,border-color,background-color] duration-150 flex flex-col gap-2.5 cursor-pointer ${
+                          isSelected
+                            ? "border-primary ring-2 ring-primary/20 bg-primary/2 border-l-4 border-l-primary"
+                            : "border-slate-200 border-l-4 border-l-emerald-600"
+                        }`}
+                      >
+                        {/* Header: Icon, Nama Lengkap, Satuan & Disparitas Badge */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-2xs ${row.iconBoxClass}`}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                {row.icon}
+                              </span>
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <h3 className="font-headline-sm text-xs sm:text-sm text-slate-900 font-bold leading-tight truncate">
+                                {row.komoditas}
+                              </h3>
+                              <span className="font-label-caps text-[10.5px] text-slate-500 font-medium">
+                                {row.satuan} • {row.sub}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end shrink-0">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full font-label-caps text-[10.5px] font-bold tracking-wide ${row.statusClass} bg-slate-100 border border-slate-200`}
+                            >
+                              Δ Rp {row.disparitasRp.toLocaleString("id-ID")}
+                            </span>
+                            <span className="text-slate-500 font-mono text-[9.5px] mt-0.5">
+                              Disparitas {row.disparitasPct}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Quick Insight Bar: Termurah vs Tertinggi (Compact Single Strip) */}
+                        {hasSpread ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            {/* Termurah */}
+                            <div className="bg-emerald-50/90 border border-emerald-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-emerald-700">arrow_downward</span> Termurah
+                                </span>
+                                <span className="text-[11px] text-emerald-950 font-medium truncate block">
+                                  {minMarkets.map((m) => m.shortName).join(", ")}
+                                </span>
+                              </div>
+                              <span className="text-xs sm:text-sm font-extrabold text-emerald-700 shrink-0 ml-1">
+                                Rp {rowMin.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+
+                            {/* Tertinggi */}
+                            <div className="bg-rose-50/90 border border-rose-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-rose-700">arrow_upward</span> Tertinggi
+                                </span>
+                                <span className="text-[11px] text-rose-950 font-medium truncate block">
+                                  {maxMarkets.map((m) => m.shortName).join(", ")}
+                                </span>
+                              </div>
+                              <span className="text-xs sm:text-sm font-extrabold text-rose-700 shrink-0 ml-1">
+                                Rp {rowMax.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                          </div>
+                        ) : rowMin > 0 ? (
+                          <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs flex justify-between items-center">
+                            <span className="text-slate-600 font-medium text-[11px]">Harga Seragam:</span>
+                            <span className="font-bold text-slate-900 text-xs">Rp {rowMin.toLocaleString("id-ID")}</span>
+                          </div>
+                        ) : null}
+
+                        {/* Accordion Toggle Bar & Active Pin Indicator */}
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+                          <span className="flex items-center gap-1 text-slate-500 font-medium text-[10.5px]">
+                            <span className="material-symbols-outlined text-[13px] text-primary">map</span>
+                            {isSelected ? (
+                              <strong className="text-primary font-semibold">Aktif di peta</strong>
+                            ) : (
+                              "Ketuk untuk sorot peta"
+                            )}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => toggleCardExpanded(row.komoditas_id, e)}
+                            className="px-2.5 py-1 rounded-lg bg-surface-subtle hover:bg-slate-200 text-slate-700 font-semibold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <span>{isExpanded ? "Tutup 6 Pasar" : "Lihat 6 Pasar"}</span>
+                            <span
+                              className={`material-symbols-outlined text-sm transition-transform duration-200 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            >
+                              expand_more
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* Expandable 6 Markets Breakdown List */}
+                        {isExpanded && (
+                          <div className="pt-2 border-t border-dashed border-slate-200 flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between text-[10.5px] text-slate-500 font-medium mb-0.5">
+                              <span className="font-bold text-slate-700 uppercase tracking-wider font-label-caps">
+                                Rincian 6 Pasar:
+                              </span>
+                              <span>
+                                Rerata: <strong className="text-slate-800 font-bold">Rp {row.rerata.toLocaleString("id-ID")}</strong>
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {marketEntries.map((m, mIdx) => {
+                                const isMin = hasSpread && m.price === rowMin;
+                                const isMax = hasSpread && m.price === rowMax;
+
+                                return (
+                                  <div
+                                    key={mIdx}
+                                    className={`px-2 py-1.5 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                                      isMin
+                                        ? "bg-emerald-50/80 border-emerald-300 text-emerald-950 font-semibold"
+                                        : isMax
+                                        ? "bg-rose-50/80 border-rose-300 text-rose-950 font-semibold"
+                                        : "bg-slate-50/70 border-slate-200 text-slate-800"
+                                    }`}
+                                  >
+                                    <div className="min-w-0 pr-1 flex items-center gap-1">
+                                      <span className="truncate text-[11px] font-medium" title={m.name}>
+                                        {m.shortName}
+                                      </span>
+                                      {isMin && (
+                                        <span className="text-[8.5px] font-extrabold text-emerald-800 bg-emerald-100 px-1 py-0.2 rounded">
+                                          Min
+                                        </span>
+                                      )}
+                                      {isMax && (
+                                        <span className="text-[8.5px] font-extrabold text-rose-800 bg-rose-100 px-1 py-0.2 rounded">
+                                          Max
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span
+                                      className={`text-[11px] shrink-0 font-bold ${
+                                        isMin ? "text-emerald-700" : isMax ? "text-rose-700" : "text-slate-900"
+                                      }`}
+                                    >
+                                      Rp {m.price > 0 ? m.price.toLocaleString("id-ID") : "-"}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
+
+              {/* Table Footer Actions: Pagination */}
+              <div className="p-space-md bg-surface-subtle/30 flex flex-col sm:flex-row items-center justify-between gap-space-sm border-t border-border-subtle/40">
+                <div className="flex items-center gap-space-xs text-body-sm text-text-secondary text-xs sm:text-sm">
+                  <span>
+                    Menampilkan{" "}
+                    <strong className="text-on-surface font-bold">
+                      {filteredTableRows.length === 0
+                        ? 0
+                        : (tableCurrentPage - 1) * TABLE_ITEMS_PER_PAGE + 1}
+                      –
+                      {Math.min(tableCurrentPage * TABLE_ITEMS_PER_PAGE, filteredTableRows.length)}
+                    </strong>{" "}
+                    dari <strong className="text-on-surface font-bold">{filteredTableRows.length}</strong> komoditas
+                  </span>
+                </div>
+
+                {totalTablePages > 1 && (
+                  <div className="flex items-center gap-1 bg-surface-card p-1 rounded-xl border border-border-subtle shadow-xs">
+                    <button
+                      onClick={() => setTableCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={tableCurrentPage === 1}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                      title="Halaman Sebelumnya"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">chevron_left</span>
+                      <span className="hidden sm:inline">Sebelumnya</span>
+                    </button>
+
+                    {Array.from({ length: totalTablePages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setTableCurrentPage(page)}
+                        className={`w-7.5 h-7.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                          tableCurrentPage === page
+                            ? "bg-primary text-white shadow-xs"
+                            : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setTableCurrentPage((p) => Math.min(totalTablePages, p + 1))}
+                      disabled={tableCurrentPage === totalTablePages}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-subtle cursor-pointer flex items-center gap-1 text-text-secondary hover:text-text-primary h-7.5"
+                      title="Halaman Berikutnya"
+                    >
+                      <span className="hidden sm:inline">Berikutnya</span>
+                      <span className="material-symbols-outlined text-[15px]">chevron_right</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+
             </div>
           </section>
         </div>
