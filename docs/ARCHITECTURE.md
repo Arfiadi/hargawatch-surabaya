@@ -232,8 +232,8 @@ hargawatch-surabaya/
 │   ├── PRD_HargaWatch_v2.md        # Product Requirements Document (Production v2.0)
 │   └── Evaluasi_Struktur_Proyek.md # Catatan evaluasi sebelum restrukturisasi
 │
-├── PROJECT_RULES.md                # Aturan koding ketat untuk AI Agent
-├── ROADMAP.md                      # Status proyek & backlog mendesak
+├── AGENTS.md                       # Kontrak operasional & aturan kerja AI Agent
+├── README.md                       # Dokumentasi utama proyek & ringkasan arsitektur
 ├── requirements.txt                # Semua dependensi (backward compatibility)
 ├── requirements-pipeline.txt       # Dependensi khusus data pipeline
 └── requirements-ml.txt             # Dependensi khusus machine learning
