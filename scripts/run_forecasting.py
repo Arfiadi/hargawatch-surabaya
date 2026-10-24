@@ -258,22 +258,11 @@ def train_and_forecast_commodity(
 
 def upsert_to_supabase(df_forecast: pd.DataFrame, df_ews: pd.DataFrame):
     """Upserts forecasts and early warning scores to Supabase."""
-    load_dotenv(BASE_DIR / ".env")
-    host = os.getenv("SUPABASE_HOST")
-    if not host or host == "aws-0-ap-northeast-1.pooler.supabase.com":
-        print("[WARN] Supabase credentials not found or placeholder in .env. Skipping cloud ingest.")
-        return
-
     try:
-        import psycopg2
+        from src.utils.ingest_supabase import koneksi
         from psycopg2.extras import execute_values
 
-        port = os.getenv("SUPABASE_PORT", "6543")
-        conn = psycopg2.connect(
-            host=host, port=port, dbname=os.getenv("SUPABASE_DB", "postgres"),
-            user=os.getenv("SUPABASE_USER"), password=os.getenv("SUPABASE_PASSWORD"),
-            sslmode="require", connect_timeout=15
-        )
+        conn = koneksi()
         cur = conn.cursor()
 
         # 1. Upsert fact_forecast

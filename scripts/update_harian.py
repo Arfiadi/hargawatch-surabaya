@@ -25,6 +25,14 @@ from datetime import datetime
 from pathlib import Path
 import sys
 
+# Ensure UTF-8 output on Windows terminals to prevent UnicodeEncodeError
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.pipeline.ingestion import (
@@ -62,7 +70,7 @@ def main(argv=None):
         conn = koneksi()
     except Exception as e:
         err_msg = f"🚨 *[HargaWatch Alert]* Gagal koneksi ke Supabase ({tgl}):\n`{e}`"
-        print(err_msg)
+        print(f"[ERROR] Gagal koneksi ke Supabase ({tgl}): {e}")
         send_telegram_alert(err_msg)
         return 1
 
@@ -91,12 +99,12 @@ def main(argv=None):
             n1 = upsert(cur, UPSERT_PASAR, rows_pasar)
             n2 = upsert(cur, UPSERT_PRODUSEN, rows_prod)
             conn.commit()
-            print(f"✅ Upsert fact_harga_pasar    : {n1} baris ke Supabase")
-            print(f"✅ Upsert fact_harga_produsen : {n2} baris ke Supabase")
+            print(f"[SUCCESS] Upsert fact_harga_pasar    : {n1} baris ke Supabase")
+            print(f"[SUCCESS] Upsert fact_harga_produsen : {n2} baris ke Supabase")
 
             if not rows_pasar and not rows_prod:
                 warn_msg = f"⚠️ *[HargaWatch Info]* Tidak ada data scraped untuk {tgl} (mis. libur). Selesai tanpa perubahan."
-                print(warn_msg)
+                print(f"[WARN] Tidak ada data scraped untuk {tgl} (mis. libur). Selesai tanpa perubahan.")
                 send_telegram_alert(warn_msg)
                 return 0
 
@@ -115,7 +123,7 @@ def main(argv=None):
         n_gagal = int(gagal_pasar) + int(gagal_prod)
         if n_gagal:
             msg_gagal = f"🚨 *[HargaWatch Alert]* {n_gagal} sumber gagal di-scrape pada {tgl}."
-            print(f"\nSELESAI DENGAN GAGAL: {msg_gagal} (exit 1)")
+            print(f"\n[FAILED] {n_gagal} sumber gagal di-scrape pada {tgl}. (exit 1)")
             send_telegram_alert(msg_gagal)
             return 1
 
@@ -133,7 +141,7 @@ def main(argv=None):
         return 0
     except Exception as e:
         err_msg = f"🚨 *[HargaWatch Error]* Pipeline update harian gagal pada {tgl}:\n`{str(e)[:400]}`"
-        print(err_msg)
+        print(f"[ERROR] Pipeline update harian gagal pada {tgl}: {e}")
         send_telegram_alert(err_msg)
         return 1
     finally:
