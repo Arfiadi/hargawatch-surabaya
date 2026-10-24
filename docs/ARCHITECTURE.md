@@ -229,7 +229,7 @@ hargawatch-surabaya/
 │
 ├── docs/                           # 📖 Dokumentasi Proyek
 │   ├── ARCHITECTURE.md             # (File ini) Peta arsitektur & struktur direktori
-│   ├── PRD_HargaWatch.md           # Product Requirements Document
+│   ├── PRD_HargaWatch_v2.md        # Product Requirements Document (Production v2.0)
 │   └── Evaluasi_Struktur_Proyek.md # Catatan evaluasi sebelum restrukturisasi
 │
 ├── PROJECT_RULES.md                # Aturan koding ketat untuk AI Agent
