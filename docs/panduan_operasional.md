@@ -1,7 +1,7 @@
 # Panduan Operasional & Standard Operating Procedure (SOP)
 ## Pipeline Produksi Harian HargaWatch Surabaya
 
-Dokumen ini adalah **SOP resmi dan Runbook Operasional** untuk menjalankan, memonitor, dan memelihara pipeline data, peramalan harga pangan (*forecasting*), serta sistem peringatan dini (*Early Warning System*) Kota Surabaya.
+Dokumen ini adalah **SOP resmi dan Runbook Operasional** untuk menjalankan, memonitor, dan memelihara pipeline data, peramalan harga pangan (*forecasting*), serta sistem peringatan dini adaptif (*Adaptive Early Warning System*) Kota Surabaya.
 
 ---
 
@@ -11,20 +11,20 @@ Pipeline operasional berjalan setiap hari secara otomatis tanpa intervensi manua
 
 ```mermaid
 flowchart TD
-    subgraph Eksekusi Pagi [Pukul 06:00 AM]
+    subgraph Eksekusi Pagi [Pukul 06:00 AM WIB]
         Bat[run_pipeline.bat] --> PyMaster[scripts/run_daily_pipeline.py]
     end
 
-    subgraph Tahap 1: Data Engineering
+    subgraph Tahap 1: Data Engineering & Ingestion
         PyMaster -->|Step 1| S1[scripts/update_harian.py]
-        S1 -->|Scrape| Web[SISKAPERBAPO & OpenMeteo]
-        S1 -->|Pembersihan & Ffill| Silver[(Supabase: fact_harga_pasar)]
+        S1 -->|RobustDataFetcher Auto-Retry| Web[SISKAPERBAPO Jatim]
+        S1 -->|Forward-Fill Imputation| Silver[(Supabase: fact_harga_pasar & fact_harga_produsen)]
     end
 
-    subgraph Tahap 2: AI & Analytics
+    subgraph Tahap 2: AI Forecasting & Adaptive EWS
         PyMaster -->|Step 2| S2["scripts/run_forecasting.py --from-db"]
-        S2 -->|Muat Model .pkl Lokal| ModelDir[models/forecasting/]
-        S2 -->|Prediksi 14 Hari & EWS 20-20-20-40| Gold[(Supabase: fact_forecast & fact_early_warning)]
+        S2 -->|Model Champion Registry| ModelDir[models/forecasting/registry.json]
+        S2 -->|Prediksi 14 Hari & EWS Adaptif 4-Pilar| Gold[(Supabase: fact_forecast & fact_early_warning)]
     end
 
     subgraph Tahap 3: Observability & Alerting
@@ -37,11 +37,11 @@ flowchart TD
     end
 ```
 
-### Estimasi Waktu Eksekusi:
-* **Step 1 (Scraping & Ingest):** ~30 – 45 detik
-* **Step 2 (Forecasting & EWS):** ~10 – 15 detik *(karena model `.pkl` sudah siap pakai)*
-* **Step 3 (Telegram Alerting):** ~2 – 5 detik
-* **Total Waktu Pipeline:** **± 1 hingga 1,5 menit saja.**
+### Estimasi Waktu Eksekusi (Benchmark Aktual CPU Lokal):
+* **Step 1 (Scraping, Fetcher Retry, & Ingest):** ~30 – 45 detik
+* **Step 2 (Forecasting 14 Hari & Adaptive EWS Scoring):** ~1,5 – 2 menit *(memproses proyeksi multi-horizon & 42 matriks risiko pasar)*
+* **Step 3 (Telegram Alerting & Evaluation):** ~2 – 5 detik
+* **Total Waktu Pipeline:** **± 2 hingga 2,5 menit saja.**
 
 ---
 
@@ -79,65 +79,58 @@ DATABASE_URL=postgresql://postgres.xxx:pass@aws-0-ap-southeast-1.pooler.supabase
 TELEGRAM_BOT_TOKEN=token_bot_anda
 TELEGRAM_CHAT_ID=id_grup_atau_channel_anda
 
-# MLOps Weights & Biases (Opsional, sudah ada fallback lokal)
+# MLOps Weights & Biases (Opsional, sudah ada fallback lokal offline)
 WANDB_API_KEY=kunci_api_wandb_anda
 WANDB_PROJECT=hargawatch-surabaya
 ```
 
-### Langkah 3: Ekspor Model Champion Lokal (Sangat Penting)
-Agar proses forecasting harian berjalan instan tanpa perlu melatih ulang dari nol setiap pagi, jalankan perintah ini satu kali:
+### Langkah 3: Ekspor Model Champion & Sinkronisasi Registri
+Agar proses forecasting harian berjalan instan tanpa perlu melatih ulang dari nol setiap pagi, seluruh artefak model biner (`.pkl`) dan konfigurasinya telah terdaftar di `models/forecasting/registry.json`.
+
+Jika ingin melatih ulang atau memperbarui model champion untuk seluruh **38 komoditas**:
 ```powershell
+# Mode Cepat (Paralel Multi-Core 16 Worker):
+.\.venv\Scripts\python scripts/run_parallel_commodity_experiments.py --workers 4
+
+# Atau ekspor champion prioritas strategis:
 .\.venv\Scripts\python scripts/export_champion_models.py
 ```
 Perintah ini akan secara otomatis:
-1. Melatih model juara (*LightGBM* dan *CatBoost*) pada data historis lengkap.
-2. Menyimpan artefak model biner ke folder `models/forecasting/` (`lightgbm_50_h7.pkl`, `catboost_39_h7.pkl`, `catboost_16_h7.pkl`, `lightgbm_10_h7.pkl`).
-3. Membuat master pemetaan di `models/forecasting/registry.json`.
+1. Melatih arsitektur champion terpilih (*LightGBM*, *CatBoost*, *XGBoost*, atau *Naive Last Value / SMA*) pada data historis lengkap.
+2. Menyimpan artefak model biner ke folder `models/forecasting/`.
+3. Memperbarui registri model champion `models/forecasting/registry.json` dan metadata `config/commodities.json`.
 
 ---
 
 ## 3. Otomatisasi Harian dengan Windows Task Scheduler
 
-Agar laptop menjalankan scraping dan peramalan secara otomatis setiap hari tanpa perlu membuka VSCode atau Terminal, ikuti konfigurasi resmi Windows Task Scheduler berikut:
+Agar laptop/server menjalankan scraping dan peramalan secara otomatis setiap hari tanpa perlu membuka VSCode atau Terminal:
 
-### Langkah 1: Buka Task Scheduler
-1. Tekan tombol **Windows + R** pada keyboard.
-2. Ketik **`taskschd.msc`** lalu tekan **Enter**.
+### Metode Cepat: Otomasi PowerShell (Direkomendasikan)
+Cukup buka PowerShell sebagai **Administrator** di folder proyek, lalu jalankan:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/setup_task_scheduler.ps1
+```
+Skrip ini akan secara otomatis mendaftarkan task harian bernama `HargaWatch_Daily_Pipeline` pada pukul **06:00 AM WIB** lengkap dengan opsi anti-gagal (*run as soon as possible after missed*).
 
-### Langkah 2: Buat Basic Task Baru
-1. Pada panel sebelah kanan (*Actions*), klik **Create Basic Task...**
-2. **Name:** `HargaWatch_Daily_Pipeline`
-3. **Description:** `Otomatisasi scraping, forecasting, dan Telegram alerting HargaWatch Surabaya`
-4. Klik **Next**.
-
-### Langkah 3: Tentukan Jadwal (Trigger)
-1. Pilih opsi **Daily** (Harian), lalu klik **Next**.
-2. **Start Time:** Atur pada pukul **06:00:00 AM** (pagi hari, sebelum pasar buka dan data kemarin sudah lengkap di server provinsi).
-3. **Recur every:** `1 days`.
-4. Klik **Next**.
-
-### Langkah 4: Tentukan Aksi Program (Action)
-1. Pilih **Start a program**, lalu klik **Next**.
-2. **Program/script:** Klik tombol **Browse...** dan pilih file batch:
-   ```text
-   D:\...\hargawatch-surabaya\run_pipeline.bat
-   ```
-3. **Start in (optional) — WAJIB DIISI:** Masukkan path absolut folder proyek Anda (tanpa tanda kutip), contohnya:
-   ```text
-   D:\ARFI\Kuliah\Project\project-semester5\hargawatch-surabaya
-   ```
-   *(Peringatan: Bagian ini wajib diisi agar Windows mengenali lokasi file log dan modul Python).*
-4. Klik **Next**, lalu klik **Finish**.
-
-### Langkah 5: Pengaturan Anti-Gagal (Sangat Direkomendasikan)
-1. Pada daftar task, klik ganda task **`HargaWatch_Daily_Pipeline`** yang baru saja dibuat.
-2. **Tab General:** Centang opsi **Run with highest privileges**.
-3. **Tab Settings (Kunci Keandalan):**
+### Metode Manual (GUI Windows):
+1. Tekan tombol **Windows + R** pada keyboard, ketik **`taskschd.msc`** lalu tekan **Enter**.
+2. Pada panel sebelah kanan (*Actions*), klik **Create Basic Task...**
+   * **Name:** `HargaWatch_Daily_Pipeline`
+   * **Trigger:** Daily (Harian), atur jam **06:00:00 AM**.
+   * **Action:** Start a program.
+   * **Program/script:** Pilih file batch:
+     ```text
+     D:\...\hargawatch-surabaya\run_pipeline.bat
+     ```
+   * **Start in (optional) — WAJIB DIISI:** Masukkan path absolut folder proyek Anda (tanpa tanda kutip), contoh:
+     ```text
+     D:\ARFI\Kuliah\Project\project-semester5\hargawatch-surabaya
+     ```
+3. **Pengaturan Anti-Gagal (Tab Settings):**
+   * Klik ganda task yang baru dibuat.
    * Centang opsi: **`Run task as soon as possible after a scheduled start is missed`**.
-   * *Manfaat:* Jika laptop mati pada jam 06:00 pagi dan baru dinyalakan jam 08:00, Windows akan **langsung otomatis mengejar eksekusi pipeline** detik itu juga!
-4. **Tab Conditions:**
-   * Di bagian *Network*, centang **Start only if the following network connection is available** dan pilih **Any connection**.
-5. Klik **OK** untuk menyimpan perubahan.
+   * *Manfaat:* Jika laptop mati pada jam 06:00 pagi dan baru dinyalakan jam 08:00, Windows akan **langsung otomatis mengejar eksekusi pipeline**.
 
 ---
 
@@ -155,36 +148,36 @@ Setelah jam 06:00 pagi (atau setelah laptop dinyalakan), lakukan pengecekan sede
    [FINISHED] Exit code: 0 at ...
    ```
 4. **Tanda Setiap Tahap Berhasil:**
-   * `--- SUCCESS: DATA_SCRAPING ---` ➔ Data 6 pasar berhasil ditarik & di-upsert ke Supabase.
-   * `--- SUCCESS: FORECASTING_AND_EWS ---` ➔ Prediksi 14 hari & skor EWS 20-20-20-40 terunggah.
+   * `--- SUCCESS: DATA_SCRAPING ---` ➔ Data 6 pasar berhasil ditarik via `RobustDataFetcher` & di-upsert ke Supabase (`fact_harga_pasar`).
+   * `--- SUCCESS: FORECASTING_AND_EWS ---` ➔ Prediksi 14 hari & matriks risiko EWS 4-pilar terunggah ke Supabase (`fact_forecast` & `fact_early_warning`).
    * `--- SUCCESS: DISPATCH_TELEGRAM_ALERTS ---` ➔ Evaluasi anomali selesai (mengirim alert jika ada status WASPADA/TINGGI).
 
 ---
 
 ## 5. Panduan Tanggap Darurat (Troubleshooting Runbook)
 
-Jika terjadi kendala operasional, berikut adalah panduan tindakan cepatnya:
-
 ### Kasus A: Server SISKAPERBAPO Sedang Down / Timeout
 * **Gejala:** Step scraping mengeluarkan log timeout atau gagal mengambil tanggal kemarin.
-* **Solusi Otomatis:** Sistem menerapkan *bounded forward-fill* sehingga data tidak akan kosong.
+* **Solusi Otomatis:** Scraper menggunakan [`RobustDataFetcher`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/src/pipeline/fetcher.py) yang melakukan *auto-retry 3 kali* dengan *exponential backoff*. Jika seluruh retry gagal, sistem menerapkan *bounded forward-fill* (limit 7 hari) sehingga data deret waktu tidak akan berlubang.
 * **Solusi Manual (Catch-Up):** Begitu server SISKAPERBAPO kembali pulih pada siang/sore hari, jalankan skrip pengisian tanggal tertinggal:
   ```powershell
   .\.venv\Scripts\python scripts/update_catchup.py
   ```
 
 ### Kasus B: Koneksi Internet Lambat / Supabase Timeout
-* **Gejala:** Log mencetak kegagalan koneksi database.
-* **Solusi:** Sistem telah dilengkapi *Local CSV Caching*. Prediksi forecasting akan otomatis menggunakan data cadangan lokal `data/processed/fact_harga_pasar.csv` tanpa menghentikan pipeline (*zero-downtime*).
+* **Gejala:** Log mencetak peringatan koneksi database.
+* **Solusi:** 
+  1. Modul [`src/utils/ingest_supabase.py`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/src/utils/ingest_supabase.py) memiliki *automatic port fallback* (mencoba port 6543 Transaction Pooler, lalu otomatis berpindah ke port 5432 Session Pooler jika terjadi kegagalan koneksi).
+  2. Sistem juga dilengkapi *Local CSV Caching*. Prediksi forecasting akan otomatis menggunakan data cadangan lokal `data/processed/fact_harga_pasar.csv` tanpa menghentikan pipeline (*zero-downtime*).
 
 ### Kasus C: Notifikasi Telegram Gagal Terkirim
-* **Gejala:** Log mencetak `[WARNING] Alert dispatcher encountered errors`.
+* **Gejala:** Log mencetak `[Alerting] [FAILED] Gagal mengirim notifikasi Telegram`.
 * **Solusi:** 
   1. Periksa apakah `TELEGRAM_BOT_TOKEN` atau `TELEGRAM_CHAT_ID` di file `.env` sudah benar.
-  2. Perlu diingat bahwa error Telegram bersifat **Non-Fatal**. Data prediksi dan EWS tetap aman tersimpan di Supabase dan web tetap berjalan normal.
+  2. Perlu diingat bahwa error Telegram bersifat **Non-Fatal**. Data prediksi dan EWS tetap aman tersimpan di Supabase dan dashboard analitik tetap berjalan normal.
 
 ### Kasus D: Uji Coba Manual Cepat (Sanity Check)
-Jika Anda ingin mengetes apakah seluruh alur berjalan lancar tanpa menunggu jam 06:00 pagi:
+Jika Anda ingin mengetes apakah seluruh alur berjalan lancar tanpa menunggu jadwal Task Scheduler:
 * Cukup lakukan **klik ganda (*double-click*) pada file `run_pipeline.bat`**, atau jalankan di terminal:
   ```cmd
   run_pipeline.bat
@@ -194,29 +187,31 @@ Jika Anda ingin mengetes apakah seluruh alur berjalan lancar tanpa menunggu jam 
 
 ## 6. Pemeliharaan Model AI Berkala (Periodic Retraining)
 
-Dalam operasional harian, model `.pkl` yang sudah tersimpan **tidak perlu di-retrain setiap hari** karena model pohon (*GBDT*) bersifat *stateless* dan tetap menerima harga terbaru melalui *lag features*.
+Dalam operasional harian, model `.pkl` yang sudah tersimpan **tidak perlu di-retrain setiap hari** karena model pohon (*GBDT*) bersifat *stateless* dan menerima harga terbaru melalui *lag features*.
 
 ### Kapan Perlu Retraining Ulang?
 * **Rekomendasi:** Cukup **1 bulan sekali** atau **3 bulan sekali**.
-* **Kondisi Khusus:** Jika terjadi perubahan harga ekstrem yang mengubah struktur ekonomi (misalnya: kenaikan harga BBM nasional atau perubahan drastis HET pemerintah).
+* **Kondisi Khusus:** Jika terjadi perubahan harga ekstrem yang mengubah struktur ekonomi makro (misalnya kenaikan harga BBM nasional atau perubahan drastis HET pangan pemerintah).
 
-### Cara Melakukan Retraining & Update Model:
-Cukup jalankan kembali skrip ekspor champion model di terminal:
+### Cara Melakukan Retraining:
+Jalankan runner eksperimen paralel multi-core di terminal:
 ```powershell
-.\.venv\Scripts\python scripts/export_champion_models.py
+.\.venv\Scripts\python scripts/run_parallel_commodity_experiments.py --workers 4 --force-all
 ```
-Skrip ini akan secara otomatis menelan seluruh riwayat harga terbaru hingga hari itu, melatih model dengan bobot mutakhir, dan memperbarui file `.pkl` di folder `models/forecasting/`.
+Skrip ini akan menelan seluruh riwayat harga mutakhir, melatih model dengan bobot terbaru, dan memperbarui seluruh file `.pkl` di folder `models/forecasting/` serta file `models/forecasting/registry.json`.
 
 ---
 
 ## 7. Rangkuman Perintah Cepat (Cheat Sheet)
 
-| Kebutuhan | Perintah Terminal |
+| Kebutuhan Operasional | Perintah Terminal |
 | :--- | :--- |
-| **Menjalankan Pipeline Lengkap** | `run_pipeline.bat` |
-| **Menjalankan Hanya Scraping** | `.\.venv\Scripts\python scripts/update_harian.py` |
-| **Menjalankan Hanya Forecasting & EWS** | `.\.venv\Scripts\python scripts/run_forecasting.py --from-db` |
-| **Menjalankan Hanya Kirim Alert Telegram** | `.\.venv\Scripts\python scripts/generate_daily_alerts.py` |
-| **Memperbarui File Model .pkl Lokal** | `.\.venv\Scripts\python scripts/export_champion_models.py` |
+| **Menjalankan Pipeline Lengkap Harian** | `run_pipeline.bat` |
+| **Menjalankan Hanya Scraping & Ingest Supabase** | `.\.venv\Scripts\python scripts/update_harian.py` |
+| **Menjalankan Hanya Forecasting & EWS Adaptif** | `.\.venv\Scripts\python scripts/run_forecasting.py --from-db` |
+| **Menjalankan Simulasi Lokal (Tanpa Sentuh Cloud)** | `.\.venv\Scripts\python scripts/run_forecasting.py --local-only --horizon 7` |
+| **Mengevaluasi & Mengirim Alert Telegram** | `.\.venv\Scripts\python scripts/generate_daily_alerts.py` |
 | **Mengejar Tanggal Data yang Tertinggal** | `.\.venv\Scripts\python scripts/update_catchup.py` |
-| **Menjalankan Seluruh Unit & Stress Tests** | `.\.venv\Scripts\pytest tests/` |
+| **Melatih Ulang 38 Model Champion (Paralel)** | `.\.venv\Scripts\python scripts/run_parallel_commodity_experiments.py --workers 4` |
+| **Memasang Otomasi Windows Task Scheduler** | `powershell -ExecutionPolicy Bypass -File scripts/setup_task_scheduler.ps1` |
+| **Menjalankan Seluruh Unit Test Suite (79 Tests)** | `.\.venv\Scripts\pytest tests/` |
