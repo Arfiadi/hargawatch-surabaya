@@ -81,12 +81,26 @@ def load_champion_from_registry(
     if model_path_str:
         p = Path(model_path_str)
         if p.exists():
-            resolved_path = p
+            resolved_path = p.resolve()
         elif (MODEL_DIR / p.name).exists():
-            resolved_path = MODEL_DIR / p.name
+            resolved_path = (MODEL_DIR / p.name).resolve()
 
     if resolved_path and resolved_path.exists():
         try:
+            # Security: Path traversal containment check
+            base_resolved = BASE_DIR.resolve()
+            if not str(resolved_path).startswith(str(base_resolved)):
+                raise PermissionError(f"Security violation: model path {resolved_path} outside {base_resolved}")
+
+            # Security: SHA-256 integrity validation if digest is provided in registry
+            expected_sha256 = entry.get("sha256")
+            if expected_sha256:
+                import hashlib
+                with open(resolved_path, "rb") as f:
+                    actual_sha256 = hashlib.sha256(f.read()).hexdigest()
+                if actual_sha256 != expected_sha256:
+                    raise ValueError(f"Integrity check failed for {resolved_path.name}: expected {expected_sha256}, got {actual_sha256}")
+
             with open(resolved_path, "rb") as f:
                 model_obj = pickle.load(f)
             return model_name, model_obj, features
@@ -103,7 +117,11 @@ def load_champion_from_registry(
         download_dir = artifact.download()
         pkl_files = list(Path(download_dir).glob("*.pkl"))
         if pkl_files:
-            with open(pkl_files[0], "rb") as f:
+            target_pkl = pkl_files[0].resolve()
+            # Security: Path containment check for downloaded artifact
+            if not str(target_pkl).startswith(str(Path(download_dir).resolve())):
+                raise PermissionError(f"Security violation: artifact path {target_pkl} outside download directory")
+            with open(target_pkl, "rb") as f:
                 model_obj = pickle.load(f)
             return model_name, model_obj, features
     except Exception:

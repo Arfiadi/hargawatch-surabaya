@@ -21,10 +21,12 @@ data/raw/
 data/processed/
 data/**/*.json
 
-# ML & Experiment Logs
+# ML & Experiment Logs & Model Blobs
 logs/
 catboost_info/
 wandb/
+models/**/*.pkl
+*.pkl
 
 # IDE & OS
 .vscode/
