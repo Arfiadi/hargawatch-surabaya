@@ -3,9 +3,9 @@
     "komoditas_id": 50,
     "commodity": "Cabe Rawit Merah",
     "horizon": 7,
-    "model_name": "XGBoost p50",
-    "wape_pct": 14.97,
-    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\xgboost_50_h7.pkl",
+    "model_name": "Catboost p50",
+    "wape_pct": 14.69,
+    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\catboost_50_h7.pkl",
     "features": [
       "pasar_id",
       "price_current",
@@ -20,23 +20,26 @@
       "rolling_std_14d",
       "pct_change_1d",
       "pct_change_7d",
-      "keputran_price_lag_1",
-      "keputran_price_lag_2",
-      "keputran_price_lag_3",
       "target_bulan",
       "target_is_libur_nasional",
       "target_is_ramadan",
       "target_is_pra_ramadan",
-      "target_hari_ke_idulfitri"
+      "target_hari_ke_idulfitri",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3",
+      "spread_keputran_ratio",
+      "volatility_acceleration",
+      "momentum_ratio_3d"
     ],
-    "updated_at": "2026-10-19T15:39:01.373303"
+    "updated_at": "2026-10-26T10:37:18.868563"
   },
   "39_h7": {
     "komoditas_id": 39,
     "commodity": "Bawang Merah",
     "horizon": 7,
-    "model_name": "CatBoost p50",
-    "wape_pct": 8.02,
+    "model_name": "Catboost p50",
+    "wape_pct": 7.87,
     "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\catboost_39_h7.pkl",
     "features": [
       "pasar_id",
@@ -52,11 +55,19 @@
       "rolling_std_14d",
       "pct_change_1d",
       "pct_change_7d",
+      "target_bulan",
+      "target_is_libur_nasional",
+      "target_is_ramadan",
+      "target_is_pra_ramadan",
+      "target_hari_ke_idulfitri",
       "keputran_price_lag_1",
       "keputran_price_lag_2",
-      "keputran_price_lag_3"
+      "keputran_price_lag_3",
+      "spread_keputran_ratio",
+      "volatility_acceleration",
+      "momentum_ratio_3d"
     ],
-    "updated_at": "2026-10-19T15:41:16.236396"
+    "updated_at": "2026-10-26T10:37:27.943620"
   },
   "16_h7": {
     "komoditas_id": 16,
@@ -218,9 +229,9 @@
     "komoditas_id": 38,
     "commodity": "Cabe Merah Besar",
     "horizon": 7,
-    "model_name": "XGBoost p50",
-    "wape_pct": 13.63,
-    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\xgboost_38_h7.pkl",
+    "model_name": "Catboost p50",
+    "wape_pct": 13.48,
+    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\catboost_38_h7.pkl",
     "features": [
       "pasar_id",
       "price_current",
@@ -235,24 +246,27 @@
       "rolling_std_14d",
       "pct_change_1d",
       "pct_change_7d",
-      "keputran_price_lag_1",
-      "keputran_price_lag_2",
-      "keputran_price_lag_3",
       "target_bulan",
       "target_is_libur_nasional",
       "target_is_ramadan",
       "target_is_pra_ramadan",
-      "target_hari_ke_idulfitri"
+      "target_hari_ke_idulfitri",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3",
+      "spread_keputran_ratio",
+      "volatility_acceleration",
+      "momentum_ratio_3d"
     ],
-    "updated_at": "2026-10-23T22:25:35.987081"
+    "updated_at": "2026-10-26T10:37:46.916907"
   },
   "37_h7": {
     "komoditas_id": 37,
     "commodity": "Cabe Merah Keriting",
     "horizon": 7,
-    "model_name": "Naive Last Value",
-    "wape_pct": 12.5,
-    "model_path": null,
+    "model_name": "Catboost p50",
+    "wape_pct": 12.99,
+    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\catboost_37_h7.pkl",
     "features": [
       "pasar_id",
       "price_current",
@@ -267,24 +281,27 @@
       "rolling_std_14d",
       "pct_change_1d",
       "pct_change_7d",
-      "keputran_price_lag_1",
-      "keputran_price_lag_2",
-      "keputran_price_lag_3",
       "target_bulan",
       "target_is_libur_nasional",
       "target_is_ramadan",
       "target_is_pra_ramadan",
-      "target_hari_ke_idulfitri"
+      "target_hari_ke_idulfitri",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3",
+      "spread_keputran_ratio",
+      "volatility_acceleration",
+      "momentum_ratio_3d"
     ],
-    "updated_at": "2026-10-23T22:28:26.727881"
+    "updated_at": "2026-10-26T10:37:56.266959"
   },
   "46_h7": {
     "komoditas_id": 46,
     "commodity": "Tomat Merah",
     "horizon": 7,
-    "model_name": "Naive Last Value",
-    "wape_pct": 11.97,
-    "model_path": null,
+    "model_name": "Catboost p50",
+    "wape_pct": 11.65,
+    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\catboost_46_h7.pkl",
     "features": [
       "pasar_id",
       "price_current",
@@ -299,16 +316,19 @@
       "rolling_std_14d",
       "pct_change_1d",
       "pct_change_7d",
-      "keputran_price_lag_1",
-      "keputran_price_lag_2",
-      "keputran_price_lag_3",
       "target_bulan",
       "target_is_libur_nasional",
       "target_is_ramadan",
       "target_is_pra_ramadan",
-      "target_hari_ke_idulfitri"
+      "target_hari_ke_idulfitri",
+      "keputran_price_lag_1",
+      "keputran_price_lag_2",
+      "keputran_price_lag_3",
+      "spread_keputran_ratio",
+      "volatility_acceleration",
+      "momentum_ratio_3d"
     ],
-    "updated_at": "2026-10-23T22:31:20.223248"
+    "updated_at": "2026-10-26T10:37:37.224458"
   },
   "47_h7": {
     "komoditas_id": 47,

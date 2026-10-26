@@ -6,3 +6,16 @@ timestamp	commit_hash	komoditas_id	commodity	horizon	model_family	wape_pct	mae_r
 2026-10-23 23:53:00	f401a40	48	Buncis	7	XGBoost p50 (Baseline)	9.57	1390.00	71.7	61.4	BASELINE	0.0	Starting Champion in registry.json (Interval calibration target)
 2026-10-23 23:53:00	f401a40	38	Cabe Merah Besar	7	XGBoost p50 (Baseline)	13.63	5059.00	76.1	26.3	BASELINE	0.0	Starting Champion in registry.json
 2026-10-26 09:54:54	f401a40	50	Cabe Rawit Merah	7	CatBoost MultiQuantile	14.69	7662.09	75.89	45.39	SUCCESS	345.24	
+2026-10-26 10:11:14	976ed46	39	Bawang Merah	7	CatBoost MultiQuantile	7.87	2921.15	73.76	28.72	SUCCESS	659.46	
+2026-10-26 10:11:16	976ed46	37	Cabe Merah Keriting	7	CatBoost MultiQuantile	13.62	5434.01	76.24	36.88	SUCCESS	661.06	
+2026-10-26 10:11:16	976ed46	50	Cabe Rawit Merah	7	CatBoost MultiQuantile	14.69	7662.09	75.89	45.39	SUCCESS	661.59	
+2026-10-26 10:11:21	976ed46	38	Cabe Merah Besar	7	CatBoost MultiQuantile	13.48	4960.56	78.72	39.72	SUCCESS	666.66	
+2026-10-26 10:11:23	976ed46	48	BUNCIS	7	CatBoost MultiQuantile	10.58	1540.65	71.63	36.88	SUCCESS	668.7	
+2026-10-26 10:11:25	976ed46	46	Tomat Merah	7	CatBoost MultiQuantile	11.8	1563.68	71.99	28.72	SUCCESS	670.13	
+2026-10-26 10:24:11	976ed46	48	BUNCIS	7	Candidate					ERROR	4.48	Training/Prediction failed at origin 2025-01-01: 0.1
+2026-10-26 10:35:08	976ed46	39	Bawang Merah	7	CatBoost MultiQuantile (Calibrated)	8.05	2989.52	79.08	31.91	SUCCESS	661.92	
+2026-10-26 10:35:09	976ed46	50	Cabe Rawit Merah	7	CatBoost MultiQuantile (Calibrated)	14.98	7810.11	81.56	41.13	SUCCESS	662.84	
+2026-10-26 10:35:10	976ed46	37	Cabe Merah Keriting	7	CatBoost Shrinkage Blend	12.99	5182.54	81.56	36.17	SUCCESS	663.97	
+2026-10-26 10:35:14	976ed46	46	Tomat Merah	7	CatBoost MultiQuantile (Calibrated)	11.65	1544.75	77.66	27.66	SUCCESS	667.36	
+2026-10-26 10:35:14	976ed46	38	Cabe Merah Besar	7	CatBoost MultiQuantile (Calibrated)	13.53	4978.81	84.04	42.2	SUCCESS	667.53	
+2026-10-26 10:36:40	976ed46	48	BUNCIS	7	XGBoost Quantile (Calibrated)	10.55	1536.44	79.43	34.04	SUCCESS	63.8	

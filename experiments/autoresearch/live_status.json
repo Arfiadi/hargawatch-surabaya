@@ -1,0 +1,77 @@
+{
+  "updated_at": "2026-10-26 10:36:40",
+  "commodities": {
+    "50": {
+      "name": "Cabe Rawit Merah",
+      "current_window": 47,
+      "total_windows": 47,
+      "progress_pct": 100.0,
+      "status": "DONE",
+      "updated_at": "10:35:09",
+      "wape_pct": 14.98,
+      "picp_pct": 81.56,
+      "da_pct": 41.13,
+      "elapsed_sec": 662.84
+    },
+    "39": {
+      "name": "Bawang Merah",
+      "current_window": 47,
+      "total_windows": 47,
+      "progress_pct": 100.0,
+      "status": "DONE",
+      "updated_at": "10:35:08",
+      "wape_pct": 8.05,
+      "picp_pct": 79.08,
+      "da_pct": 31.91,
+      "elapsed_sec": 661.92
+    },
+    "46": {
+      "name": "Tomat Merah",
+      "current_window": 47,
+      "total_windows": 47,
+      "progress_pct": 100.0,
+      "status": "DONE",
+      "updated_at": "10:35:14",
+      "wape_pct": 11.65,
+      "picp_pct": 77.66,
+      "da_pct": 27.66,
+      "elapsed_sec": 667.36
+    },
+    "37": {
+      "name": "Cabe Merah Keriting",
+      "current_window": 47,
+      "total_windows": 47,
+      "progress_pct": 100.0,
+      "status": "DONE",
+      "updated_at": "10:35:10",
+      "wape_pct": 12.99,
+      "picp_pct": 81.56,
+      "da_pct": 36.17,
+      "elapsed_sec": 663.97
+    },
+    "48": {
+      "name": "BUNCIS",
+      "current_window": 47,
+      "total_windows": 47,
+      "progress_pct": 100.0,
+      "status": "DONE",
+      "updated_at": "10:36:40",
+      "wape_pct": 10.55,
+      "picp_pct": 79.43,
+      "da_pct": 34.04,
+      "elapsed_sec": 63.8
+    },
+    "38": {
+      "name": "Cabe Merah Besar",
+      "current_window": 47,
+      "total_windows": 47,
+      "progress_pct": 100.0,
+      "status": "DONE",
+      "updated_at": "10:35:14",
+      "wape_pct": 13.53,
+      "picp_pct": 84.04,
+      "da_pct": 42.2,
+      "elapsed_sec": 667.53
+    }
+  }
+}

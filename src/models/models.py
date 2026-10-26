@@ -247,9 +247,9 @@ class LightGBMForecaster:
                 X_feat[cat_col] = X_feat[cat_col].astype("category")
 
         preds = {}
-        preds["batas_bawah"] = np.round(np.nan_to_num(self.models[0.10].predict(X_feat), nan=0.0)).astype(int)
+        preds["batas_bawah"] = np.round(np.nan_to_num(self.models.get(0.10, self.models.get(sorted(self.models.keys())[0])).predict(X_feat), nan=0.0)).astype(int)
         preds["harga_prediksi"] = np.round(np.nan_to_num(self.models[0.50].predict(X_feat), nan=0.0)).astype(int)
-        preds["batas_atas"] = np.round(np.nan_to_num(self.models[0.90].predict(X_feat), nan=0.0)).astype(int)
+        preds["batas_atas"] = np.round(np.nan_to_num(self.models.get(0.90, self.models.get(sorted(self.models.keys())[-1])).predict(X_feat), nan=0.0)).astype(int)
         
         # Ensure logical ordering: batas_bawah <= harga_prediksi <= batas_atas
         preds["batas_bawah"] = np.minimum(preds["batas_bawah"], preds["harga_prediksi"])
@@ -368,9 +368,9 @@ class XGBoostForecaster:
 
         X_feat = self._prepare_features(X, is_training=False)
 
-        raw_10 = np.nan_to_num(self.models[0.10].predict(X_feat), nan=0.0)
+        raw_10 = np.nan_to_num(self.models.get(0.10, self.models.get(sorted(self.models.keys())[0])).predict(X_feat), nan=0.0)
         raw_50 = np.nan_to_num(self.models[0.50].predict(X_feat), nan=0.0)
-        raw_90 = np.nan_to_num(self.models[0.90].predict(X_feat), nan=0.0)
+        raw_90 = np.nan_to_num(self.models.get(0.90, self.models.get(sorted(self.models.keys())[-1])).predict(X_feat), nan=0.0)
 
         preds = {
             "batas_bawah": np.round(np.maximum(0, raw_10)).astype(int),

@@ -58,6 +58,56 @@ CATEGORY_3_COMMODITIES = [
 ]
 
 RESULTS_TSV_PATH = BASE_DIR / "experiments" / "autoresearch" / "results.tsv"
+LIVE_STATUS_PATH = BASE_DIR / "experiments" / "autoresearch" / "live_status.json"
+
+
+def update_live_status(
+    cid: int,
+    name: str,
+    current_window: int,
+    total_windows: int,
+    status: str,
+    metrics: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Process-safe atomic update to live_status.json for real-time observability."""
+    try:
+        LIVE_STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        data = {}
+        if LIVE_STATUS_PATH.exists():
+            try:
+                with open(LIVE_STATUS_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+
+        commodities = data.get("commodities", {})
+        pct = round((current_window / max(total_windows, 1)) * 100.0, 1)
+        entry = {
+            "name": name,
+            "current_window": current_window,
+            "total_windows": total_windows,
+            "progress_pct": pct,
+            "status": status,
+            "updated_at": datetime.datetime.now().strftime("%H:%M:%S"),
+        }
+        if metrics:
+            entry.update({
+                "wape_pct": metrics.get("wape_pct"),
+                "picp_pct": metrics.get("picp_pct"),
+                "da_pct": metrics.get("da_pct"),
+                "elapsed_sec": metrics.get("elapsed_seconds"),
+            })
+        commodities[str(cid)] = entry
+
+        data["updated_at"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data["commodities"] = commodities
+
+        temp_path = LIVE_STATUS_PATH.with_suffix(f".tmp_{cid}")
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        temp_path.replace(LIVE_STATUS_PATH)
+    except Exception:
+        pass
 
 
 def get_git_commit_hash() -> str:
@@ -190,7 +240,13 @@ def evaluate_single_commodity(
     y_high_all: List[float] = []
 
     # 5. Walk-Forward Rolling-Origin Loop
-    for origin_date in eval_dates:
+    total_windows = len(eval_dates)
+    for idx, origin_date in enumerate(eval_dates):
+        update_live_status(cid, cname, idx + 1, total_windows, "RUNNING")
+        if verbose and (idx == 0 or (idx + 1) % 5 == 0 or idx == total_windows - 1):
+            now_str = datetime.datetime.now().strftime("%H:%M:%S")
+            print(f"  [{now_str}] [{cname}] Window {idx+1}/{total_windows} ({origin_date.date()})...", flush=True)
+
         if "target_date" in df.columns:
             train_df = df[df["target_date"] <= origin_date]
         else:
@@ -285,7 +341,7 @@ def evaluate_single_commodity(
     # Hard Constraint Check: PICP >= 75.0%
     picp_passed = picp is not None and picp >= 75.0
 
-    return {
+    res = {
         "komoditas_id": cid,
         "commodity": cname,
         "horizon": horizon,
@@ -302,6 +358,8 @@ def evaluate_single_commodity(
         "num_origins": len(eval_dates),
         "elapsed_seconds": elapsed,
     }
+    update_live_status(cid, cname, total_windows, total_windows, "DONE", res)
+    return res
 
 
 def log_experiment_to_tsv(
@@ -358,6 +416,10 @@ def run_parallel_cluster_evaluation(
     start_all = time.time()
     results: List[Dict[str, Any]] = []
 
+    # Initialize live status
+    for cid, cname in commodities:
+        update_live_status(cid, cname, 0, 47, "QUEUED")
+
     with ProcessPoolExecutor(max_workers=workers) as executor:
         future_to_cid = {
             executor.submit(evaluate_single_commodity, cid, horizon): (cid, cname)
@@ -373,10 +435,11 @@ def run_parallel_cluster_evaluation(
                     print(
                         f"  [OK] [{cid:2d}] {cname:22s} | WAPE: {res['wape_pct']:5.2f}% | "
                         f"PICP: {res['picp_pct']:5.1f}% | DA: {res['da_pct']:4.1f}% | "
-                        f"Time: {res['elapsed_seconds']}s"
+                        f"Time: {res['elapsed_seconds']}s",
+                        flush=True,
                     )
                 else:
-                    print(f"  [FAIL] [{cid:2d}] {cname:22s} | Error: {res.get('error_msg')}")
+                    print(f"  [FAIL] [{cid:2d}] {cname:22s} | Error: {res.get('error_msg')}", flush=True)
 
                 if log_tsv:
                     log_experiment_to_tsv(res, notes=notes)
