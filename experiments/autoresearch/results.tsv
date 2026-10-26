@@ -19,3 +19,6 @@ timestamp	commit_hash	komoditas_id	commodity	horizon	model_family	wape_pct	mae_r
 2026-10-26 10:35:14	976ed46	46	Tomat Merah	7	CatBoost MultiQuantile (Calibrated)	11.65	1544.75	77.66	27.66	SUCCESS	667.36	
 2026-10-26 10:35:14	976ed46	38	Cabe Merah Besar	7	CatBoost MultiQuantile (Calibrated)	13.53	4978.81	84.04	42.2	SUCCESS	667.53	
 2026-10-26 10:36:40	976ed46	48	BUNCIS	7	XGBoost Quantile (Calibrated)	10.55	1536.44	79.43	34.04	SUCCESS	63.8	
+2026-10-26 11:16:38	e395f63	50	Cabe Rawit Merah	7	CatBoost MultiQuantile (Calibrated)	14.92	7779.74	79.79	43.26	SUCCESS	379.3	
+2026-10-26 11:38:08	e395f63	50	Cabe Rawit Merah	7	Deep-GBDT Ensemble (CatBoost + TiDE + XGBoost)	15.02	7834.0	79.43	44.68	SUCCESS	482.53	
+2026-10-26 12:30:03	e395f63	48	BUNCIS	7	Deep-GBDT Ensemble (CatBoost + TiDE + XGBoost)	10.46	1522.44	78.01	29.79	SUCCESS	3033.37	

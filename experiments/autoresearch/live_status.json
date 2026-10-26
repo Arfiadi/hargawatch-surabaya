@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-26 10:36:40",
+  "updated_at": "2026-10-26 12:30:03",
   "commodities": {
     "50": {
       "name": "Cabe Rawit Merah",
@@ -7,11 +7,11 @@
       "total_windows": 47,
       "progress_pct": 100.0,
       "status": "DONE",
-      "updated_at": "10:35:09",
-      "wape_pct": 14.98,
-      "picp_pct": 81.56,
-      "da_pct": 41.13,
-      "elapsed_sec": 662.84
+      "updated_at": "11:38:08",
+      "wape_pct": 15.02,
+      "picp_pct": 79.43,
+      "da_pct": 44.68,
+      "elapsed_sec": 482.53
     },
     "39": {
       "name": "Bawang Merah",
@@ -55,11 +55,11 @@
       "total_windows": 47,
       "progress_pct": 100.0,
       "status": "DONE",
-      "updated_at": "10:36:40",
-      "wape_pct": 10.55,
-      "picp_pct": 79.43,
-      "da_pct": 34.04,
-      "elapsed_sec": 63.8
+      "updated_at": "12:30:03",
+      "wape_pct": 10.46,
+      "picp_pct": 78.01,
+      "da_pct": 29.79,
+      "elapsed_sec": 3033.37
     },
     "38": {
       "name": "Cabe Merah Besar",
