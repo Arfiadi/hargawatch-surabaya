@@ -52,11 +52,52 @@ interface ComparisonRowItem {
   rerata: number;
   disparitasRp: number;
   disparitasPct: number;
+  missingMarkets: number[];
+  reportedCount: number;
+  isRepresentative: boolean;
+  thresholdHigh: number;
+  thresholdMed: number;
   statusClass: string;
   statusBadge: string;
   badgeClass: string;
   dotClass: string;
 }
+
+function getCommodityDisparityThreshold(commodityId: number, name?: string): { high: number; med: number; label: string } {
+  const n = (name || "").toLowerCase();
+
+  // 1. Pangan Pokok Ber-HET Ketat (Beras, Minyak Goreng, Gula) - Ambang batas ketat (>= 6% sudah Tinggi)
+  if ([1, 2, 3, 4, 10, 11, 7].includes(commodityId) || n.includes("beras") || n.includes("minyak") || n.includes("gula")) {
+    return { high: 6, med: 3, label: "Pangan Pokok Ber-HET" };
+  }
+
+  // 2. Hortikultura & Bumbu Volatil (Cabai Rawit, Cabai Merah, Bawang Merah, Bawang Putih) - Variasi wajar s/d 20%
+  if ([50, 51, 52, 39, 49, 41].includes(commodityId) || n.includes("cabai") || n.includes("cabe") || n.includes("bawang")) {
+    return { high: 22, med: 12, label: "Hortikultura Volatil" };
+  }
+
+  // 3. Protein Hewani (Daging Sapi, Daging Ayam, Telur Ayam)
+  if ([12, 13, 14, 15, 16, 17].includes(commodityId) || n.includes("ayam") || n.includes("sapi") || n.includes("telur") || n.includes("daging")) {
+    return { high: 12, med: 6, label: "Protein Hewani" };
+  }
+
+  // 4. Komoditas Umum Lainnya
+  return { high: 15, med: 8, label: "Komoditas Umum" };
+}
+
+const ZONE_MARKETS: Record<string, number[]> = {
+  Pusat: [5, 3], // Keputran, Genteng
+  Selatan: [2],  // Wonokromo
+  Timur: [4, 146], // Pucang Anom, Soponyono
+  Utara: [1],    // Tambahrejo
+};
+
+const ZONE_MARKET_NAMES: Record<string, string> = {
+  Pusat: "Pasar Keputran & Pasar Genteng",
+  Selatan: "Pasar Wonokromo",
+  Timur: "Pasar Pucang Anom & Pasar Soponyono",
+  Utara: "Pasar Tambahrejo",
+};
 
 const ORDERED_GROUPS = [
   "Semua",
@@ -117,10 +158,18 @@ function getCommodityIcon(nama: string): string {
 }
 
 function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
-  const isHigh = d.disparitasPct >= 15;
-  const isMed = d.disparitasPct >= 8 && d.disparitasPct < 15;
+  const threshold = getCommodityDisparityThreshold(d.komoditas_id, d.komoditas);
+  const isHigh = d.disparitasPct >= threshold.high;
+  const isMed = d.disparitasPct >= threshold.med && d.disparitasPct < threshold.high;
   const rawSatuan = d.satuan || "kg";
   const formattedSatuan = rawSatuan.match(/^\d/) ? rawSatuan : `1 ${rawSatuan}`;
+  const isRep = d.isRepresentative !== false;
+
+  let statusBadge = `${d.disparitasPct}% (${isHigh ? "Tinggi" : isMed ? "Sedang" : "Wajar"})`;
+  if (!isRep) {
+    statusBadge = `${d.disparitasPct}% (Data Terbatas)`;
+  }
+
   return {
     komoditas_id: d.komoditas_id,
     komoditas: formatCommodityName(d.komoditas),
@@ -131,7 +180,7 @@ function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
       ? "bg-status-warning/10 text-status-warning"
       : "bg-primary/10 text-primary",
     group: catalogGroupOf(d.komoditas_id),
-    sub: "Pantauan Harian 6 Pasar",
+    sub: isRep ? "Pantauan Harian 6 Pasar" : `Laporan Terbatas (${d.reportedCount || 2}/6 Pasar)`,
     satuan: formattedSatuan,
     keputran: d.keputran,
     wonokromo: d.wonokromo,
@@ -142,8 +191,13 @@ function mapApiRow(d: MarketComparisonRow): ComparisonRowItem {
     rerata: d.rerata,
     disparitasRp: d.disparitasRp,
     disparitasPct: d.disparitasPct,
+    missingMarkets: d.missingMarkets || [],
+    reportedCount: d.reportedCount || 6,
+    isRepresentative: isRep,
+    thresholdHigh: threshold.high,
+    thresholdMed: threshold.med,
     statusClass: isHigh ? "text-status-critical" : isMed ? "text-status-warning" : "text-status-normal",
-    statusBadge: `${d.disparitasPct}% (${isHigh ? "Tinggi" : isMed ? "Sedang" : "Wajar"})`,
+    statusBadge,
     badgeClass: isHigh
       ? "bg-status-critical-bg text-status-critical"
       : isMed
@@ -270,6 +324,7 @@ export default function SpatialMapPage() {
       longitude: marketCoords[5]?.lng || 112.7441,
       address: "Jl. Keputran No. 45, Tegalsari",
       characteristic: "Pusat pasokan sayur & bumbu yang langsung menerima pasokan dari sentra pertanian (Kediri, Malang). Menjadi patokan harga grosir terendah.",
+      isImputed: Boolean(activeCommodity?.missingMarkets?.includes(5)),
     },
     {
       id: "genteng",
@@ -283,6 +338,7 @@ export default function SpatialMapPage() {
       longitude: marketCoords[3]?.lng || 112.7431,
       address: "Jl. Genteng Besar, Genteng",
       characteristic: "Pasar ritel sentral komersial dengan segmen konsumen menengah-atas di pusat kota Surabaya. Sering mencatat selisih harga eceran tertinggi.",
+      isImputed: Boolean(activeCommodity?.missingMarkets?.includes(3)),
     },
     {
       id: "wonokromo",
@@ -296,6 +352,7 @@ export default function SpatialMapPage() {
       longitude: marketCoords[2]?.lng || 112.7388,
       address: "Jl. Wonokromo (Depan Stasiun)",
       characteristic: "Pasar ritel dan semi-grosir dengan volume protein hewani (daging sapi, ayam, telur) yang besar dan harga bersaing.",
+      isImputed: Boolean(activeCommodity?.missingMarkets?.includes(2)),
     },
     {
       id: "pucang",
@@ -309,6 +366,7 @@ export default function SpatialMapPage() {
       longitude: marketCoords[4]?.lng || 112.7554,
       address: "Jl. Pucang Anom, Gubeng",
       characteristic: "Pasar bahan pokok segar yang melayani kawasan perumahan Surabaya Timur dan Tengah dengan rantai distribusi harian.",
+      isImputed: Boolean(activeCommodity?.missingMarkets?.includes(4)),
     },
     {
       id: "tambahrejo",
@@ -322,6 +380,7 @@ export default function SpatialMapPage() {
       longitude: marketCoords[1]?.lng || 112.7631,
       address: "Jl. Kapas Krampung, Simokerto",
       characteristic: "Pasar semi-grosir efisien untuk komoditas kering (beras, minyak goreng, gula) di wilayah Surabaya Utara.",
+      isImputed: Boolean(activeCommodity?.missingMarkets?.includes(1)),
     },
     {
       id: "soponyono",
@@ -335,6 +394,7 @@ export default function SpatialMapPage() {
       longitude: marketCoords[146]?.lng || 112.7744,
       address: "Jl. Rungkut Asri, Rungkut",
       characteristic: "Pasar ritel utama bagi sentra industri dan perumahan padat Rungkut & Tenggilis, dipengaruhi biaya angkut dari pusat kota.",
+      isImputed: Boolean(activeCommodity?.missingMarkets?.includes(146)),
     },
   ], [activeCommodity, marketCoords]);
 
@@ -408,7 +468,7 @@ export default function SpatialMapPage() {
                   Peta Disparitas Harga Antar-Pasar
                 </h1>
                 <p className="font-body-sm text-body-sm text-text-secondary mt-1">
-                  Pantauan spasial 6 pasar Kota Surabaya untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman.
+                  Pantauan spasial 6 pasar Kota Surabaya untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman{latestDate ? ` (Data per ${latestDate})` : ""}.
                 </p>
               </div>
 
@@ -436,9 +496,9 @@ export default function SpatialMapPage() {
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <span
                         className={`font-metric-display text-2xl sm:text-metric-display font-extrabold ${
-                          activeCommodity.disparitasPct >= 15
+                          activeCommodity.disparitasPct >= activeCommodity.thresholdHigh
                             ? "text-status-critical"
-                            : activeCommodity.disparitasPct >= 8
+                            : activeCommodity.disparitasPct >= activeCommodity.thresholdMed
                             ? "text-status-warning"
                             : "text-status-normal"
                         }`}
@@ -448,7 +508,13 @@ export default function SpatialMapPage() {
                       <span
                         className={`px-2 py-0.5 rounded-full font-label-caps text-[10px] sm:text-label-caps font-semibold shrink-0 ${activeCommodity.badgeClass}`}
                       >
-                        {activeCommodity.disparitasPct >= 15 ? "Tinggi" : activeCommodity.disparitasPct >= 8 ? "Waspada" : "Wajar"}
+                        {!activeCommodity.isRepresentative
+                          ? "Data Terbatas"
+                          : activeCommodity.disparitasPct >= activeCommodity.thresholdHigh
+                          ? "Tinggi"
+                          : activeCommodity.disparitasPct >= activeCommodity.thresholdMed
+                          ? "Waspada"
+                          : "Wajar"}
                       </span>
                     </div>
                   </div>
@@ -532,21 +598,23 @@ export default function SpatialMapPage() {
                 ) : (
                   <div
                     className={`md:col-span-3 rounded-lg px-3 py-2 flex items-center gap-2 self-end h-10 ${
-                      activeCommodity.disparitasPct >= 15
+                      activeCommodity.disparitasPct >= activeCommodity.thresholdHigh
                         ? "bg-status-critical-bg text-status-critical border border-status-critical/30"
-                        : activeCommodity.disparitasPct >= 8
+                        : activeCommodity.disparitasPct >= activeCommodity.thresholdMed
                         ? "bg-status-warning-bg text-status-warning border border-status-warning/30"
                         : "bg-status-normal-bg text-status-normal border border-status-normal/30"
                     }`}
                   >
                     <span className="material-symbols-outlined text-body-md shrink-0">
-                      {activeCommodity.disparitasPct >= 15 ? "warning" : activeCommodity.disparitasPct >= 8 ? "info" : "check_circle"}
+                      {activeCommodity.disparitasPct >= activeCommodity.thresholdHigh ? "warning" : activeCommodity.disparitasPct >= activeCommodity.thresholdMed ? "info" : "check_circle"}
                     </span>
                     <div className="flex flex-wrap items-baseline gap-x-1 min-w-0">
                       <span className="font-headline-sm text-body-sm text-text-primary font-bold leading-none truncate">
-                        {activeCommodity.disparitasPct >= 15
+                        {!activeCommodity.isRepresentative
+                          ? `Laporan Terbatas (${activeCommodity.reportedCount}/6 Pasar)`
+                          : activeCommodity.disparitasPct >= activeCommodity.thresholdHigh
                           ? "Disparitas Tinggi"
-                          : activeCommodity.disparitasPct >= 8
+                          : activeCommodity.disparitasPct >= activeCommodity.thresholdMed
                           ? "Disparitas Sedang"
                           : "Disparitas Wajar"}
                       </span>
@@ -643,13 +711,25 @@ export default function SpatialMapPage() {
 
                     {/* Price Comparison Metric for Selected Commodity */}
                     <div className="space-y-space-sm mb-space-md">
+                      {activeCommodity.missingMarkets?.includes(selectedMarket.pasar_id) && (
+                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs flex items-start gap-1.5">
+                          <span className="material-symbols-outlined text-sm mt-0.5 shrink-0 text-amber-600">warning</span>
+                          <div>
+                            <span className="font-semibold block">Laporan Tertunda (Estimasi)</span>
+                            <span className="text-[11px] leading-tight text-amber-900/80 block">
+                              Pasar ini belum memasukkan laporan harga hari ini. Sistem menampilkan estimasi rerata kota.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col gap-1">
                         <span className="text-xs text-text-secondary">
                           Harga {activeCommodity.komoditas}:
                         </span>
                         <div className="flex items-baseline justify-between">
                           <span className="font-metric-value text-headline-sm text-text-primary font-bold">
-                            Rp {selectedMarket.price.toLocaleString("id-ID")}
+                            {activeCommodity.missingMarkets?.includes(selectedMarket.pasar_id) ? "~" : ""}Rp {selectedMarket.price.toLocaleString("id-ID")}
                           </span>
                           <span className="text-xs text-text-muted">
                             /{activeCommodity.satuan}
@@ -811,6 +891,24 @@ export default function SpatialMapPage() {
                 })}
               </div>
 
+              {/* Active Zone Filter Context Banner */}
+              {selectedZone !== "Semua" && (
+                <div className="px-space-md py-2.5 bg-primary/10 border-b border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-primary font-medium">
+                    <span className="material-symbols-outlined text-sm shrink-0">filter_alt</span>
+                    <span>
+                      Menyorot pasar wilayah <strong>Surabaya {selectedZone}</strong> ({ZONE_MARKET_NAMES[selectedZone] || ""}). Kolom pasar wilayah ini disorot khusus.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedZone("Semua")}
+                    className="text-primary hover:underline font-bold text-xs shrink-0 self-start sm:self-auto cursor-pointer"
+                  >
+                    Tampilkan Semua Wilayah ✕
+                  </button>
+                </div>
+              )}
+
               {/* 1. Tampilan Desktop & Tablet: Data Table Container with Sticky Commodity Column (≥ 768px) */}
               <div className="hidden md:block w-full overflow-x-auto">
                 <table className="w-full text-left font-body-sm text-body-sm border-collapse min-w-[1000px]">
@@ -820,12 +918,12 @@ export default function SpatialMapPage() {
                         Komoditas Pokok
                       </th>
                       <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-xs text-center min-w-[55px] sm:min-w-[70px]">Satuan</th>
-                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Keputran (Induk)</th>
-                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Wonokromo</th>
-                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Pucang Anom</th>
-                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Genteng</th>
-                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Tambahrejo</th>
-                      <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Soponyono</th>
+                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(5) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Keputran (Induk)</th>
+                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(2) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Wonokromo</th>
+                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(4) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Pucang Anom</th>
+                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(3) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Genteng</th>
+                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(1) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Tambahrejo</th>
+                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(146) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Soponyono</th>
                       <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px]">Rerata Kota</th>
                       <th className="py-2.5 sm:py-3 px-2 sm:px-space-md text-right min-w-[105px] sm:min-w-[125px]">Disparitas</th>
                     </tr>
@@ -864,7 +962,7 @@ export default function SpatialMapPage() {
                         <td colSpan={10} className="py-12 text-center">
                           <div className="max-w-md mx-auto flex flex-col items-center gap-2 text-text-secondary">
                             <span className="material-symbols-outlined text-3xl text-status-warning">cloud_off</span>
-                            <span className="font-semibold text-text-primary">Data matriks disparitas tidak tersedia</span>
+                            <span className="font-semibold text-text-primary">Data matriks selisih harga pasar belum tersedia</span>
                             <p className="text-xs text-text-secondary">Gagal memuat matriks perbandingan 6 pasar. Silakan periksa koneksi atau coba muat ulang.</p>
                             <button
                               onClick={() => loadTableData()}
@@ -896,9 +994,12 @@ export default function SpatialMapPage() {
                       const rowMin = Math.min(...prices);
                       const rowMax = Math.max(...prices);
 
-                      const renderCell = (price: number) => {
+                      const renderCell = (price: number, pasarId: number) => {
                         const isMin = price === rowMin;
                         const isMax = price === rowMax;
+                        const isMissing = Boolean(row.missingMarkets?.includes(pasarId));
+                        const isZoneActive = selectedZone !== "Semua" && (ZONE_MARKETS[selectedZone]?.includes(pasarId) ?? false);
+
                         return (
                           <td
                             className={`py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm min-w-[95px] sm:min-w-[110px] transition-colors ${
@@ -906,10 +1007,24 @@ export default function SpatialMapPage() {
                                 ? "bg-emerald-50/70 hover:bg-emerald-100/60 text-emerald-700 font-bold"
                                 : isMax
                                 ? "bg-rose-50/70 hover:bg-rose-100/60 text-rose-700 font-bold"
+                                : isZoneActive
+                                ? "bg-primary/5 text-text-primary font-semibold"
+                                : selectedZone !== "Semua"
+                                ? "text-text-secondary/60"
                                 : "text-text-secondary"
-                            }`}
+                            } ${isZoneActive ? "border-x border-primary/20" : ""}`}
                           >
-                            <div>Rp {price.toLocaleString("id-ID")}</div>
+                            <div className="flex items-center gap-1">
+                              <span>{isMissing ? "~" : ""}Rp {price.toLocaleString("id-ID")}</span>
+                              {isMissing && (
+                                <span
+                                  className="inline-flex items-center px-1 py-0.2 rounded font-label-caps text-[8px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
+                                  title="Laporan Tertunda: Estimasi Rerata Kota"
+                                >
+                                  Est
+                                </span>
+                              )}
+                            </div>
                             {isMin && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 leading-tight mt-0.5">
                                 Terendah
@@ -958,12 +1073,12 @@ export default function SpatialMapPage() {
                           <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-xs text-text-secondary font-label-caps text-[11px] sm:text-xs text-center whitespace-nowrap min-w-[55px] sm:min-w-[70px]">
                             {row.satuan}
                           </td>
-                          {renderCell(row.keputran)}
-                          {renderCell(row.wonokromo)}
-                          {renderCell(row.pucang)}
-                          {renderCell(row.genteng)}
-                          {renderCell(row.tambahrejo)}
-                          {renderCell(row.soponyono)}
+                          {renderCell(row.keputran, 5)}
+                          {renderCell(row.wonokromo, 2)}
+                          {renderCell(row.pucang, 4)}
+                          {renderCell(row.genteng, 3)}
+                          {renderCell(row.tambahrejo, 1)}
+                          {renderCell(row.soponyono, 146)}
                           <td className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm font-metric-value text-xs sm:text-body-sm text-text-secondary min-w-[95px] sm:min-w-[110px]">
                             Rp {row.rerata.toLocaleString("id-ID")}
                           </td>
@@ -1013,7 +1128,7 @@ export default function SpatialMapPage() {
                 ) : errorTable ? (
                   <div className="p-8 rounded-xl bg-surface-card border border-border-subtle text-center flex flex-col items-center gap-2">
                     <span className="material-symbols-outlined text-3xl text-status-warning">cloud_off</span>
-                    <span className="font-semibold text-text-primary text-sm">Data matriks disparitas tidak tersedia</span>
+                    <span className="font-semibold text-text-primary text-sm">Data matriks selisih harga pasar belum tersedia</span>
                     <p className="text-xs text-text-secondary">Gagal memuat matriks perbandingan 6 pasar.</p>
                     <button
                       onClick={() => loadTableData()}
@@ -1031,12 +1146,12 @@ export default function SpatialMapPage() {
                 ) : (
                   paginatedTableRows.map((row, idx) => {
                     const marketEntries = [
-                      { name: "Keputran (Induk)", shortName: "Keputran", price: row.keputran },
-                      { name: "Pasar Wonokromo", shortName: "Wonokromo", price: row.wonokromo },
-                      { name: "Pasar Pucang Anom", shortName: "Pucang Anom", price: row.pucang },
-                      { name: "Pasar Genteng", shortName: "Genteng", price: row.genteng },
-                      { name: "Pasar Tambahrejo", shortName: "Tambahrejo", price: row.tambahrejo },
-                      { name: "Pasar Soponyono", shortName: "Soponyono", price: row.soponyono },
+                      { id: "keputran", pasar_id: 5, name: "Keputran (Induk)", shortName: "Keputran", price: row.keputran },
+                      { id: "wonokromo", pasar_id: 2, name: "Pasar Wonokromo", shortName: "Wonokromo", price: row.wonokromo },
+                      { id: "pucang", pasar_id: 4, name: "Pasar Pucang Anom", shortName: "Pucang Anom", price: row.pucang },
+                      { id: "genteng", pasar_id: 3, name: "Pasar Genteng", shortName: "Genteng", price: row.genteng },
+                      { id: "tambahrejo", pasar_id: 1, name: "Pasar Tambahrejo", shortName: "Tambahrejo", price: row.tambahrejo },
+                      { id: "soponyono", pasar_id: 146, name: "Pasar Soponyono", shortName: "Soponyono", price: row.soponyono },
                     ];
 
                     const validPrices = marketEntries.map((m) => m.price).filter((p) => p > 0);
@@ -1173,6 +1288,8 @@ export default function SpatialMapPage() {
                               {marketEntries.map((m, mIdx) => {
                                 const isMin = hasSpread && m.price === rowMin;
                                 const isMax = hasSpread && m.price === rowMax;
+                                const isMissing = Boolean(row.missingMarkets?.includes(m.pasar_id));
+                                const isZoneActive = selectedZone !== "Semua" && (ZONE_MARKETS[selectedZone]?.includes(m.pasar_id) ?? false);
 
                                 return (
                                   <div
@@ -1182,6 +1299,8 @@ export default function SpatialMapPage() {
                                         ? "bg-emerald-50/80 border-emerald-300 text-emerald-950 font-semibold"
                                         : isMax
                                         ? "bg-rose-50/80 border-rose-300 text-rose-950 font-semibold"
+                                        : isZoneActive
+                                        ? "bg-primary/10 border-primary/40 text-primary font-semibold"
                                         : "bg-slate-50/70 border-slate-200 text-slate-800"
                                     }`}
                                   >
@@ -1189,6 +1308,11 @@ export default function SpatialMapPage() {
                                       <span className="truncate text-[11px] font-medium" title={m.name}>
                                         {m.shortName}
                                       </span>
+                                      {isZoneActive && (
+                                        <span className="text-[8px] font-bold text-primary bg-primary/20 px-1 py-0.2 rounded">
+                                          Zona
+                                        </span>
+                                      )}
                                       {isMin && (
                                         <span className="text-[8.5px] font-extrabold text-emerald-800 bg-emerald-100 px-1 py-0.2 rounded">
                                           Min
@@ -1199,13 +1323,18 @@ export default function SpatialMapPage() {
                                           Max
                                         </span>
                                       )}
+                                      {isMissing && (
+                                        <span className="text-[8px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded" title="Estimasi Rerata Kota">
+                                          Est
+                                        </span>
+                                      )}
                                     </div>
                                     <span
                                       className={`text-[11px] shrink-0 font-bold ${
                                         isMin ? "text-emerald-700" : isMax ? "text-rose-700" : "text-slate-900"
                                       }`}
                                     >
-                                      Rp {m.price > 0 ? m.price.toLocaleString("id-ID") : "-"}
+                                      {isMissing ? "~" : ""}Rp {m.price > 0 ? m.price.toLocaleString("id-ID") : "-"}
                                     </span>
                                   </div>
                                 );

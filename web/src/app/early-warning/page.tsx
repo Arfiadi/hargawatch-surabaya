@@ -124,7 +124,7 @@ export default function EarlyWarningPage() {
 
   // Table UX States: Category Filter & Pagination (10 per page)
   const [selectedCategory, setSelectedCategory] = useState<CommodityCategory>("Semua");
-  const [tableFilter, setTableFilter] = useState<"ALL" | "ACTION" | "NORMAL">("ALL");
+  const [tableFilter] = useState<"ALL" | "ACTION" | "NORMAL">("ALL");
   const [tableSearch, setTableSearch] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
@@ -167,6 +167,7 @@ export default function EarlyWarningPage() {
 
   useEffect(() => {
     loadData(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pivot ewsData by commodity across 6 markets
@@ -727,7 +728,7 @@ export default function EarlyWarningPage() {
                               </td>
 
                               {/* 6 Market Data Cells with Color-Coded Pricing */}
-                              {MARKET_CONFIGS.map((m) => {
+                              {MARKET_CONFIGS.map((m, mIndex) => {
                                 const marketItem = row.markets[m.id];
                                 if (!marketItem) {
                                   return (
@@ -744,6 +745,14 @@ export default function EarlyWarningPage() {
 
                                 const score = marketItem.total_skor || 0;
                                 const isCellHovered = activeTooltip === `${row.komoditas_id}-${m.id}`;
+
+                                const isRightEdge = mIndex >= MARKET_CONFIGS.length - 2;
+                                const isLeftEdge = mIndex === 0;
+                                const horizontalPosClass = isRightEdge
+                                  ? "right-1 sm:right-2 left-auto translate-x-0"
+                                  : isLeftEdge
+                                  ? "left-1 sm:left-2 translate-x-0"
+                                  : "left-1/2 -translate-x-1/2";
 
                                 // Determine price tier visual styles
                                 let cellBgClass = "";
@@ -789,7 +798,7 @@ export default function EarlyWarningPage() {
                                     {/* Tooltip: Market Detail Breakdown (White Card theme, no clipping) */}
                                     {isCellHovered && (
                                       <div
-                                        className={`absolute z-50 ${tooltipPosClass} left-1/2 -translate-x-1/2 w-56 p-3 bg-white text-text-primary rounded-xl shadow-xl border border-border-subtle text-left pointer-events-none text-xs`}
+                                        className={`absolute z-50 ${tooltipPosClass} ${horizontalPosClass} w-56 p-3 bg-white text-text-primary rounded-xl shadow-xl border border-border-subtle text-left pointer-events-none text-xs`}
                                       >
                                         <div className="font-bold text-text-primary mb-1.5 border-b border-border-subtle/80 pb-1.5 flex justify-between items-center">
                                           <span className="font-semibold text-text-primary">{m.name}</span>

@@ -25,6 +25,10 @@ export interface CommodityPrice {
   sparkClass: string;
   basketItemName: string;
   basketItemPrice: number;
+  savingBadge?: string;
+  trend7d?: string;
+  hasMarketAlert?: boolean;
+  marketAlertNote?: string;
 }
 
 export interface EarlyWarningItem {
@@ -96,8 +100,50 @@ export interface CommodityForecastDetails {
   peakPrice?: number;
 }
 
+export type TimeframeOption = "7d" | "14d" | "30d" | "3m" | "6m" | "1y";
+
+export interface TimeframeConfigItem {
+  id: TimeframeOption;
+  label: string;
+  days: number;
+}
+
+export const TIMEFRAME_CONFIG: TimeframeConfigItem[] = [
+  { id: "7d", label: "7 Hari", days: 7 },
+  { id: "14d", label: "14 Hari", days: 14 },
+  { id: "30d", label: "30 Hari", days: 30 },
+  { id: "3m", label: "3 Bulan", days: 90 },
+  { id: "6m", label: "6 Bulan", days: 180 },
+  { id: "1y", label: "1 Tahun", days: 365 },
+];
+
+export const TIMEFRAME_DAYS: Record<TimeframeOption, number> = {
+  "7d": 7,
+  "14d": 14,
+  "30d": 30,
+  "3m": 90,
+  "6m": 180,
+  "1y": 365,
+};
+
+export interface RawMarketPriceRow {
+  tanggal: string;
+  harga_asli?: number | null;
+  harga_imputasi?: number | null;
+  is_imputed?: boolean | null;
+  pasar_id?: number | null;
+}
+
+export interface RawForecastRow {
+  tanggal: string;
+  pasar_id?: number | null;
+  harga_prediksi?: number | null;
+  batas_bawah?: number | null;
+  batas_atas?: number | null;
+}
+
 export const FORECAST_COMMODITIES = [
-  { id: 50, name: "Cabe Rawit Merah", unit: "kg" },
+  { id: 50, name: "Cabai Rawit Merah", unit: "kg" },
   { id: 39, name: "Bawang Merah", unit: "kg" },
   { id: 10, name: "Minyak Goreng Curah", unit: "kg" },
   { id: 2, name: "Beras Premium", unit: "kg" },
@@ -109,6 +155,7 @@ export const FORECAST_COMMODITIES = [
 /**
  * Normalizes commodity names to consistent, uniform Title Case.
  * Eliminates uppercase/screaming entries (e.g. 'KACANG HIJAU' -> 'Kacang Hijau', 'WORTEL' -> 'Wortel').
+ * Standardizes spelling to KBBI (e.g. 'Cabe' -> 'Cabai').
  */
 export function formatCommodityName(name: string): string {
   if (!name) return "";
@@ -136,9 +183,11 @@ export function formatCommodityName(name: string): string {
   }
 
   return trimmed
+    .replace(/\bCabe\b/gi, "Cabai")
     .toLowerCase()
     .replace(/(^|[\s\/\(\)\-])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase())
-    .replace(/\bMinyakita\b/gi, "Minyakita");
+    .replace(/\bMinyakita\b/gi, "Minyakita")
+    .replace(/\bCabe\b/gi, "Cabai");
 }
 
 export interface FoodStabilitySummary {
@@ -189,7 +238,17 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
     const normalCount = ewsRes.data.filter(r => r.status_warning === "NORMAL").length;
     const warningItems = ewsRes.data.filter(r => r.status_warning !== "NORMAL");
     const alertCount = warningItems.length;
-    const stabilityPct = ((normalCount / total) * 100).toFixed(1);
+    const stabilityNum = total > 0 ? (normalCount / total) * 100 : 100;
+    const stabilityPct = stabilityNum.toFixed(1);
+
+    // Evaluasi status stabilitas kota secara proporsional terhadap target ketahanan kota (>90%)
+    const isCityStable = stabilityNum >= 90;
+    const isCityCritical = stabilityNum < 75;
+    const statusLabel = isCityCritical
+      ? "Kritis"
+      : isCityStable
+      ? "Terkendali"
+      : "Waspada";
 
     if (alertCount > 0) {
       const top = warningItems[0];
@@ -198,14 +257,14 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
       return {
         stabilityIndex: `${stabilityPct}%`,
         targetText: "Target Kota > 90%",
-        isNormal: false,
-        statusLabel: "Waspada",
+        isNormal: isCityStable,
+        statusLabel,
         normalCount,
         alertCount,
-        alertNote: komName,
-        bannerTitle: "Waspada Fluktuasi Pasar",
+        alertNote: `${alertCount} Dalam Pengawasan`,
+        bannerTitle: isCityStable ? "Stabilitas Pangan Terkendali (Pengawasan Terfokus)" : "Waspada Fluktuasi Pasar",
         bannerSubtitle: "",
-        bannerMessage: `${komName} di ${pasarName} menunjukkan sinyal peningkatan dengan skor risiko ${top.total_skor}/100. Satgas pangan menyarankan pemantauan pasokan di pasar induk.`,
+        bannerMessage: `Secara umum stabilitas pangan Surabaya berada dalam kondisi terkendali (${stabilityPct}% dari target >90%). Terdapat ${alertCount} titik pantau dalam pengawasan: ${komName} di ${pasarName} (skor risiko ${top.total_skor}/100). Satgas pangan terus memantau kelancaran pasokan.`,
         hasAlert: true,
       };
     } else {
@@ -219,7 +278,7 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
         alertNote: "Semua Terkendali",
         bannerTitle: "Stabilitas Harga Pangan Terkendali",
         bannerSubtitle: "",
-        bannerMessage: `Seluruh ${total} komoditas bahan pokok di pasar Surabaya terpantau stabil dalam rentang harga wajar tanpa indikasi lonjakan harga ekstrem.`,
+        bannerMessage: `Seluruh ${total} titik pantau komoditas strategis di pasar Surabaya berada dalam rentang harga normal tanpa indikasi lonjakan harga.`,
         hasAlert: false,
       };
     }
@@ -234,9 +293,9 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
   if (!supabase) return null;
 
   try {
-    const priorityIds = [2, 10, 50, 16, 39, 13]; // Beras, Minyak, Cabai, Telur, Bawang, Ayam
+    const priorityIds = [2, 10, 50, 16, 39, 13, 7, 49]; // Beras, Minyak, Cabai, Telur, Bawang Merah, Ayam, Gula Pasir, Bawang Putih
 
-    const [komRes, pasarRes, priceRes] = await Promise.all([
+    const [komRes, pasarRes, priceRes, ewsRes] = await Promise.all([
       supabase.from("dim_komoditas").select("komoditas_id, nama_komoditas, grup, satuan"),
       supabase.from("dim_pasar").select("pasar_id, nama_pasar"),
       supabase
@@ -245,7 +304,13 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
         .in("komoditas_id", priorityIds)
         .not("harga_imputasi", "eq", "NaN")
         .order("tanggal", { ascending: false })
-        .limit(60)
+        .limit(500),
+      supabase
+        .from("fact_early_warning")
+        .select("komoditas_id, pasar_id, total_skor, status_warning, tanggal")
+        .in("komoditas_id", priorityIds)
+        .order("tanggal", { ascending: false })
+        .limit(150)
     ]);
 
     if (!komRes.data || !pasarRes.data || !priceRes.data || priceRes.data.length === 0) {
@@ -255,33 +320,104 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
     const komMap = new Map(komRes.data.map(k => [k.komoditas_id, k]));
     const pasarMap = new Map(pasarRes.data.map(p => [p.pasar_id, p.nama_pasar]));
 
-    // Find latest date in data
+    // Tanggal terbaru transaksi
     const latestDate = priceRes.data[0].tanggal;
     const latestPrices = priceRes.data.filter(p => p.tanggal === latestDate && !isNaN(Number(p.harga_imputasi)));
+
+    // EWS records untuk tanggal terbaru
+    const latestEwsDate = ewsRes.data && ewsRes.data.length > 0 ? ewsRes.data[0].tanggal : null;
+    const ewsList = latestEwsDate && ewsRes.data ? ewsRes.data.filter(e => e.tanggal === latestEwsDate) : [];
 
     const result: CommodityPrice[] = [];
 
     for (const cid of priorityIds) {
       const komMeta = komMap.get(cid);
       if (!komMeta) continue;
-      if (!komMeta) continue;
 
       const items = latestPrices.filter(p => p.komoditas_id === cid && Number(p.harga_imputasi) > 0);
       if (items.length === 0) continue;
 
-      // Find cheapest market
+      // Temukan pasar termurah di Surabaya
       items.sort((a, b) => Number(a.harga_imputasi) - Number(b.harga_imputasi));
       const cheapest = items[0];
       const cheapestPrice = Number(cheapest.harga_imputasi);
       const marketName = pasarMap.get(cheapest.pasar_id) || "Pasar Surabaya";
 
-      // Calculate city average
+      // Rata-rata harga kota
       const sum = items.reduce((acc, curr) => acc + Number(curr.harga_imputasi), 0);
       const avg = Math.round(sum / items.length);
 
+      // Selisih hemat terhadap rata-rata kota
       const diff = avg - cheapestPrice;
-      const isCritical = cid === 50 && cheapestPrice > 60000;
-      const isWarning = cid === 39 && cheapestPrice > 35000;
+      const savingPct = avg > 0 ? Math.round((diff / avg) * 100) : 0;
+      const savingBadge = diff > 0 ? `${savingPct}% lebih hemat` : "Sesuai rerata";
+
+      // Evaluasi status EWS untuk komoditas ini
+      const commodityEws = ewsList.filter(e => e.komoditas_id === cid);
+      const alertMarkets = commodityEws.filter(e => e.status_warning !== "NORMAL");
+      const hasMarketAlert = alertMarkets.length > 0;
+      const cheapestMarketEws = commodityEws.find(e => e.pasar_id === cheapest.pasar_id);
+
+      const isCritical = cheapestMarketEws?.status_warning === "TINGGI" || (cid === 50 && cheapestPrice > 75000);
+      const isWarning = cheapestMarketEws?.status_warning === "WASPADA" || (cid === 39 && cheapestPrice > 45000);
+      const status = isCritical ? "Kritis" : isWarning ? "Waspada" : "Normal";
+
+      const alertMarketNames = alertMarkets.map(m => (pasarMap.get(m.pasar_id) || "Pasar").replace("Pasar ", "")).join(", ");
+      const marketAlertNote = hasMarketAlert ? `Fluktuasi di ${alertMarkets.length} pasar lain (${alertMarketNames})` : undefined;
+
+      // Hitung tren historis 7 hari sebenarnya untuk komoditas ini
+      const cidAllRows = priceRes.data.filter(r => r.komoditas_id === cid && Number(r.harga_imputasi) > 0);
+      const dateMap = new Map<string, number[]>();
+      for (const r of cidAllRows) {
+        if (!dateMap.has(r.tanggal)) dateMap.set(r.tanggal, []);
+        dateMap.get(r.tanggal)!.push(Number(r.harga_imputasi));
+      }
+      const sortedDates = Array.from(dateMap.keys()).sort().slice(-7);
+      const dayAvgs = sortedDates.map(d => {
+        const vals = dateMap.get(d)!;
+        return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+      });
+
+      let trend7d = "Stabil";
+      let deltaIcon = "horizontal_rule";
+      let deltaClass = "text-status-normal";
+      let sparkPath = "M0,16 L200,16";
+      let sparkClass = "text-status-normal";
+
+      if (dayAvgs.length > 1) {
+        const oldestAvg = dayAvgs[0];
+        const newestAvg = dayAvgs[dayAvgs.length - 1];
+        const pctChange = oldestAvg > 0 ? ((newestAvg - oldestAvg) / oldestAvg) * 100 : 0;
+
+        if (pctChange > 0.5) {
+          trend7d = `+${pctChange.toFixed(1)}% (7 hari)`;
+          deltaIcon = "trending_up";
+          deltaClass = pctChange > 3 ? "text-status-critical" : "text-status-warning";
+          sparkClass = pctChange > 3 ? "text-status-critical" : "text-status-warning";
+        } else if (pctChange < -0.5) {
+          trend7d = `${pctChange.toFixed(1)}% (7 hari)`;
+          deltaIcon = "trending_down";
+          deltaClass = "text-status-normal";
+          sparkClass = "text-status-normal";
+        } else {
+          trend7d = "Stabil (7 hari)";
+          deltaIcon = "horizontal_rule";
+          deltaClass = "text-text-secondary";
+          sparkClass = "text-text-muted";
+        }
+
+        const minVal = Math.min(...dayAvgs);
+        const maxVal = Math.max(...dayAvgs);
+        const range = maxVal - minVal;
+
+        if (range > 0) {
+          sparkPath = dayAvgs.map((v, i) => {
+            const x = Math.round((i / (dayAvgs.length - 1)) * 200);
+            const y = Math.round(28 - ((v - minVal) / range) * 24);
+            return `${i === 0 ? "M" : "L"}${x},${y}`;
+          }).join(" ");
+        }
+      }
 
       result.push({
         id: `kom_${cid}`,
@@ -289,25 +425,29 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
         category: komMeta.grup || "Pangan Pokok",
         tag: komMeta.grup || "Pangan Strategis",
         name: formatCommodityName(komMeta.nama_komoditas),
-        status: isCritical ? "Kritis" : isWarning ? "Waspada" : "Normal",
+        status,
         isCritical,
         isWarning,
         cheapestBadge: "Termurah di Surabaya",
         cheapestSub: diff > 0 ? `Hemat Rp ${diff.toLocaleString("id-ID")}/${komMeta.satuan || "kg"}` : "Harga Terkendali",
-        marketName: marketName,
+        marketName,
         marketSub: "Kota Surabaya",
         price: `Rp ${cheapestPrice.toLocaleString("id-ID")}`,
         numericPrice: cheapestPrice,
         unit: `/${komMeta.satuan || "kg"}`,
         cityAvg: `Rp ${avg.toLocaleString("id-ID")}`,
         numericCityAvg: avg,
-        delta: diff > 0 ? `-${Math.round((diff / avg) * 100)}%` : "0.0%",
-        deltaIcon: diff > 0 ? "trending_down" : "horizontal_rule",
-        deltaClass: isCritical ? "text-status-critical" : "text-status-normal",
-        sparkPath: "M0,24 L30,22 L60,25 L100,18 L140,16 L170,12 L200,10",
-        sparkClass: isCritical ? "text-status-critical" : "text-status-normal",
+        delta: savingBadge,
+        deltaIcon,
+        deltaClass,
+        sparkPath,
+        sparkClass,
         basketItemName: formatCommodityName(komMeta.nama_komoditas),
         basketItemPrice: cheapestPrice,
+        savingBadge,
+        trend7d,
+        hasMarketAlert,
+        marketAlertNote,
       });
     }
 
@@ -452,8 +592,11 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
   }
 }
 
-// 3. Fetch comprehensive 14-day Forecasting & Historical Trajectory
-export async function getLiveForecastDetails(komoditasId: number = 50): Promise<CommodityForecastDetails | null> {
+// 3. Fetch comprehensive 14-day Forecasting & Historical Trajectory with dynamic timeframe
+export async function getLiveForecastDetails(
+  komoditasId: number = 50,
+  timeframe: TimeframeOption = "14d"
+): Promise<CommodityForecastDetails | null> {
   if (!supabase) return null;
 
   try {
@@ -476,15 +619,40 @@ export async function getLiveForecastDetails(komoditasId: number = 50): Promise<
       .limit(1);
 
     const latestDate = latestDateRow?.[0]?.tanggal || "2026-10-10";
+    const targetDays = TIMEFRAME_DAYS[timeframe] || 14;
 
-    // 3. Ambil data historis 14 hari terakhir sebelum/pada latestDate
-    const { data: histData } = await supabase
-      .from("fact_harga_pasar")
-      .select("tanggal, harga_asli, harga_imputasi, is_imputed")
-      .eq("komoditas_id", komoditasId)
-      .lte("tanggal", latestDate)
-      .order("tanggal", { ascending: false })
-      .limit(120);
+    // 3. Ambil data historis sesuai timeframe sebelum/pada latestDate
+    let histData: RawMarketPriceRow[] = [];
+    if (targetDays <= 120) {
+      const fetchLimit = Math.max(100, targetDays * 7);
+      const { data } = await supabase
+        .from("fact_harga_pasar")
+        .select("tanggal, harga_asli, harga_imputasi, is_imputed")
+        .eq("komoditas_id", komoditasId)
+        .lte("tanggal", latestDate)
+        .order("tanggal", { ascending: false })
+        .limit(Math.min(1000, fetchLimit));
+      histData = data || [];
+    } else {
+      // Ambil data dalam 2 rentang paralel untuk mencakup hingga 1 tahun (>120 hari)
+      const [res1, res2] = await Promise.all([
+        supabase
+          .from("fact_harga_pasar")
+          .select("tanggal, harga_asli, harga_imputasi, is_imputed")
+          .eq("komoditas_id", komoditasId)
+          .lte("tanggal", latestDate)
+          .order("tanggal", { ascending: false })
+          .range(0, 999),
+        supabase
+          .from("fact_harga_pasar")
+          .select("tanggal, harga_asli, harga_imputasi, is_imputed")
+          .eq("komoditas_id", komoditasId)
+          .lte("tanggal", latestDate)
+          .order("tanggal", { ascending: false })
+          .range(1000, 2400),
+      ]);
+      histData = [...(res1.data || []), ...(res2.data || [])];
+    }
 
     const histByDate = new Map<string, { vals: number[]; imputedCount: number; totalCount: number }>();
     if (histData) {
@@ -500,14 +668,18 @@ export async function getLiveForecastDetails(komoditasId: number = 50): Promise<
       }
     }
 
-    const sortedHistDates = Array.from(histByDate.keys()).sort().slice(-14);
+    const sortedHistDates = Array.from(histByDate.keys()).sort().slice(-targetDays);
     const history: ForecastHistoryPoint[] = sortedHistDates.map((tgl) => {
       const entry = histByDate.get(tgl)!;
       const avg = entry.vals.length > 0 ? Math.round(entry.vals.reduce((a, b) => a + b, 0) / entry.vals.length) : 0;
       const d = new Date(tgl);
       return {
         tanggal: tgl,
-        formattedDate: d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+        formattedDate: d.toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: targetDays > 180 ? "2-digit" : undefined,
+        }),
         harga: avg,
         isImputed: entry.imputedCount > entry.totalCount / 2,
       };
@@ -654,6 +826,8 @@ export interface TrendSeriesPoint {
   tanggal: string;
   formattedDate: string;
   price: number;
+  isImputed?: boolean;
+  isForecast?: boolean;
 }
 
 export interface MultiCommodityTrendSeries {
@@ -758,6 +932,14 @@ export interface MarketTrendSeries {
   points: TrendSeriesPoint[];
 }
 
+export interface CityForecastPoint {
+  tanggal: string;
+  formattedDate: string;
+  hargaPrediksi: number;
+  batasBawah: number;
+  batasAtas: number;
+}
+
 export interface MarketTrendComparisonResult {
   komoditas_id: number;
   nama_komoditas: string;
@@ -765,17 +947,19 @@ export interface MarketTrendComparisonResult {
   dates: string[];
   formattedDates: string[];
   splitIndex: number;
+  anchorDate?: string;
   series: MarketTrendSeries[];
+  cityForecastBand?: CityForecastPoint[];
   latestSyncDate: string;
 }
 
 export const TREND_MARKET_CONFIGS = [
-  { id: "keputran", pasar_id: 5, name: "Pasar Keputran", tipe: "Grosir (Acuan)", color: "#004328" },
-  { id: "wonokromo", pasar_id: 2, name: "Pasar Wonokromo", tipe: "Ritel Tradisional", color: "#0D5C3A" },
-  { id: "genteng", pasar_id: 3, name: "Pasar Genteng", tipe: "Ritel Pusat", color: "#B45309" },
-  { id: "pucanganom", pasar_id: 4, name: "Pasar Pucang Anom", tipe: "Ritel Menengah", color: "#6B7280" },
-  { id: "tambahrejo", pasar_id: 1, name: "Pasar Tambahrejo", tipe: "Ritel Tradisional", color: "#9A3412" },
-  { id: "soponyono", pasar_id: 146, name: "Pasar Soponyono", tipe: "Ritel Rungkut", color: "#3F6212" },
+  { id: "keputran", pasar_id: 5, name: "Pasar Keputran", tipe: "Grosir (Acuan)", color: "#059669" }, // Emerald Zamrud (Acuan Pasar Induk)
+  { id: "wonokromo", pasar_id: 2, name: "Pasar Wonokromo", tipe: "Ritel Tradisional", color: "#0284C7" }, // Ocean Blue / Biru Samudera
+  { id: "genteng", pasar_id: 3, name: "Pasar Genteng", tipe: "Ritel Pusat", color: "#D97706" }, // Warm Amber / Oranye Cerah
+  { id: "pucanganom", pasar_id: 4, name: "Pasar Pucang Anom", tipe: "Ritel Menengah", color: "#7C3AED" }, // Slate Purple / Violet
+  { id: "tambahrejo", pasar_id: 1, name: "Pasar Tambahrejo", tipe: "Ritel Tradisional", color: "#E11D48" }, // Coral Red / Merah Bata
+  { id: "soponyono", pasar_id: 146, name: "Pasar Soponyono", tipe: "Ritel Rungkut", color: "#CA8A04" }, // Golden Mustard / Cokelat Emas
 ];
 
 export interface CatalogCommodity {
@@ -791,8 +975,8 @@ export const ALL_CATALOG_COMMODITIES: CatalogCommodity[] = [
   // Cabai & Bumbu
   { id: 50, name: "Cabai Rawit Merah", unit: "kg", icon: "cabai", shortName: "Cabai Rawit", group: "Cabai & Bumbu" },
   { id: 39, name: "Bawang Merah", unit: "kg", icon: "bawang", shortName: "Bawang Merah", group: "Cabai & Bumbu" },
-  { id: 37, name: "Cabe Merah Keriting", unit: "kg", icon: "cabai_keriting", shortName: "Cabe Keriting", group: "Cabai & Bumbu" },
-  { id: 38, name: "Cabe Merah Besar", unit: "kg", icon: "cabai_besar", shortName: "Cabe Besar", group: "Cabai & Bumbu" },
+  { id: 37, name: "Cabai Merah Keriting", unit: "kg", icon: "cabai_keriting", shortName: "Cabai Keriting", group: "Cabai & Bumbu" },
+  { id: 38, name: "Cabai Merah Besar", unit: "kg", icon: "cabai_besar", shortName: "Cabai Besar", group: "Cabai & Bumbu" },
   { id: 49, name: "Bawang Putih Sinco/Honan", unit: "kg", icon: "bawang_putih", shortName: "Bawang Putih", group: "Cabai & Bumbu" },
   
   // Beras & Gandum
@@ -845,37 +1029,68 @@ export const AVAILABLE_TREND_COMMODITIES = [
   { id: 39, name: "Bawang Merah", unit: "kg", icon: "bawang", shortName: "Bawang Merah" },
   { id: 2, name: "Beras Premium", unit: "kg", icon: "beras", shortName: "Beras Premium" },
   { id: 16, name: "Telur Ayam Ras", unit: "kg", icon: "telur", shortName: "Telur Ayam" },
-  { id: 10, name: "Minyak Goreng", unit: "liter", icon: "minyak", shortName: "Minyak Goreng" },
+  { id: 10, name: "Minyak Goreng Curah", unit: "kg", icon: "minyak", shortName: "Minyak Curah" },
   { id: 7, name: "Gula Pasir", unit: "kg", icon: "gula", shortName: "Gula Pasir" },
 ];
 
-export async function getLiveMarketComparisonTrends(komoditasId: number = 50): Promise<MarketTrendComparisonResult | null> {
+export async function getLiveMarketComparisonTrends(
+  komoditasId: number = 50,
+  timeframe: TimeframeOption = "7d"
+): Promise<MarketTrendComparisonResult | null> {
   const meta = ALL_CATALOG_COMMODITIES.find(c => c.id === komoditasId) || AVAILABLE_TREND_COMMODITIES[0];
 
   if (!supabase) return null;
 
   try {
-    // 1. Ambil observasi historis 7 hari terakhir dari fact_harga_pasar
-    const [histRes, fcRes] = await Promise.all([
-      supabase
-        .from("fact_harga_pasar")
-        .select("tanggal, pasar_id, harga_imputasi")
-        .eq("komoditas_id", komoditasId)
-        .order("tanggal", { ascending: false })
-        .limit(100),
-      supabase
-        .from("fact_forecast")
-        .select("tanggal, pasar_id, harga_prediksi")
-        .eq("komoditas_id", komoditasId)
-        .order("tanggal", { ascending: true })
-        .limit(100)
-    ]);
+    const targetDays = TIMEFRAME_DAYS[timeframe] || 7;
+    let histData: RawMarketPriceRow[] = [];
+    let fcData: RawForecastRow[] = [];
 
-    const histData = histRes.data || [];
-    const fcData = fcRes.data || [];
+    if (targetDays <= 120) {
+      const fetchLimit = Math.max(100, targetDays * 7);
+      const [histRes, fcRes] = await Promise.all([
+        supabase
+          .from("fact_harga_pasar")
+          .select("tanggal, pasar_id, harga_asli, harga_imputasi, is_imputed")
+          .eq("komoditas_id", komoditasId)
+          .order("tanggal", { ascending: false })
+          .limit(Math.min(1000, fetchLimit)),
+        supabase
+          .from("fact_forecast")
+          .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas")
+          .eq("komoditas_id", komoditasId)
+          .order("tanggal", { ascending: true })
+          .limit(100)
+      ]);
+      histData = histRes.data || [];
+      fcData = fcRes.data || [];
+    } else {
+      const [histRes1, histRes2, fcRes] = await Promise.all([
+        supabase
+          .from("fact_harga_pasar")
+          .select("tanggal, pasar_id, harga_asli, harga_imputasi, is_imputed")
+          .eq("komoditas_id", komoditasId)
+          .order("tanggal", { ascending: false })
+          .range(0, 999),
+        supabase
+          .from("fact_harga_pasar")
+          .select("tanggal, pasar_id, harga_asli, harga_imputasi, is_imputed")
+          .eq("komoditas_id", komoditasId)
+          .order("tanggal", { ascending: false })
+          .range(1000, 2400),
+        supabase
+          .from("fact_forecast")
+          .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas")
+          .eq("komoditas_id", komoditasId)
+          .order("tanggal", { ascending: true })
+          .limit(100)
+      ]);
+      histData = [...(histRes1.data || []), ...(histRes2.data || [])];
+      fcData = fcRes.data || [];
+    }
 
-    // Kumpulkan tanggal observasi unik (7 hari terakhir, diurutkan ascending)
-    const histDates = Array.from(new Set(histData.map(d => d.tanggal))).sort().slice(-7);
+    // Kumpulkan tanggal observasi unik (sesuai targetDays, diurutkan ascending)
+    const histDates = Array.from(new Set(histData.map(d => d.tanggal))).sort().slice(-targetDays);
     const anchorDate = histDates.length > 0 ? histDates[histDates.length - 1] : "2026-10-11";
     
     // Ambil tanggal proyeksi dari DB yang benar-benar lebih besar dari anchorDate
@@ -907,6 +1122,9 @@ export async function getLiveMarketComparisonTrends(komoditasId: number = 50): P
     const formattedDates = allDates.map(dt => {
       const parts = dt.split("-");
       if (parts.length === 3) {
+        if (targetDays > 180) {
+          return `${parts[2]} ${monthNames[parts[1]] || parts[1]} '${parts[0].slice(2)}`;
+        }
         return `${parts[2]} ${monthNames[parts[1]] || parts[1]}`;
       }
       return dt;
@@ -914,9 +1132,12 @@ export async function getLiveMarketComparisonTrends(komoditasId: number = 50): P
 
     // Peta harga historis & forecast per pasar: key = `${pasar_id}_${tanggal}`
     const priceMap: Record<string, number> = {};
+    const imputedMap: Record<string, boolean> = {};
+
     for (const h of histData) {
       if (h.harga_imputasi) {
         priceMap[`${h.pasar_id}_${h.tanggal}`] = Number(h.harga_imputasi);
+        imputedMap[`${h.pasar_id}_${h.tanggal}`] = !!h.is_imputed;
       }
     }
     for (const f of fcData) {
@@ -936,6 +1157,26 @@ export async function getLiveMarketComparisonTrends(komoditasId: number = 50): P
     };
     const baseP = basePrices[komoditasId] || 30000;
 
+    // Hitung rata-rata proyeksi agregat kota dan rentang interval keyakinan (P10 - P90)
+    const cityForecastBand: CityForecastPoint[] = fcDates.map((dt, idx) => {
+      const rows = fcData.filter(f => f.tanggal === dt);
+      const preds = rows.map(r => Number(r.harga_prediksi)).filter(v => v > 0);
+      const lowers = rows.map(r => Number(r.batas_bawah)).filter(v => v > 0);
+      const uppers = rows.map(r => Number(r.batas_atas)).filter(v => v > 0);
+
+      const avgPred = preds.length > 0 ? Math.round(preds.reduce((a, b) => a + b, 0) / preds.length) : baseP;
+      const avgLower = lowers.length > 0 ? Math.round(lowers.reduce((a, b) => a + b, 0) / lowers.length) : Math.round(avgPred * 0.94);
+      const avgUpper = uppers.length > 0 ? Math.round(uppers.reduce((a, b) => a + b, 0) / uppers.length) : Math.round(avgPred * 1.06);
+
+      return {
+        tanggal: dt,
+        formattedDate: formattedDates[splitIdx + 1 + idx] || dt,
+        hargaPrediksi: avgPred,
+        batasBawah: avgLower,
+        batasAtas: avgUpper,
+      };
+    });
+
     // Multiplier karakteristik pasar di Surabaya:
     // Keputran (grosir) paling murah, Genteng paling tinggi, Wonokromo & Tambahrejo menengah
     const marketOffsets: Record<number, number> = {
@@ -954,19 +1195,25 @@ export async function getLiveMarketComparisonTrends(komoditasId: number = 50): P
       const points: TrendSeriesPoint[] = allDates.map((dt, idx) => {
         const key = `${cfg.pasar_id}_${dt}`;
         let p = priceMap[key];
+        let wasSynthesized = false;
 
         if (!p || p === 0) {
-          // Model trend sintesis realistis jika ada tanggal libur / gap data
-          const wave = Math.sin((idx + cfg.pasar_id) * 0.7) * (baseP * 0.02);
-          p = Math.round(lastKnownPrice + wave);
+          // Zero Lookahead Bias (AGENTS.md 6.1): Gunakan carry-forward flat murni, bukan gelombang sinusoidal artifisial
+          p = lastKnownPrice;
+          wasSynthesized = true;
         } else {
           lastKnownPrice = p;
         }
 
+        const isForecast = idx > splitIdx;
+        const isImputed = !isForecast && (wasSynthesized || !!imputedMap[key]);
+
         return {
           tanggal: dt,
           formattedDate: formattedDates[idx],
-          price: p
+          price: p,
+          isImputed,
+          isForecast,
         };
       });
 
@@ -987,7 +1234,9 @@ export async function getLiveMarketComparisonTrends(komoditasId: number = 50): P
       dates: allDates,
       formattedDates,
       splitIndex: splitIdx,
+      anchorDate,
       series,
+      cityForecastBand,
       latestSyncDate
     };
   } catch (err) {
@@ -1009,6 +1258,9 @@ export interface MarketComparisonRow {
   rerata: number;
   disparitasRp: number;
   disparitasPct: number;
+  missingMarkets: number[];
+  reportedCount: number;
+  isRepresentative: boolean;
   tanggal?: string;
 }
 
@@ -1089,6 +1341,11 @@ function buildComparisonRow(
   const validPrices = Object.values(pMap);
   if (validPrices.length === 0) return null;
 
+  const ALL_MARKET_IDS = [5, 2, 4, 3, 1, 146];
+  const missingMarkets = ALL_MARKET_IDS.filter((id) => !pMap[id]);
+  const reportedCount = ALL_MARKET_IDS.length - missingMarkets.length;
+  const isRepresentative = reportedCount >= 3;
+
   const rerata = Math.round(validPrices.reduce((a, b) => a + b, 0) / validPrices.length);
   const minPrice = Math.min(...validPrices);
   const maxPrice = Math.max(...validPrices);
@@ -1109,6 +1366,9 @@ function buildComparisonRow(
     rerata,
     disparitasRp: dispRp,
     disparitasPct: dispPct,
+    missingMarkets,
+    reportedCount,
+    isRepresentative,
   };
 }
 
@@ -1209,31 +1469,48 @@ export interface MarketBasketRank {
   isCheapest: boolean;
 }
 
+export interface SplitBasketItem {
+  komoditas_id: number;
+  name: string;
+  qty: number;
+  unit: string;
+  cheapestMarket: string;
+  cheapestPrice: number;
+  itemTotal: number;
+}
+
 export interface ShoppingBasketSimulation {
   tanggal: string;
   items: Array<BasketItem & { itemTotal: number }>;
   rankings: MarketBasketRank[];
+  tripSaving: number;
   monthlySaving: number;
   cheapestMarket: string;
   mostExpensiveMarket: string;
+  splitBasket: {
+    totalBelanja: number;
+    additionalSaving: number;
+    items: SplitBasketItem[];
+  };
 }
 
 export const COMMODITY_BASKET_META: Record<number, { icon: string; unit: string; defaultQty: number; name: string }> = {
   2: { icon: "inventory_2", unit: "kg", defaultQty: 5, name: "Beras Premium" },
   4: { icon: "inventory_2", unit: "kg", defaultQty: 5, name: "Beras Medium" },
-  10: { icon: "water_drop", unit: "L", defaultQty: 2, name: "Minyak Goreng Curah" },
+  10: { icon: "water_drop", unit: "kg", defaultQty: 2, name: "Minyak Goreng Curah" },
   16: { icon: "egg", unit: "kg", defaultQty: 1, name: "Telur Ayam Ras" },
   50: { icon: "local_fire_department", unit: "kg", defaultQty: 0.5, name: "Cabai Rawit Merah" },
   39: { icon: "nutrition", unit: "kg", defaultQty: 1, name: "Bawang Merah" },
   13: { icon: "set_meal", unit: "kg", defaultQty: 1, name: "Daging Ayam Ras" },
   12: { icon: "lunch_dining", unit: "kg", defaultQty: 1, name: "Daging Sapi" },
   7: { icon: "cookie", unit: "kg", defaultQty: 1, name: "Gula Pasir" },
+  49: { icon: "nutrition", unit: "kg", defaultQty: 1, name: "Bawang Putih Honan" },
   41: { icon: "nutrition", unit: "kg", defaultQty: 1, name: "Bawang Putih" },
 };
 
 export const DEFAULT_BASKET_ITEMS: BasketItem[] = [
   { id: "beras", komoditas_id: 2, name: "Beras Premium", icon: "inventory_2", qty: 5, unit: "kg" },
-  { id: "minyak", komoditas_id: 10, name: "Minyak Goreng", icon: "water_drop", qty: 2, unit: "L" },
+  { id: "minyak", komoditas_id: 10, name: "Minyak Goreng Curah", icon: "water_drop", qty: 2, unit: "kg" },
   { id: "telur", komoditas_id: 16, name: "Telur Ayam Ras", icon: "egg", qty: 1, unit: "kg" },
   { id: "cabai", komoditas_id: 50, name: "Cabai Rawit Merah", icon: "local_fire_department", qty: 0.5, unit: "kg" },
   { id: "bawang", komoditas_id: 39, name: "Bawang Merah", icon: "nutrition", qty: 1, unit: "kg" },
@@ -1310,17 +1587,62 @@ export async function getLiveShoppingBasket(basketList: BasketItem[] = DEFAULT_B
 
     const minTotal = sorted[0].totalBelanja;
     const maxTotal = sorted[sorted.length - 1].totalBelanja;
-    const monthlySaving = (maxTotal - minTotal) * 4;
+    const tripSaving = Math.max(0, maxTotal - minTotal);
+    const monthlySaving = tripSaving * 4;
 
-    const rankings: MarketBasketRank[] = sorted.map((m, idx) => ({
-      rank: idx + 1,
-      pasar_id: m.pasar_id,
-      nama_pasar: m.nama_pasar,
-      wilayah: m.wilayah,
-      totalBelanja: m.totalBelanja,
-      selisih: m.totalBelanja - minTotal,
-      isCheapest: idx === 0
-    }));
+    // Handle ties gracefully: identical totalBelanja gets identical rank and isCheapest: true
+    let currentRank = 1;
+    const rankings: MarketBasketRank[] = sorted.map((m, idx) => {
+      if (idx > 0 && m.totalBelanja > sorted[idx - 1].totalBelanja) {
+        currentRank = idx + 1;
+      }
+      return {
+        rank: currentRank,
+        pasar_id: m.pasar_id,
+        nama_pasar: m.nama_pasar,
+        wilayah: m.wilayah,
+        totalBelanja: m.totalBelanja,
+        selisih: m.totalBelanja - minTotal,
+        isCheapest: m.totalBelanja === minTotal
+      };
+    });
+
+    // Multi-Market / Split-Basket scenario:
+    // User buys each basket item at its individual cheapest market across Surabaya
+    const splitItems: SplitBasketItem[] = [];
+    let splitTotal = 0;
+
+    for (const item of basketList) {
+      const itemPrices = latestPrices
+        .filter(p => p.komoditas_id === item.komoditas_id && Number(p.harga_imputasi) > 0)
+        .map(p => ({
+          pasar_id: p.pasar_id,
+          nama_pasar: (marketMap[p.pasar_id]?.nama_pasar || "Pasar").replace(/^Pasar\s+/i, ""),
+          price: Number(p.harga_imputasi)
+        }))
+        .sort((a, b) => a.price - b.price);
+
+      const best = itemPrices.length > 0
+        ? itemPrices[0]
+        : { nama_pasar: "Pasar Kota", price: avgPrices[item.komoditas_id] || 15000, pasar_id: 0 };
+
+      const itemCost = Math.round(best.price * item.qty);
+      splitTotal += itemCost;
+
+      splitItems.push({
+        komoditas_id: item.komoditas_id,
+        name: item.name,
+        qty: item.qty,
+        unit: item.unit,
+        cheapestMarket: best.nama_pasar,
+        cheapestPrice: best.price,
+        itemTotal: itemCost
+      });
+    }
+
+    const additionalSaving = Math.max(0, minTotal - splitTotal);
+    const cheapestMarkets = sorted.filter(s => s.totalBelanja === minTotal).map(s => s.nama_pasar);
+    const cheapestMarketStr = cheapestMarkets.join(" & ");
 
     const itemized = basketList.map(item => ({
       ...item,
@@ -1331,9 +1653,15 @@ export async function getLiveShoppingBasket(basketList: BasketItem[] = DEFAULT_B
       tanggal: latestDate,
       items: itemized,
       rankings,
+      tripSaving,
       monthlySaving,
-      cheapestMarket: sorted[0].nama_pasar,
-      mostExpensiveMarket: sorted[sorted.length - 1].nama_pasar
+      cheapestMarket: cheapestMarketStr,
+      mostExpensiveMarket: sorted[sorted.length - 1].nama_pasar,
+      splitBasket: {
+        totalBelanja: splitTotal,
+        additionalSaving,
+        items: splitItems
+      }
     };
   } catch (err) {
     console.error("Failed to calculate live basket:", err);

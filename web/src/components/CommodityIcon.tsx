@@ -44,7 +44,7 @@ export default function CommodityIcon({ id, className = "w-5 h-5" }: CommodityIc
         <path d="M13 5c-.5.8-1 1-2 1" />
         <path d="M13.5 5.2c2.5 1 4 3 3.5 6-.5 3-3 4-3.5 6-.5 2 1 3 1.5 3.8-1.5.5-3-.5-4-1.5-1.5-1.5-1.5-3.5-1-5.5.5-2 2.5-3 3-5 .5-2-.5-3.5.5-3.8z" />
       </>,
-      "Cabe Merah Keriting"
+      "Cabai Merah Keriting"
     );
   }
 
@@ -57,7 +57,7 @@ export default function CommodityIcon({ id, className = "w-5 h-5" }: CommodityIc
         <path d="M13 5c3 1.5 5 4.5 5 8.5 0 4-3.5 7.5-7.5 7.5S4 18 4 14C4 9.5 9 5 13 5z" />
         <path d="M10.5 10c2 1 3.5 3 3.5 5.5" opacity="0.6" strokeWidth="1.5" />
       </>,
-      "Cabe Merah Besar"
+      "Cabai Merah Besar"
     );
   }
 

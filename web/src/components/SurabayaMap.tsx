@@ -16,6 +16,7 @@ export interface MapMarketItem {
   longitude: number;
   address: string;
   characteristic: string;
+  isImputed?: boolean;
 }
 
 interface SurabayaMapProps {
@@ -44,6 +45,7 @@ export default function SurabayaMap({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const markerMapRef = useRef<Record<string, L.Marker>>({});
 
   // Initialize Map Instance once
   useEffect(() => {
@@ -100,7 +102,9 @@ export default function SurabayaMap({
     const markersGroup = markersLayerRef.current;
     if (!map || !markersGroup) return;
 
+    map.closePopup();
     markersGroup.clearLayers();
+    markerMapRef.current = {};
 
     markets.forEach((m) => {
       const isMin = m.price === minPrice && minPrice > 0;
@@ -142,14 +146,14 @@ export default function SurabayaMap({
           </div>
 
           <!-- Clean Minimal Label below Pin (Apple Maps style) -->
-          <div style="display: flex; flex-direction: column; align-items: center; margin-top: 3px; pointer-events: none;">
+          <div style="display: flex; flex-direction: column; align-items: center; margin-top: 3px; pointer-events: none; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;">
             <span style="font-size: 11px; font-weight: 700; color: #0F172A; text-shadow: 0 1px 3px rgba(255,255,255,0.95), 0 0 5px #FFFFFF; letter-spacing: -0.01em; white-space: nowrap;">
               ${m.shortName}
             </span>
             <span style="font-size: 10px; font-weight: 700; color: ${
               isMin ? "#059669" : isMax ? "#DC2626" : "#334155"
             }; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(4px); padding: 1.5px 7px; border-radius: 9999px; border: 1px solid rgba(226, 232, 240, 0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.06); white-space: nowrap; margin-top: 1px;">
-              Rp ${m.price.toLocaleString("id-ID")}
+              ${m.isImputed ? "~" : ""}Rp ${m.price.toLocaleString("id-ID")}
             </span>
           </div>
         </div>
@@ -169,47 +173,71 @@ export default function SurabayaMap({
       const diffVsAvg = m.price - cityAvg;
 
       const popupHtml = `
-        <div style="padding: 4px; font-family: inherit; min-width: 220px;">
+        <div style="font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 232px; -webkit-font-smoothing: antialiased;">
+          <!-- Header: Nama Pasar & Badge Wilayah -->
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px; margin-bottom: 6px;">
-            <strong style="font-size: 13px; color: #0F172A;">${m.name}</strong>
-            <span style="font-size: 10px; background: #F1F5F9; padding: 2px 6px; border-radius: 999px; color: #475569; font-weight: 600;">${m.zone}</span>
+            <strong style="font-size: 13.5px; font-weight: 700; color: #0F172A; letter-spacing: -0.01em;">${m.name}</strong>
+            <span style="font-size: 10px; font-weight: 700; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 7px; border-radius: 9999px; color: #475569; letter-spacing: 0.01em;">Surabaya ${m.zone}</span>
           </div>
-          <div style="font-size: 11px; color: #64748B; margin-bottom: 8px;">${m.address}</div>
           
-          <div style="background: #F8FAFC; padding: 6px 8px; border-radius: 6px; margin-bottom: 8px;">
-            <div style="font-size: 10px; color: #64748B;">Harga ${selectedCommodityName}:</div>
-            <div style="font-size: 14px; font-weight: 800; color: ${isMin ? "#16A34A" : isMax ? "#DC2626" : "#0F172A"};">
-              Rp ${m.price.toLocaleString("id-ID")} <span style="font-size: 10px; font-weight: 400; color: #64748B;">/${unit}</span>
+          <!-- Alamat Pasar -->
+          <div style="font-size: 11px; font-weight: 500; color: #64748B; margin-bottom: 8px; line-height: 1.35;">${m.address}</div>
+          
+          <!-- Box Komoditas & Harga -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 7px 9px; border-radius: 8px; margin-bottom: 8px;">
+            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748B; margin-bottom: 2px;">
+              Harga ${selectedCommodityName}:
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <div>
+                <span style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em; color: ${isMin ? "#16A34A" : isMax ? "#DC2626" : "#0F172A"};">
+                  ${m.isImputed ? "~" : ""}Rp ${m.price.toLocaleString("id-ID")}
+                </span>
+                <span style="font-size: 10.5px; font-weight: 500; color: #64748B;">/${unit}</span>
+              </div>
+              ${isMin ? '<span style="font-size: 9.5px; font-weight: 700; background: #DCFCE7; color: #166534; padding: 1.5px 6px; border-radius: 9999px; border: 1px solid #BBF7D0;">Termurah</span>' : ''}
+              ${isMax ? '<span style="font-size: 9.5px; font-weight: 700; background: #FEE2E2; color: #991B1B; padding: 1.5px 6px; border-radius: 9999px; border: 1px solid #FECACA;">Tertinggi</span>' : ''}
             </div>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 3px; font-size: 11px;">
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: #64748B;">vs Rerata Kota:</span>
-              <strong style="color: ${diffVsAvg > 0 ? "#DC2626" : "#16A34A"};">${diffVsAvg >= 0 ? "+" : ""}Rp ${diffVsAvg.toLocaleString("id-ID")}</strong>
+          <!-- Komparasi Selisih -->
+          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #64748B; font-weight: 500;">vs Rerata Kota:</span>
+              <strong style="color: ${diffVsAvg > 0 ? "#DC2626" : "#16A34A"}; font-weight: 700; letter-spacing: -0.01em;">
+                ${diffVsAvg >= 0 ? "+" : ""}Rp ${diffVsAvg.toLocaleString("id-ID")}
+              </strong>
             </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: #64748B;">vs Termurah:</span>
-              <strong style="color: ${isMin ? "#16A34A" : "#DC2626"};">${isMin ? "Paling Murah" : `+Rp ${diffVsMin.toLocaleString("id-ID")}`}</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #64748B; font-weight: 500;">vs Termurah:</span>
+              <strong style="color: ${isMin ? "#16A34A" : "#DC2626"}; font-weight: 700; letter-spacing: -0.01em;">
+                ${isMin ? "Acuan Termurah ⭐" : `+Rp ${diffVsMin.toLocaleString("id-ID")}`}
+              </strong>
             </div>
           </div>
 
-          <div style="margin-top: 8px; font-size: 10px; color: #64748B; line-height: 1.35; border-top: 1px dashed #E2E8F0; padding-top: 6px;">
-            <em>${m.role}</em>
+          <!-- Peran Distribusi Pasar -->
+          <div style="margin-top: 8px; font-size: 10.5px; font-weight: 500; color: #64748B; line-height: 1.35; border-top: 1px dashed #E2E8F0; padding-top: 6px;">
+            ${m.role}
           </div>
         </div>
       `;
 
       marker.bindPopup(popupHtml, {
         offset: [0, -42],
-        closeButton: false,
+        closeButton: true,
+        autoClose: true,
+        closeOnClick: true,
       });
 
       marker.on("click", () => {
+        map.closePopup();
         onSelectMarket(m.id);
+        marker.openPopup();
       });
 
       markersGroup.addLayer(marker);
+      markerMapRef.current[m.id] = marker;
     });
   }, [markets, selectedCommodityName, unit, selectedMarketId, selectedZone, minPrice, maxPrice, cityAvg, onSelectMarket]);
 
@@ -231,6 +259,11 @@ export default function SurabayaMap({
     const active = markets.find((m) => m.id === selectedMarketId);
     if (active) {
       map.panTo([active.latitude, active.longitude], { animate: true, duration: 0.8 });
+      const activeMarker = markerMapRef.current[active.id];
+      if (activeMarker && !activeMarker.isPopupOpen()) {
+        map.closePopup();
+        activeMarker.openPopup();
+      }
     }
   }, [selectedZone, selectedMarketId, markets]);
 

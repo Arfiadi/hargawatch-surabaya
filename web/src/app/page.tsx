@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,153 +18,12 @@ import {
   ShoppingBasketSimulation,
   MarketTrendComparisonResult,
   TREND_MARKET_CONFIGS,
-  AVAILABLE_TREND_COMMODITIES,
   ALL_CATALOG_COMMODITIES,
-  CatalogCommodity,
+  TIMEFRAME_CONFIG,
+  TimeframeOption,
 } from "@/lib/dataService";
 import CommodityIcon from "@/components/CommodityIcon";
 import CommoditySearchSelect from "@/components/CommoditySearchSelect";
-
-const DEFAULT_COMMODITIES: CommodityPrice[] = [
-    {
-      id: "beras",
-      category: "Beras",
-      tag: "Pangan Pokok",
-      name: "Beras Medium",
-      status: "Normal",
-      isCritical: false,
-      isWarning: false,
-      cheapestBadge: "Termurah di Surabaya",
-      cheapestSub: "Hemat Rp 600/kg",
-      marketName: "Pasar Tambahrejo",
-      marketSub: "Simokerto, Surabaya Utara",
-      price: "Rp 13.200",
-      unit: "/kg",
-      cityAvg: "Rp 13.800",
-      delta: "-1.5%",
-      deltaIcon: "trending_down",
-      deltaClass: "text-status-normal",
-      sparkPath: "M0,28 L30,24 L60,26 L100,18 L140,16 L170,12 L200,8",
-      sparkClass: "text-status-normal",
-      basketItemName: "Beras Premium",
-      basketItemPrice: 14500,
-    },
-    {
-      id: "minyak",
-      category: "Minyak Goreng",
-      tag: "Minyak Nabati",
-      name: "Minyak Goreng Curah",
-      status: "Stabil",
-      isCritical: false,
-      isWarning: false,
-      cheapestBadge: "Termurah di Surabaya",
-      cheapestSub: "Harga Terkendali",
-      marketName: "Pasar Wonokromo",
-      marketSub: "Wonokromo, Surabaya Selatan",
-      price: "Rp 15.500",
-      unit: "/liter",
-      cityAvg: "Rp 16.200",
-      delta: "0.0%",
-      deltaIcon: "horizontal_rule",
-      deltaClass: "text-status-normal",
-      sparkPath: "M0,16 L40,16 L80,18 L120,16 L160,15 L200,16",
-      sparkClass: "text-status-normal",
-      basketItemName: "Minyak Goreng",
-      basketItemPrice: 16000,
-    },
-    {
-      id: "telur",
-      category: "Telur",
-      tag: "Protein Unggas",
-      name: "Telur Ayam Ras",
-      status: "Stabil",
-      isCritical: false,
-      isWarning: false,
-      cheapestBadge: "Termurah di Surabaya",
-      cheapestSub: "Pasokan Aman",
-      marketName: "Pasar Soponyono",
-      marketSub: "Rungkut, Surabaya Timur",
-      price: "Rp 27.500",
-      unit: "/kg",
-      cityAvg: "Rp 28.400",
-      delta: "Stabil",
-      deltaIcon: "trending_flat",
-      deltaClass: "text-status-normal",
-      sparkPath: "M0,20 L35,18 L70,22 L110,19 L150,20 L200,18",
-      sparkClass: "text-status-normal",
-      basketItemName: "Telur Ayam",
-      basketItemPrice: 27500,
-    },
-    {
-      id: "cabai",
-      category: "Cabai",
-      tag: "Disparitas Tinggi",
-      name: "Cabai Rawit Merah",
-      status: "Waspada",
-      isCritical: true,
-      isWarning: false,
-      cheapestBadge: "Termurah: Keputran",
-      cheapestSub: "Selisih Rp 8.000!",
-      marketName: "Pasar Keputran",
-      marketSub: "Genteng: Rp 76.000/kg",
-      price: "Rp 68.000",
-      unit: "/kg",
-      cityAvg: "Rp 72.500",
-      delta: "+6.5%",
-      deltaIcon: "trending_up",
-      deltaClass: "text-status-critical",
-      sparkPath: "M0,28 L40,24 L80,22 L120,18 L160,8 L200,4",
-      sparkClass: "text-status-critical",
-      basketItemName: "Cabai Rawit",
-      basketItemPrice: 68000,
-    },
-    {
-      id: "daging",
-      category: "Daging Sapi",
-      tag: "Peternakan",
-      name: "Daging Sapi Murni",
-      status: "Normal",
-      isCritical: false,
-      isWarning: false,
-      cheapestBadge: "Termurah di Surabaya",
-      cheapestSub: "Harga RPH Terjaga",
-      marketName: "Pasar Pucang Anom",
-      marketSub: "Gubeng, Surabaya Tengah",
-      price: "Rp 118.000",
-      unit: "/kg",
-      cityAvg: "Rp 122.500",
-      delta: "0.0%",
-      deltaIcon: "trending_flat",
-      deltaClass: "text-status-normal",
-      sparkPath: "M0,18 L50,18 L90,16 L140,16 L175,18 L200,16",
-      sparkClass: "text-status-normal",
-      basketItemName: "Daging Sapi",
-      basketItemPrice: 118000,
-    },
-    {
-      id: "bawang",
-      category: "Bawang",
-      tag: "Hortikultura",
-      name: "Bawang Merah",
-      status: "Waspada",
-      isCritical: false,
-      isWarning: true,
-      cheapestBadge: "Termurah di Surabaya",
-      cheapestSub: "Grosir Keputran",
-      marketName: "Pasar Keputran",
-      marketSub: "Tegalsari, Surabaya Pusat",
-      price: "Rp 32.000",
-      unit: "/kg",
-      cityAvg: "Rp 35.800",
-      delta: "+3.8%",
-      deltaIcon: "trending_up",
-      deltaClass: "text-status-warning",
-      sparkPath: "M0,24 L45,22 L90,20 L135,14 L170,10 L200,8",
-      sparkClass: "text-status-warning",
-      basketItemName: "Bawang Merah",
-      basketItemPrice: 32000,
-    },
-  ];
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
@@ -171,7 +31,6 @@ export default function HomePage() {
   const [addedItems, setAddedItems] = useState<{ [key: string]: boolean }>({});
   const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [commodities, setCommodities] = useState<CommodityPrice[]>([]);
-  const [isLive, setIsLive] = useState<boolean>(false);
   const [loadingCommodities, setLoadingCommodities] = useState<boolean>(true);
   const [errorCommodities, setErrorCommodities] = useState<boolean>(false);
   const [stabilitySummary, setStabilitySummary] = useState<FoodStabilitySummary | null>(null);
@@ -184,14 +43,39 @@ export default function HomePage() {
   const [isBasketLoading, setIsBasketLoading] = useState<boolean>(false);
   const [showFloatingBasket, setShowFloatingBasket] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [shoppingFreq, setShoppingFreq] = useState<number>(4);
+  const [basketViewMode, setBasketViewMode] = useState<"single" | "split">("single");
 
   const activeBasketList = useMemo(() => {
     return basketList.filter((b) => checkedItems[b.komoditas_id] !== false);
   }, [basketList, checkedItems]);
 
+  // Mini Price Ticker untuk Hero: 4 komoditas kunci harian Surabaya
+  const heroTickerItems = useMemo(() => {
+    if (!commodities || commodities.length === 0) return [];
+    const targetIds = [50, 16, 2, 39]; // Cabai Rawit Merah, Telur Ayam Ras, Beras Medium, Bawang Merah
+    const picked: CommodityPrice[] = [];
+
+    targetIds.forEach((id) => {
+      const found = commodities.find((c) => c.komoditas_id === id);
+      if (found) picked.push(found);
+    });
+
+    if (picked.length < 4) {
+      commodities.forEach((c) => {
+        if (!picked.some((p) => p.id === c.id) && picked.length < 4) {
+          picked.push(c);
+        }
+      });
+    }
+
+    return picked.slice(0, 4);
+  }, [commodities]);
+
   // Multi-Commodity 14-Day Trajectory State
-  // Per-Market 14-Day Trajectory Comparison for Selected Commodity
+  // Per-Market Trajectory Comparison for Selected Commodity
   const [trendCommodityId, setTrendCommodityId] = useState<number>(50); // Default: Cabai Rawit Merah
+  const [trendTimeframe, setTrendTimeframe] = useState<TimeframeOption>("7d");
   const [marketTrendsData, setMarketTrendsData] = useState<MarketTrendComparisonResult | null>(null);
   const [loadingTrends, setLoadingTrends] = useState<boolean>(true);
   const [errorTrends, setErrorTrends] = useState<boolean>(false);
@@ -217,7 +101,6 @@ export default function HomePage() {
       ]);
       if (liveData && liveData.length > 0) {
         setCommodities(liveData);
-        setIsLive(true);
         setErrorCommodities(false);
       } else {
         setErrorCommodities(true);
@@ -266,11 +149,11 @@ export default function HomePage() {
     };
   }, []);
 
-  // Fetch live 14-day forecast trends comparing all 6 markets for the selected commodity
-  const loadTrends = (commodityId: number) => {
+  // Fetch live forecast trends comparing all 6 markets for the selected commodity with timeframe
+  const loadTrends = (commodityId: number, tf: TimeframeOption = trendTimeframe) => {
     setLoadingTrends(true);
     setErrorTrends(false);
-    getLiveMarketComparisonTrends(commodityId)
+    getLiveMarketComparisonTrends(commodityId, tf)
       .then((liveTrends) => {
         if (liveTrends && liveTrends.series && liveTrends.series.length > 0) {
           setMarketTrendsData(liveTrends);
@@ -284,8 +167,9 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    loadTrends(trendCommodityId);
-  }, [trendCommodityId]);
+    loadTrends(trendCommodityId, trendTimeframe);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trendCommodityId, trendTimeframe]);
 
   // Compute live basket simulation from Supabase on activeBasketList change
   useEffect(() => {
@@ -416,6 +300,9 @@ export default function HomePage() {
 
   const handleShareToWhatsApp = () => {
     if (!basketSim) return;
+    const tripSaving = basketSim.tripSaving || (basketSim.rankings[basketSim.rankings.length - 1].totalBelanja - basketSim.rankings[0].totalBelanja);
+    const totalSaving = tripSaving * shoppingFreq;
+
     const itemsText = basketSim.items
       .map(
         (it, idx) =>
@@ -427,7 +314,7 @@ export default function HomePage() {
       .map(
         (r) =>
           `#${r.rank}. ${r.nama_pasar} — Rp ${r.totalBelanja.toLocaleString("id-ID")}${
-            r.selisih > 0 ? ` (+Rp ${r.selisih.toLocaleString("id-ID")})` : " (Paling Hemat ⭐)"
+            r.isCheapest ? " (Paling Hemat ⭐)" : r.selisih > 0 ? ` (+Rp ${r.selisih.toLocaleString("id-ID")})` : " (Sama Hemat)"
           }`
       )
       .join("\n");
@@ -437,9 +324,9 @@ export default function HomePage() {
         `📅 Tanggal Pantauan: ${basketSim.tanggal}\n\n` +
         `*Daftar Belanja:*\n${itemsText}\n\n` +
         `*Ranking Total Belanja di 6 Pasar Tradisional:*\n${rankText}\n\n` +
-        `💡 *Estimasi Hemat:* Belanja di *${basketSim.cheapestMarket}* vs *${basketSim.mostExpensiveMarket}* menghemat hingga *Rp ${basketSim.monthlySaving.toLocaleString(
+        `💡 *Estimasi Hemat:* Belanja di *${basketSim.cheapestMarket}* vs *${basketSim.mostExpensiveMarket}* menghemat *Rp ${tripSaving.toLocaleString("id-ID")}/kunjungan* atau hingga *Rp ${totalSaving.toLocaleString(
           "id-ID"
-        )}/bulan* (pola 4x belanja keluarga).\n\n` +
+        )}/bulan* (pola ${shoppingFreq}x belanja keluarga).\n\n` +
         `Akses data harga pangan riil Surabaya: https://hargawatch.surabaya.go.id`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
@@ -447,6 +334,9 @@ export default function HomePage() {
 
   const handleDownloadList = () => {
     if (!basketSim) return;
+    const tripSaving = basketSim.tripSaving || (basketSim.rankings[basketSim.rankings.length - 1].totalBelanja - basketSim.rankings[0].totalBelanja);
+    const totalSaving = tripSaving * shoppingFreq;
+
     const itemsText = basketSim.items
       .map((it, idx) => `${idx + 1}. ${it.name} (${it.qty} ${it.unit}) ~ Rp ${it.itemTotal.toLocaleString("id-ID")}`)
       .join("\n");
@@ -455,10 +345,21 @@ export default function HomePage() {
       .map(
         (r) =>
           `#${r.rank} ${r.nama_pasar} (${r.wilayah}): Rp ${r.totalBelanja.toLocaleString("id-ID")}${
-            r.selisih > 0 ? ` (+Rp ${r.selisih.toLocaleString("id-ID")})` : " [REKOMENDASI TERMURAH]"
+            r.isCheapest ? " [REKOMENDASI TERMURAH]" : r.selisih > 0 ? ` (+Rp ${r.selisih.toLocaleString("id-ID")})` : " [SAMA HEMAT]"
           }`
       )
       .join("\n");
+
+    const splitText = basketSim.splitBasket
+      ? `\nSKENARIO BELANJA MULTI-PASAR (SUPER HEMAT):\n` +
+        basketSim.splitBasket.items
+          .map(
+            (it, idx) =>
+              `${idx + 1}. ${it.name} (${it.qty} ${it.unit}) -> Beli di ${it.cheapestMarket} @ Rp ${it.itemTotal.toLocaleString("id-ID")}`
+          )
+          .join("\n") +
+        `\nTotal Multi-Pasar: Rp ${basketSim.splitBasket.totalBelanja.toLocaleString("id-ID")} (Hemat Ekstra Rp ${basketSim.splitBasket.additionalSaving.toLocaleString("id-ID")} vs 1 pasar)\n`
+      : "";
 
     const content =
       `=======================================================\n` +
@@ -466,10 +367,13 @@ export default function HomePage() {
       `Tanggal Observasi: ${basketSim.tanggal}\n` +
       `=======================================================\n\n` +
       `RINCIAN ITEM BELANJA:\n${itemsText}\n\n` +
-      `RANKING TOTAL BELANJA DI 6 PASAR:\n${rankText}\n\n` +
-      `ESTIMASI PENGHEMATAN BULANAN (4x Belanja):\n` +
-      `Rp ${basketSim.monthlySaving.toLocaleString("id-ID")} / bulan\n` +
-      `(Selisih ${basketSim.cheapestMarket} vs ${basketSim.mostExpensiveMarket})\n` +
+      `RANKING TOTAL BELANJA DI 6 PASAR:\n${rankText}\n` +
+      splitText +
+      `\nESTIMASI PENGHEMATAN BULANAN (${shoppingFreq}x Belanja):\n` +
+      `Rp ${totalSaving.toLocaleString("id-ID")} / bulan\n` +
+      `(Hemat Rp ${tripSaving.toLocaleString("id-ID")} per kunjungan di ${basketSim.cheapestMarket} vs ${basketSim.mostExpensiveMarket})\n` +
+      `\nCATATAN REALISTIS:\n` +
+      `Pertimbangkan jarak tempuh & biaya transportasi/bensin. Bila selisih tipis (< Rp 5.000), prioritaskan pasar terdekat.\n` +
       `=======================================================\n` +
       `Platform Intelijen Harga Pangan Kota Surabaya\n`;
 
@@ -514,19 +418,6 @@ export default function HomePage() {
     );
   });
 
-  const highestSavingItem = useMemo(() => {
-    if (commodities.length === 0) return null;
-    return [...commodities].sort((a, b) => {
-      const diffA = (a.numericCityAvg || 0) - (a.numericPrice || 0);
-      const diffB = (b.numericCityAvg || 0) - (b.numericPrice || 0);
-      return diffB - diffA;
-    })[0] || null;
-  }, [commodities]);
-
-  const selectedCommodityMeta =
-    ALL_CATALOG_COMMODITIES.find((c) => c.id === trendCommodityId) ||
-    AVAILABLE_TREND_COMMODITIES[0];
-
   return (
     <div className="bg-surface-canvas text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col">
       <Header />
@@ -545,18 +436,69 @@ export default function HomePage() {
             <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary-fixed/20 blur-3xl pointer-events-none"></div>
             <div className="absolute top-1/2 -left-20 w-72 h-72 rounded-full bg-surface-variant/30 blur-2xl pointer-events-none"></div>
             <div className="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop py-space-xl relative z-10">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-lg">
-                <div className="flex-1 max-w-2xl">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-space-lg">
+                <div className="flex-1 max-w-2xl xl:max-w-3xl">
                   <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight mb-space-xs">
                     Pantau Harga Pangan Harian &amp; Belanja Lebih Hemat di Surabaya
                   </h1>
                   <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">
                     Bandingkan harga harian di 6 pasar tradisional, temukan pasar termurah, dan hitung estimasi pengeluaran dapur hari ini.
                   </p>
+
+                  {/* OPSI A: Mini Price Ticker (Harga Acuan Termurah Hari Ini) */}
+                  <div className="mt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {loadingCommodities ? (
+                        Array.from({ length: 4 }).map((_, idx) => (
+                          <div
+                            key={idx}
+                            className="p-2.5 rounded-xl bg-surface-canvas/60 border border-border-subtle/50 animate-pulse h-[82px] flex flex-col justify-between"
+                          >
+                            <div className="w-16 h-3 bg-surface-subtle rounded" />
+                            <div className="w-20 h-4 bg-surface-subtle rounded" />
+                            <div className="w-24 h-3 bg-surface-subtle rounded" />
+                          </div>
+                        ))
+                      ) : (
+                        heroTickerItems.map((item) => (
+                          <a
+                            key={item.id}
+                            href="#best-price-finder-section"
+                            onClick={() => {
+                              if (item.komoditas_id) setTrendCommodityId(item.komoditas_id);
+                            }}
+                            className="group p-2.5 rounded-xl bg-surface-canvas hover:bg-emerald-500/5 border border-border-subtle/80 hover:border-primary/40 transition-all duration-150 flex flex-col justify-between shadow-2xs hover:shadow-xs cursor-pointer"
+                            title={`Lihat detail harga ${item.name} (${item.marketName || "Pasar Termurah"})`}
+                          >
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-semibold text-xs text-text-primary group-hover:text-primary transition-colors truncate">
+                                {item.name.replace(/(Merah|Ras|Kuning)$/i, "").trim()}
+                              </span>
+                              <span className="material-symbols-outlined text-text-muted group-hover:text-primary text-[13px] shrink-0 transition-transform group-hover:translate-x-0.5">
+                                arrow_forward
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1 my-0.5">
+                              <span className="font-extrabold text-sm text-text-primary tracking-tight">
+                                {item.price}
+                              </span>
+                              <span className="text-[10px] text-text-muted">
+                                {item.unit}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10.5px] text-emerald-800 bg-emerald-50 border border-emerald-200/70 px-1.5 py-0.5 rounded-md font-medium truncate">
+                              <span className="material-symbols-outlined text-[12px] shrink-0 text-emerald-600">storefront</span>
+                              <span className="truncate">{item.marketName || "Pasar Termurah"}</span>
+                            </div>
+                          </a>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {/* Quick Health Summary Card */}
                 {loadingSummary || !stabilitySummary ? (
-                  <div className="w-full lg:w-auto min-w-[320px] bg-surface-canvas rounded-xl p-space-md shadow-sm border border-border-subtle/50 animate-pulse">
+                  <div className="w-full lg:w-[390px] xl:w-[420px] shrink-0 bg-surface-canvas rounded-xl p-space-md shadow-sm border border-border-subtle/50 animate-pulse">
                     <div className="flex items-center justify-between gap-space-sm mb-space-xs">
                       <div className="h-3.5 w-36 bg-surface-subtle rounded" />
                       <div className="h-5 w-24 bg-surface-subtle rounded-full" />
@@ -580,11 +522,16 @@ export default function HomePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full lg:w-auto min-w-[320px] bg-surface-canvas rounded-xl p-space-md shadow-sm">
+                  <div className="w-full lg:w-[390px] xl:w-[420px] shrink-0 bg-surface-canvas rounded-xl p-space-md shadow-sm border border-border-subtle/80">
                     <div className="flex items-center justify-between gap-space-sm mb-space-xs">
-                      <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                        Indeks Stabilitas Pangan
-                      </span>
+                      <div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                          Status Pasokan Kota (TPID)
+                        </span>
+                        <span className="font-headline-sm text-headline-sm text-text-primary">
+                          Indeks Ketahanan Pangan
+                        </span>
+                      </div>
                       <span
                         className={`inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full font-label-caps text-label-caps ${
                           stabilitySummary.isNormal
@@ -617,10 +564,10 @@ export default function HomePage() {
                         </div>
                         <div className="flex flex-col">
                           <span className="font-headline-sm text-headline-sm text-text-primary">
-                            {stabilitySummary.normalCount} Titik
+                            {stabilitySummary.normalCount} Titik Pantau
                           </span>
                           <span className="font-label-caps text-label-caps text-text-muted">
-                            Harga Normal
+                            Harga Terkendali
                           </span>
                         </div>
                       </div>
@@ -645,14 +592,29 @@ export default function HomePage() {
                             }`}
                           >
                             {stabilitySummary.alertCount > 0
-                              ? `${stabilitySummary.alertCount} Titik`
-                              : "0 Titik"}
+                              ? `${stabilitySummary.alertCount} Titik Pantau`
+                              : "0 Titik Pantau"}
                           </span>
                           <span className="font-label-caps text-[11px] sm:text-label-caps text-text-muted whitespace-nowrap">
                             {stabilitySummary.alertNote}
                           </span>
                         </div>
                       </div>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-border-subtle/60 flex flex-col gap-1.5 text-[11px]">
+                      <div className="flex items-center justify-between gap-2 text-text-muted">
+                        <span>
+                          {stabilitySummary.normalCount} dari {stabilitySummary.normalCount + stabilitySummary.alertCount} indikator pasar stabil
+                        </span>
+                      </div>
+                      {basketSim && (
+                        <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/90 px-2.5 py-1 rounded-md border border-emerald-200/70 text-[10.5px]">
+                          <span className="material-symbols-outlined text-[14px] text-emerald-700 shrink-0">storefront</span>
+                          <span className="truncate">
+                            Pasar Termurah: <strong className="font-bold text-emerald-900">{basketSim.cheapestMarket}</strong>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -671,14 +633,20 @@ export default function HomePage() {
               ) : (
                 <div
                   className={`mt-space-lg rounded-xl p-space-sm sm:p-space-md flex items-start sm:items-center justify-between gap-space-sm ${
-                    stabilitySummary.hasAlert ? "bg-status-warning-bg" : "bg-status-normal-bg/60 border border-status-normal/20"
+                    stabilitySummary.hasAlert
+                      ? stabilitySummary.isNormal
+                        ? "bg-amber-50/90 border border-amber-200/80"
+                        : "bg-status-warning-bg border border-status-warning/30"
+                      : "bg-status-normal-bg/60 border border-status-normal/20"
                   }`}
                 >
                   <div className="flex items-start sm:items-center gap-space-sm">
                     <div
                       className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                         stabilitySummary.hasAlert
-                          ? "bg-status-warning text-white"
+                          ? stabilitySummary.isNormal
+                            ? "bg-amber-600 text-white"
+                            : "bg-status-warning text-white"
                           : "bg-status-normal text-white"
                       }`}
                     >
@@ -690,7 +658,11 @@ export default function HomePage() {
                       <div className="flex items-center gap-space-xs flex-wrap">
                         <span
                           className={`font-label-caps text-label-caps uppercase font-semibold ${
-                            stabilitySummary.hasAlert ? "text-status-warning" : "text-status-normal"
+                            stabilitySummary.hasAlert
+                              ? stabilitySummary.isNormal
+                                ? "text-amber-800"
+                                : "text-status-warning"
+                              : "text-status-normal"
                           }`}
                         >
                           {stabilitySummary.bannerTitle}
@@ -928,38 +900,51 @@ export default function HomePage() {
                             </div>
                           </div>
 
-                          {/* City Average & Trend */}
+                          {item.hasMarketAlert && item.marketAlertNote && (
+                            <div className="mt-1 mb-1.5 px-2 py-0.5 rounded bg-amber-50 border border-amber-200/70 flex items-center gap-1.5 text-[9.5px] sm:text-[10px] text-amber-800">
+                              <span className="material-symbols-outlined text-[12px] text-amber-600 shrink-0">info</span>
+                              <span className="truncate">{item.marketAlertNote}</span>
+                            </div>
+                          )}
+
+                          {/* City Average & Savings Badge */}
                           <div className="flex items-center justify-between text-text-secondary text-[10px] sm:text-body-sm mb-1.5 sm:mb-space-sm pt-0.5">
                             <span className="truncate mr-1">
                               <span className="hidden sm:inline">Rata-rata Kota: </span>
                               <span className="sm:hidden">Rerata: </span>
                               <strong className="font-semibold text-text-primary">{item.cityAvg}</strong>
                             </span>
-                            <span
-                              className={`inline-flex items-center font-medium shrink-0 ${item.deltaClass}`}
-                            >
-                              <span className="material-symbols-outlined text-[11px] sm:text-body-sm mr-0.5">
-                                {item.deltaIcon}
-                              </span>
-                              {item.delta}
+                            <span className="inline-flex items-center font-bold text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-1.5 py-0.5 rounded shrink-0">
+                              {item.savingBadge || item.delta}
                             </span>
                           </div>
 
-                          {/* Sparkline Visual */}
-                          <div className="w-full h-5 sm:h-8 mb-1.5 sm:mb-space-sm">
-                            <svg
-                              className={`w-full h-full ${item.sparkClass}`}
-                              preserveAspectRatio="none"
-                              viewBox="0 0 200 32"
-                            >
-                              <path
-                                d={item.sparkPath}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeWidth="2"
-                              ></path>
-                            </svg>
+                          {/* Real 7-day Historical Trend & Sparkline */}
+                          <div className="mb-1.5 sm:mb-space-sm">
+                            <div className="flex items-center justify-between text-[9.5px] text-text-muted mb-0.5">
+                              <span>Tren 7 Hari Kota</span>
+                              <span className={`inline-flex items-center font-semibold text-[10px] ${item.deltaClass}`}>
+                                <span className="material-symbols-outlined text-[13px] mr-0.5">
+                                  {item.deltaIcon}
+                                </span>
+                                {item.trend7d || "Stabil"}
+                              </span>
+                            </div>
+                            <div className="w-full h-5 sm:h-7">
+                              <svg
+                                className={`w-full h-full ${item.sparkClass}`}
+                                preserveAspectRatio="none"
+                                viewBox="0 0 200 32"
+                              >
+                                <path
+                                  d={item.sparkPath}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeLinecap="round"
+                                  strokeWidth="2"
+                                ></path>
+                              </svg>
+                            </div>
                           </div>
                         </div>
 
@@ -987,45 +972,29 @@ export default function HomePage() {
                   )}
                 </div>
 
-                {/* Data-Driven Strategic Buying Insight (Diposisikan di Bawah Grid Kartu Komoditas) */}
-                {loadingCommodities || !highestSavingItem ? (
-                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col sm:flex-row items-start gap-space-md border border-border-subtle/50 animate-pulse">
-                    <div className="w-full sm:w-28 h-24 rounded-lg bg-surface-subtle shrink-0" />
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <div className="h-4 w-44 bg-surface-subtle rounded" />
-                      <div className="h-5 w-60 bg-surface-subtle rounded" />
-                      <div className="h-3.5 w-full bg-surface-subtle rounded" />
-                      <div className="h-3.5 w-4/5 bg-surface-subtle rounded" />
+                {/* Banner Akses Lengkap 38 Komoditas */}
+                <div className="mt-2 p-3.5 sm:p-4 bg-primary/5 rounded-2xl border border-primary/15 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-xl">query_stats</span>
                     </div>
-                  </div>
-                ) : (
-                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col sm:flex-row items-start gap-space-md border border-primary/20">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      alt="Aktivitas Pasar Tradisional Surabaya"
-                      className="w-full sm:w-28 h-24 rounded-lg object-cover shrink-0"
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU4KGhZnWEhwLnkUcGkN7FfrjtTBmI7s9dDXzMdZBGDzk6UNil3-jRcsPlCiPzkQO3IQDWq9-t7N-LU1Yvib2THuq86ihHqTCmaKT79s0tNulOBcrLkQW1ZDUl77sbEjrxPLuhimAy2DiE1aaO8VZzkViHI3hMxRjuIQyMToJkZffRwOBWpuupknXOqXSi8ZOY1cMqmlH8ZZF6-hzHlTisiVkVQpBtZD7mOtKo9xgEjjbBRDhB1zGo"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-status-normal"></span>
-                          Disparitas Tertinggi: {highestSavingItem.name}
-                        </span>
-                        <span className="font-label-caps text-label-caps text-text-muted">
-                          {highestSavingItem.cheapestSub}
-                        </span>
-                      </div>
-                      <h4 className="font-headline-sm text-body-md text-text-primary font-bold mb-1">
-                        Strategi Belanja Cerdas di {highestSavingItem.marketName}
-                      </h4>
-                      <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed text-justify">
-                        {highestSavingItem.marketName} saat ini mencatat harga terendah untuk {highestSavingItem.name} sebesar <strong className="text-text-primary font-semibold">{highestSavingItem.price}{highestSavingItem.unit}</strong> dibanding rata-rata Surabaya ({highestSavingItem.cityAvg}). Memilih belanja di {highestSavingItem.marketName} memberikan efisiensi anggaran paling signifikan hari ini dengan potensi penghematan hingga <strong className="text-status-normal font-semibold">{highestSavingItem.cheapestSub.replace("Hemat ", "")}</strong>.
+                    <div className="min-w-0">
+                      <p className="font-bold text-text-primary text-xs sm:text-sm">
+                        Ingin Memantau Komoditas Lain?
+                      </p>
+                      <p className="text-[11px] sm:text-xs text-text-secondary leading-tight mt-0.5">
+                        Tersedia riwayat harga dan estimasi tren untuk <strong>seluruh 38 komoditas</strong> pangan Surabaya.
                       </p>
                     </div>
                   </div>
-                )}
-
+                  <a
+                    href="#grafik-tren"
+                    className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs shrink-0 cursor-pointer"
+                  >
+                    <span>Buka Grafik 38 Komoditas</span>
+                    <span className="material-symbols-outlined text-sm">arrow_downward</span>
+                  </a>
+                </div>
               </div>
 
               {/* RIGHT COLUMN: Smart Shopping Basket (lg:col-span-5) */}
@@ -1038,12 +1007,9 @@ export default function HomePage() {
                         <span className="material-symbols-outlined text-[19px] sm:text-[22px]">shopping_bag</span>
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="font-headline-sm text-sm sm:text-base text-text-primary font-bold truncate">Smart Shopping Basket</h3>
-                          <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] sm:text-[10px] font-bold font-label-caps shrink-0">
-                            SIMULASI
-                          </span>
-                        </div>
+                        <h3 className="font-headline-sm text-sm sm:text-base text-text-primary font-bold truncate">
+                          Smart Shopping Basket
+                        </h3>
                         <p className="font-label-caps text-[10.5px] sm:text-xs text-text-secondary truncate">
                           Kalkulator 6 Pasar Tradisional Surabaya
                         </p>
@@ -1169,17 +1135,45 @@ export default function HomePage() {
                     </div>
                   )}
 
-                  {/* Market Ranking Comparison List (Ala Pilihan Toko / Kurir Shopee) */}
+                  {/* Market Ranking Comparison List & Multi-Market Strategy */}
                   <div className="mb-3.5 sm:mb-4">
                     <div className="flex items-center justify-between gap-1 mb-2">
                       <span className="font-label-caps text-[11px] sm:text-xs text-text-secondary uppercase tracking-wider font-bold truncate">
-                        Ranking Belanja 6 Pasar
+                        Strategi Belanja Paling Hemat
                       </span>
                       {activeBasketList.length > 0 && (
                         <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium shrink-0">
                           {activeBasketList.length} item aktif
                         </span>
                       )}
+                    </div>
+
+                    {/* Mode Selector Tabs: 1 Pasar vs Multi-Pasar */}
+                    <div className="flex items-center bg-surface-subtle p-1 rounded-xl mb-3 border border-border-subtle/70">
+                      <button
+                        type="button"
+                        onClick={() => setBasketViewMode("single")}
+                        className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          basketViewMode === "single"
+                            ? "bg-surface-card text-primary shadow-xs"
+                            : "text-text-secondary hover:text-text-primary"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm">storefront</span>
+                        <span>1 Pasar (Praktis)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBasketViewMode("split")}
+                        className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          basketViewMode === "split"
+                            ? "bg-surface-card text-primary shadow-xs"
+                            : "text-text-secondary hover:text-text-primary"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm">alt_route</span>
+                        <span>Multi-Pasar (Super Hemat)</span>
+                      </button>
                     </div>
 
                     {isBasketLoading ? (
@@ -1192,101 +1186,172 @@ export default function HomePage() {
                         Centang minimal 1 barang di atas untuk melihat perbandingan pasar.
                       </div>
                     ) : basketSim?.rankings && basketSim.rankings.length > 0 ? (
-                      <div className="space-y-2">
-                        {/* Winner Store (#1 Keputran) - Shopee Recommendation Style */}
-                        {(() => {
-                          const winner = basketSim.rankings[0];
-                          const mostExp = basketSim.rankings[basketSim.rankings.length - 1];
-                          const maxSaving = mostExp ? mostExp.totalBelanja - winner.totalBelanja : 0;
-                          const cleanWilayah = winner.wilayah.replace(/^Surabaya\s+/i, "");
-                          return (
-                            <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-2 border-emerald-500/80 shadow-xs relative overflow-hidden">
-                              <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="bg-emerald-600 text-white text-[9.5px] sm:text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs shrink-0">
-                                    <span className="material-symbols-outlined text-[12px] sm:text-[13px]">verified</span> Paling Hemat
+                      basketViewMode === "single" ? (
+                        <div className="space-y-2">
+                          {/* Winners Box (Handles single winner or ties gracefully) */}
+                          {(() => {
+                            const winners = basketSim.rankings.filter((r) => r.isCheapest);
+                            const mostExp = basketSim.rankings[basketSim.rankings.length - 1];
+                            const maxSaving = mostExp ? Math.max(0, mostExp.totalBelanja - winners[0].totalBelanja) : 0;
+                            const isTie = winners.length > 1;
+
+                            return (
+                              <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-2 border-emerald-500/80 shadow-xs relative overflow-hidden">
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="bg-emerald-600 text-white text-[9.5px] sm:text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs shrink-0">
+                                      <span className="material-symbols-outlined text-[12px] sm:text-[13px]">verified</span> Paling Hemat
+                                    </span>
+                                    <span className="text-emerald-900 font-bold text-xs">
+                                      {isTie ? `Pilihan Terbaik Bersama (${winners.length} Pasar)` : "Pilihan Terbaik"}
+                                    </span>
+                                  </div>
+                                  <span className="font-extrabold text-base sm:text-lg text-emerald-700 tracking-tight shrink-0">
+                                    Rp {winners[0].totalBelanja.toLocaleString("id-ID")}
                                   </span>
-                                  <span className="text-emerald-900 font-bold text-xs">Pilihan Terbaik</span>
                                 </div>
-                                <span className="font-extrabold text-base sm:text-lg text-emerald-700 tracking-tight shrink-0">
-                                  Rp {winner.totalBelanja.toLocaleString("id-ID")}
+
+                                <div className="space-y-1.5">
+                                  {winners.map((winner) => {
+                                    const cleanWilayah = winner.wilayah.replace(/^Surabaya\s+/i, "");
+                                    const marketType = winner.pasar_id === 5 ? "Pasar Induk (Grosir)" : "Pasar Tradisional (Ritel)";
+                                    return (
+                                      <div key={winner.pasar_id} className="flex items-center justify-between text-xs gap-2 pt-1 border-t border-emerald-200/50 first:border-t-0 first:pt-0">
+                                        <div className="min-w-0">
+                                          <span className="font-bold text-slate-900 text-xs sm:text-sm truncate block">
+                                            {winner.nama_pasar}
+                                          </span>
+                                          <span className="text-slate-500 text-[10.5px] sm:text-[11px] truncate block">
+                                            Surabaya {cleanWilayah} • {marketType}
+                                          </span>
+                                        </div>
+                                        {maxSaving > 0 && (
+                                          <span className="text-[10.5px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
+                                            Hemat Rp {maxSaving.toLocaleString("id-ID")}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Other Markets (#2 to #6) */}
+                          <div className="space-y-1.5 pt-1">
+                            {basketSim.rankings.filter((r) => !r.isCheapest).map((m) => {
+                              const isMostExp = m.rank === basketSim.rankings[basketSim.rankings.length - 1].rank;
+                              const cleanWil = m.wilayah.replace(/^Surabaya\s+/i, "");
+                              return (
+                                <div
+                                  key={m.pasar_id}
+                                  className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl flex items-center justify-between text-xs border transition-colors ${
+                                    isMostExp
+                                      ? "bg-rose-50/40 border-rose-200/60"
+                                      : "bg-surface-canvas border-slate-200/70"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 pr-1">
+                                    <span className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-surface-subtle text-text-secondary flex items-center justify-center font-bold text-[9.5px] sm:text-[10px] shrink-0">
+                                      #{m.rank}
+                                    </span>
+                                    <div className="min-w-0 flex items-center gap-1">
+                                      <span className="font-semibold text-slate-800 text-xs truncate">
+                                        {m.nama_pasar}
+                                      </span>
+                                      <span className="hidden sm:inline text-slate-400 text-[10px] shrink-0">
+                                        {cleanWil}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-right flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                    <span className="font-semibold text-slate-900 text-xs">
+                                      Rp {m.totalBelanja.toLocaleString("id-ID")}
+                                    </span>
+                                    <span
+                                      className={`text-[9.5px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                        m.selisih === 0
+                                          ? "bg-emerald-100 text-emerald-800"
+                                          : isMostExp
+                                          ? "bg-rose-100 text-rose-700"
+                                          : "bg-slate-100 text-slate-600"
+                                      }`}
+                                    >
+                                      {m.selisih === 0 ? "Sama Hemat" : `+Rp ${m.selisih.toLocaleString("id-ID")}`}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        /* Multi-Market / Split-Basket View */
+                        <div className="space-y-2">
+                          <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent border-2 border-teal-500/80 shadow-xs">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <div>
+                                <span className="bg-teal-700 text-white text-[9.5px] sm:text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block shadow-2xs">
+                                  KERANJANG OPTIMAL MULTI-PASAR
+                                </span>
+                                <span className="block text-[11px] text-slate-600 mt-1">
+                                  Beli tiap komoditas di pasar termurahnya masing-masing:
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between text-xs gap-2">
-                                <div className="min-w-0">
-                                  <span className="font-bold text-slate-900 text-xs sm:text-sm truncate block">
-                                    {winner.nama_pasar}
-                                  </span>
-                                  <span className="text-slate-500 text-[10.5px] sm:text-[11px] truncate block">
-                                    Surabaya {cleanWilayah} • Pasar Grosir
-                                  </span>
-                                </div>
-                                {maxSaving > 0 && (
-                                  <span className="text-[10.5px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
-                                    Hemat Rp {maxSaving.toLocaleString("id-ID")}
+                              <div className="text-right">
+                                <span className="font-extrabold text-base sm:text-lg text-teal-800 tracking-tight block">
+                                  Rp {basketSim.splitBasket.totalBelanja.toLocaleString("id-ID")}
+                                </span>
+                                {basketSim.splitBasket.additionalSaving > 0 && (
+                                  <span className="text-[10px] font-bold text-teal-800 bg-teal-100 px-1.5 py-0.5 rounded-md">
+                                    +Hemat Rp {basketSim.splitBasket.additionalSaving.toLocaleString("id-ID")}
                                   </span>
                                 )}
                               </div>
                             </div>
-                          );
-                        })()}
 
-                        {/* Other Markets (#2 to #6) */}
-                        <div className="space-y-1.5 pt-1">
-                          {basketSim.rankings.slice(1).map((m) => {
-                            const isMostExp = m.rank === basketSim.rankings.length;
-                            const cleanWil = m.wilayah.replace(/^Surabaya\s+/i, "");
-                            return (
-                              <div
-                                key={m.pasar_id}
-                                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl flex items-center justify-between text-xs border transition-colors ${
-                                  isMostExp
-                                    ? "bg-rose-50/40 border-rose-200/60"
-                                    : "bg-surface-canvas border-slate-200/70"
-                                }`}
-                              >
-                                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 pr-1">
-                                  <span className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-surface-subtle text-text-secondary flex items-center justify-center font-bold text-[9.5px] sm:text-[10px] shrink-0">
-                                    #{m.rank}
-                                  </span>
-                                  <div className="min-w-0 flex items-center gap-1">
-                                    <span className="font-semibold text-slate-800 text-xs truncate">
-                                      {m.nama_pasar}
+                            <div className="mt-2.5 pt-2 border-t border-teal-200/60 space-y-1.5">
+                              {basketSim.splitBasket.items.map((it) => (
+                                <div
+                                  key={`split_${it.komoditas_id}`}
+                                  className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-white/70 border border-teal-100"
+                                >
+                                  <div className="min-w-0 pr-2">
+                                    <span className="font-semibold text-slate-900 block truncate">
+                                      {it.name} ({it.qty} {it.unit})
                                     </span>
-                                    <span className="hidden sm:inline text-slate-400 text-[10px] shrink-0">
-                                      {cleanWil}
+                                    <span className="text-[10.5px] text-teal-700 font-medium block">
+                                      📍 Beli di Pasar {it.cheapestMarket}
                                     </span>
                                   </div>
-                                </div>
-
-                                <div className="text-right flex items-center gap-1.5 sm:gap-2 shrink-0">
-                                  <span className="font-semibold text-slate-900 text-xs">
-                                    Rp {m.totalBelanja.toLocaleString("id-ID")}
-                                  </span>
-                                  <span
-                                    className={`text-[9.5px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                                      isMostExp
-                                        ? "bg-rose-100 text-rose-700"
-                                        : "bg-slate-100 text-slate-600"
-                                    }`}
-                                  >
-                                    +{m.selisih > 0 ? `Rp ${m.selisih.toLocaleString("id-ID")}` : "-"}
+                                  <span className="font-bold text-slate-900 shrink-0 text-xs">
+                                    Rp {it.itemTotal.toLocaleString("id-ID")}
                                   </span>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )
                     ) : (
                       <div className="text-text-muted text-xs text-center py-2">
                         Pilih item untuk melihat ranking pasar.
                       </div>
                     )}
+
+                    {/* Realistic Transport & Distance Tip Callout */}
+                    <div className="mt-3 p-2.5 sm:p-3 rounded-xl bg-amber-50/80 border border-amber-200/70 text-[11px] sm:text-xs text-amber-900 flex items-start gap-2 shadow-2xs">
+                      <span className="material-symbols-outlined text-amber-700 text-sm sm:text-base shrink-0 mt-0.5">commute</span>
+                      <div className="leading-relaxed">
+                        <strong className="font-semibold text-amber-950">Tips Belanja Bijak:</strong> Selisih penghematan sebaiknya disesuaikan dengan jarak tempuh &amp; biaya transportasi/parkir. Bila selisihnya tipis (&lt; Rp 5.000), utamakan pasar tradisional terdekat dari rumah Anda.
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Monthly Savings Ticket / Voucher Card (Shopee Voucher Style) */}
-                  {basketSim && basketSim.monthlySaving > 0 && (
+                  {/* Monthly Savings Ticket / Voucher Card (Interactive Shopping Frequency) */}
+                  {basketSim && (basketSim.tripSaving > 0 || basketSim.monthlySaving > 0) && (
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-5 py-3.5 sm:px-6 sm:py-4 mb-3.5 sm:mb-4 shadow-sm">
                       {/* Symmetrical Ticket cutouts decoration */}
                       <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-surface-card"></div>
@@ -1297,18 +1362,47 @@ export default function HomePage() {
                           <span className="material-symbols-outlined text-2xl text-emerald-200">savings</span>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
                             <span className="text-[9.5px] uppercase tracking-wider font-extrabold bg-emerald-950/40 text-emerald-200 px-2 py-0.5 rounded-full inline-block">
                               POTENSI HEMAT BULANAN
                             </span>
+                            {/* Interactive Frequency Selector */}
+                            <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xs p-0.5 rounded-lg border border-white/20">
+                              {[
+                                { f: 2, l: "2x/bln" },
+                                { f: 4, l: "4x/bln" },
+                                { f: 8, l: "8x/bln" },
+                              ].map((item) => (
+                                <button
+                                  key={item.f}
+                                  type="button"
+                                  onClick={() => setShoppingFreq(item.f)}
+                                  className={`px-1.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-bold transition-all cursor-pointer ${
+                                    shoppingFreq === item.f
+                                      ? "bg-white text-emerald-900 shadow-xs"
+                                      : "text-emerald-100 hover:text-white"
+                                  }`}
+                                >
+                                  {item.l}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <div className="text-base sm:text-lg font-extrabold tracking-tight text-white mt-0.5">
-                            Rp {basketSim.monthlySaving.toLocaleString("id-ID")}{" "}
-                            <span className="text-[11px] font-normal text-emerald-100">/ bulan</span>
-                          </div>
-                          <p className="text-[10.5px] sm:text-[11px] text-emerald-100/90 leading-tight mt-0.5">
-                            Belanja di <strong>{basketSim.cheapestMarket}</strong> vs <strong>{basketSim.mostExpensiveMarket}</strong> (estimasi 4x belanja/bulan).
-                          </p>
+                          {(() => {
+                            const tripSaving = basketSim.tripSaving || (basketSim.rankings[basketSim.rankings.length - 1].totalBelanja - basketSim.rankings[0].totalBelanja);
+                            const totalMonthly = tripSaving * shoppingFreq;
+                            return (
+                              <>
+                                <div className="text-base sm:text-lg font-extrabold tracking-tight text-white mt-0.5">
+                                  Rp {totalMonthly.toLocaleString("id-ID")}{" "}
+                                  <span className="text-[11px] font-normal text-emerald-100">/ bulan</span>
+                                </div>
+                                <p className="text-[10.5px] sm:text-[11px] text-emerald-100/90 leading-tight mt-0.5">
+                                  Hemat <strong>Rp {tripSaving.toLocaleString("id-ID")}</strong> / trip × {shoppingFreq}x belanja sebulan ({basketSim.cheapestMarket} vs {basketSim.mostExpensiveMarket}).
+                                </p>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -1330,6 +1424,9 @@ export default function HomePage() {
                       <span className="material-symbols-outlined text-sm sm:text-base">download_for_offline</span>
                       Simpan Catatan Belanja
                     </button>
+                    <p className="text-[10px] text-text-muted mt-1 text-center leading-relaxed">
+                      *Minyak goreng curah dihitung dalam satuan kg sesuai pencatatan resmi pasar SISKAPERBAPO (1 kg ≈ 1,1 liter).
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1341,32 +1438,22 @@ export default function HomePage() {
           <section className="max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop w-full mb-space-lg sm:mb-space-xl lg:mb-space-2xl" id="grafik-tren">
             <div className="bg-surface-card rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-border-subtle/80 transition-all">
               {/* Header: Title & Info */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                      Komparasi 6 Pasar Surabaya
-                    </span>
-                  </div>
-                  <h2 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
-                    Dinamika Harga {marketTrendsData?.nama_komoditas || "Komoditas Pangan"}
-                  </h2>
-                  <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                    Perbandingan pergerakan harga riil &amp; trajektori model di 6 pasar Surabaya per {marketTrendsData?.satuan || "kg"}
-                  </p>
-                </div>
+              <div className="mb-4">
+                <h2 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
+                  Dinamika Harga {marketTrendsData?.nama_komoditas || "Komoditas Pangan"}
+                </h2>
+                <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
+                  Perbandingan pergerakan harga riil &amp; estimasi tren 7 hari ke depan di 6 pasar Surabaya per {marketTrendsData?.satuan || "kg"}
+                </p>
               </div>
 
-              {/* Pola 2: Searchable Dropdown for All 38 Commodities + Strategic Quick Chips */}
-              <div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-start gap-8 bg-surface-subtle/50 p-3 rounded-2xl border border-border-subtle/70">
+              {/* Panel Kontrol: Pilihan Komoditas & Rentang Waktu (Bebas Redundansi) */}
+              <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 bg-surface-subtle/50 p-3.5 rounded-2xl border border-border-subtle/70">
                 {/* Left: Searchable Dropdown for 38 Commodities */}
-                <div className="w-full lg:w-72 shrink-0">
-                  <div className="mb-1.5">
-                    <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
-                      Pilih dari 38 Komoditas:
-                    </span>
-                  </div>
+                <div className="w-full md:w-72 lg:w-80 shrink-0">
+                  <label className="block mb-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider">
+                    Pilih Komoditas Pokok:
+                  </label>
                   <CommoditySearchSelect
                     options={ALL_CATALOG_COMMODITIES}
                     valueId={trendCommodityId}
@@ -1380,35 +1467,26 @@ export default function HomePage() {
                   />
                 </div>
 
-                {/* Right: Quick Chips (Pangan Pokok Strategis) */}
-                <div className="w-full lg:flex-1 min-w-0">
-                  <div className="mb-1.5 pl-1.5">
-                    <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
-                      Pangan Pokok Strategis:
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar px-1.5 py-1 -mt-1 pr-8">
-                    {AVAILABLE_TREND_COMMODITIES.map((c) => {
-                      const isSelected = trendCommodityId === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => {
-                            setTrendCommodityId(c.id);
-                            setHighlightedMarketId(null);
-                          }}
-                          className={`h-11 inline-flex items-center justify-center gap-2 px-3.5 rounded-xl text-xs font-semibold shrink-0 whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                            isSelected
-                              ? "bg-primary text-white shadow-sm shadow-primary/30 ring-2 ring-primary/40 font-bold"
-                              : "bg-white hover:bg-surface-subtle text-text-secondary hover:text-text-primary border border-border-subtle hover:border-primary/20 shadow-xs"
-                          }`}
-                        >
-                          <CommodityIcon id={c.id} className="w-4 h-4 shrink-0" />
-                          <span>{c.shortName}</span>
-                        </button>
-                      );
-                    })}
+                {/* Right: Rentang Waktu (Timeframe Selector) menggantikan chip strategis redundant */}
+                <div className="w-full md:flex-1 min-w-0">
+                  <label className="block mb-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider">
+                    Rentang Waktu:
+                  </label>
+                  <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-border-subtle shadow-xs overflow-x-auto no-scrollbar h-11">
+                    {TIMEFRAME_CONFIG.map((tf) => (
+                      <button
+                        key={tf.id}
+                        type="button"
+                        onClick={() => setTrendTimeframe(tf.id)}
+                        className={`h-9 flex-1 min-w-[68px] inline-flex items-center justify-center px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                          trendTimeframe === tf.id
+                            ? "bg-primary text-white shadow-xs font-bold"
+                            : "text-text-secondary hover:text-text-primary hover:bg-surface-subtle"
+                        }`}
+                      >
+                        {tf.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1557,50 +1635,11 @@ export default function HomePage() {
 
                 const todayX = getX(todayIdx);
 
-                // Helper for Catmull-Rom cubic spline
-                const getCurvedPath = (pts: { x: number; y: number }[]) => {
+                // Path lurus (linear point-to-point) bersih presisi sesuai style modern chart
+                const getLinearPath = (pts: { x: number; y: number }[]) => {
                   if (pts.length === 0) return "";
-                  if (pts.length === 1) return `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-                  if (pts.length === 2) return `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)} L ${pts[1].x.toFixed(1)},${pts[1].y.toFixed(1)}`;
-
-                  let d = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-                  for (let i = 0; i < pts.length - 1; i++) {
-                    const p0 = pts[i === 0 ? 0 : i - 1];
-                    const p1 = pts[i];
-                    const p2 = pts[i + 1];
-                    const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1];
-
-                    const cp1x = p1.x + (p2.x - p0.x) / 6;
-                    const cp1y = p1.y + (p2.y - p0.y) / 6;
-                    const cp2x = p2.x - (p3.x - p1.x) / 6;
-                    const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-                    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-                  }
-                  return d;
+                  return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
                 };
-
-                // Envelope corridor between min and max lines across all active markets
-                const corridorMinPts: { x: number; y: number }[] = [];
-                const corridorMaxPts: { x: number; y: number }[] = [];
-                for (let i = 0; i < totalPoints; i++) {
-                  const dayPrices = seriesToRender
-                    .filter((s) => activeMarkets[s.id])
-                    .map((s) => s.points[i]?.price || 0)
-                    .filter((p) => p > 0);
-                  if (dayPrices.length > 0) {
-                    corridorMinPts.push({ x: getX(i), y: getY(Math.min(...dayPrices)) });
-                    corridorMaxPts.push({ x: getX(i), y: getY(Math.max(...dayPrices)) });
-                  }
-                }
-
-                let envelopeD = "";
-                if (corridorMinPts.length > 1 && corridorMaxPts.length > 1) {
-                  const topPath = getCurvedPath(corridorMaxPts);
-                  const revMin = [...corridorMinPts].reverse();
-                  const bottomPoints = revMin.map((p) => `L ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-                  envelopeD = `${topPath} ${bottomPoints} Z`;
-                }
 
                 // Active hover point calculations
                 const activeHoverPoint = hoveredPointIndex !== null ? {
@@ -1615,6 +1654,7 @@ export default function HomePage() {
                       name: s.name,
                       color: s.color,
                       price: s.points[hoveredPointIndex]?.price || 0,
+                      isImputed: s.points[hoveredPointIndex]?.isImputed || false,
                       y: getY(s.points[hoveredPointIndex]?.price || 0),
                     }))
                     .sort((a, b) => a.price - b.price),
@@ -1745,11 +1785,6 @@ export default function HomePage() {
 
                       {/* Desktop Right Actions */}
                       <div className="hidden md:flex items-center gap-2">
-                        {highlightedMarketId && (
-                          <span className="text-[11px] text-primary font-semibold hidden sm:inline animate-pulse">
-                            Mode Fokus Aktif
-                          </span>
-                        )}
                         <button
                           type="button"
                           onClick={() => {
@@ -1765,7 +1800,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Chart Container Canvas */}
-                    <div className="w-full relative bg-surface-card rounded-2xl p-3 sm:p-5 mb-space-md select-none border border-border-subtle/60">
+                    <div className="w-full relative bg-white rounded-2xl p-3 sm:p-5 mb-space-md select-none border border-border-subtle/70">
                       {/* Mobile Swipe Affordance */}
                       <div className="sm:hidden flex items-center justify-between text-text-muted text-[11px] font-medium mb-2.5 pb-2 border-b border-border-subtle/50">
                         <span className="flex items-center gap-1.5">
@@ -1818,10 +1853,17 @@ export default function HomePage() {
                                           {p.name}
                                         </span>
                                       </span>
-                                      <div className="text-right shrink-0">
-                                        <span className="font-bold text-text-primary font-metric-value">
-                                          Rp {p.price.toLocaleString("id-ID")}
-                                        </span>
+                                      <div className="text-right shrink-0 flex flex-col items-end">
+                                        <div className="flex items-center gap-1">
+                                          {p.isImputed && (
+                                            <span className="text-[9px] bg-amber-100 text-amber-800 font-semibold px-1 rounded" title="Data hasil estimasi/forward-fill karena laporan pasar tertunda">
+                                              Estimasi
+                                            </span>
+                                          )}
+                                          <span className="font-bold text-text-primary font-metric-value">
+                                            Rp {p.price.toLocaleString("id-ID")}
+                                          </span>
+                                        </div>
                                         {rankIdx > 0 && diffVsCheapest > 0 && (
                                           <span className="block text-[9px] text-text-muted font-mono leading-none">
                                             +{diffVsCheapest.toLocaleString("id-ID")}
@@ -1851,53 +1893,12 @@ export default function HomePage() {
                             onMouseLeave={() => setHoveredPointIndex(null)}
                           >
                             <svg className="w-full h-auto block" viewBox="0 0 820 215">
-                          <defs>
-                            <linearGradient id="forecastAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" stopColor="#004328" stopOpacity="0.05" />
-                              <stop offset="100%" stopColor="#004328" stopOpacity="0.01" />
-                            </linearGradient>
-                            <linearGradient id="disparityBandGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" stopColor="#004328" stopOpacity="0.08" />
-                              <stop offset="100%" stopColor="#004328" stopOpacity="0.02" />
-                            </linearGradient>
-                          </defs>
 
-                          {/* Shaded Forecast Region */}
-                          <rect
-                            x={todayX}
-                            y={chartTop}
-                            width={chartRight - todayX}
-                            height={chartHeight}
-                            fill="url(#forecastAreaGrad)"
-                            rx="4"
-                          />
-
-                          {/* Forecast Pill Header in Top Clearance Zone (Bebas tabrakan dari kurva data) */}
-                          <rect
-                            x={(todayX + chartRight) / 2 - 76}
-                            y="10"
-                            width="152"
-                            height="20"
-                            rx="10"
-                            fill="#F0FDF4"
-                            stroke="#BBF7D0"
-                            strokeWidth="1"
-                          />
-                          <text
-                            x={(todayX + chartRight) / 2}
-                            y="24"
-                            textAnchor="middle"
-                            className="fill-[#166534] font-label-caps text-[10px] font-bold tracking-wide select-none pointer-events-none"
-                          >
-                            Proyeksi 7 hari ke depan
-                          </text>
-
-                          {/* Dynamic Horizontal Grid Lines & Y-Labels */}
+                          {/* Dynamic Horizontal Grid Lines & Y-Labels (Clean Solid Style) */}
                           {gridLevels.map((lvl, idx) => (
                             <g key={idx}>
                               <line
                                 stroke="#E2E8F0"
-                                strokeDasharray={idx === 3 ? undefined : "4 4"}
                                 strokeWidth="1"
                                 x1={chartLeft - 10}
                                 x2={chartRight}
@@ -1914,28 +1915,19 @@ export default function HomePage() {
                             </g>
                           ))}
 
-                          {/* Disparity Envelope Band Shading */}
-                          {envelopeD && (
-                            <path
-                              d={envelopeD}
-                              fill="url(#disparityBandGrad)"
-                              className="transition-opacity duration-300 pointer-events-none"
-                              opacity={highlightedMarketId ? 0.05 : 0.14}
-                            />
-                          )}
-
                           {/* Vertical Indicator Line for Today / Split Date */}
                           <line
-                            stroke="#004328"
-                            strokeDasharray="4 3"
-                            strokeWidth="1.5"
+                            stroke="#94A3B8"
+                            strokeDasharray="3 3"
+                            strokeWidth="1"
+                            opacity="0.6"
                             x1={todayX}
                             x2={todayX}
                             y1={chartTop}
                             y2={chartBottom}
                           />
                           <text
-                            className="fill-[#004328] font-label-caps text-[10px] font-extrabold select-none pointer-events-none"
+                            className="fill-[#64748B] font-label-caps text-[10px] font-semibold select-none pointer-events-none"
                             textAnchor="middle"
                             x={todayX}
                             y="24"
@@ -1949,15 +1941,15 @@ export default function HomePage() {
                             const pts = s.points.map((pt, i) => ({ x: getX(i), y: getY(pt.price) }));
                             const histPts = pts.slice(0, todayIdx + 1);
                             const forecastPts = pts.slice(todayIdx);
-                            const histPathString = getCurvedPath(histPts);
-                            const forecastPathString = forecastPts.length > 1 ? getCurvedPath(forecastPts) : "";
+                            const histPathString = getLinearPath(histPts);
+                            const forecastPathString = forecastPts.length > 1 ? getLinearPath(forecastPts) : "";
 
                             const isHighlighted = highlightedMarketId === s.id;
                             const isDimmed = highlightedMarketId !== null && !isHighlighted;
 
                             return (
                               <g key={s.id}>
-                                {/* Observasi Riil: Solid Line */}
+                                {/* Observasi Riil: Solid Line (Clean 2px) */}
                                 {histPathString && (
                                   <path
                                     d={histPathString}
@@ -1965,65 +1957,62 @@ export default function HomePage() {
                                     stroke={s.color}
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    strokeWidth={isHighlighted ? "3" : "2"}
-                                    opacity={isDimmed ? 0.15 : isHighlighted ? 1 : 0.85}
+                                    strokeWidth={isHighlighted ? "2.8" : "2"}
+                                    opacity={isDimmed ? 0.15 : isHighlighted ? 1 : 0.9}
                                     className="trend-path cursor-pointer"
                                     onMouseEnter={() => setHighlightedMarketId(s.id)}
                                     onMouseLeave={() => setHighlightedMarketId(null)}
                                   />
                                 )}
 
-                                {/* Proyeksi Masa Depan: Garis Putus-putus (Dashed Line) */}
+                                {/* Proyeksi Masa Depan: Garis Putus-putus (Dashed Line 1.8px) */}
                                 {forecastPathString && (
                                   <path
                                     d={forecastPathString}
                                     fill="none"
                                     stroke={s.color}
-                                    strokeDasharray="6 4"
+                                    strokeDasharray="4 3"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    strokeWidth={isHighlighted ? "3" : "2"}
-                                    opacity={isDimmed ? 0.15 : isHighlighted ? 1 : 0.85}
-                                    className="trend-path cursor-pointer"
+                                    strokeWidth={isHighlighted ? "2.4" : "1.8"}
+                                    opacity={isDimmed ? 0.12 : isHighlighted ? 1 : 0.7}
+                                    className="trend-path cursor-pointer transition-opacity duration-200"
                                     onMouseEnter={() => setHighlightedMarketId(s.id)}
                                     onMouseLeave={() => setHighlightedMarketId(null)}
                                   />
                                 )}
 
-                                {/* Data Markers on Key Dates */}
+                                {/* Data Markers on Key Dates (Solid Dot Markers) */}
                                 {s.points.map((pt, i) => {
                                   const isToday = i === todayIdx;
-                                  const isForecast = i > todayIdx;
+                                  const isHovered = hoveredPointIndex === i;
+                                  const shouldRenderCircle =
+                                    totalPoints <= 35 ||
+                                    isToday ||
+                                    isHovered ||
+                                    i === 0 ||
+                                    i === totalPoints - 1 ||
+                                    i % Math.ceil(totalPoints / 25) === 0;
+
+                                  if (!shouldRenderCircle) return null;
+
                                   const cx = getX(i);
                                   const cy = getY(pt.price);
 
                                   return (
-                                    <g key={i}>
-                                      {/* Static subtle halo on today's cheapest market point */}
-                                      {isToday && s.id === cheapestToday?.id && (
-                                        <circle
-                                          cx={cx}
-                                          cy={cy}
-                                          r="7"
-                                          fill={s.color}
-                                          opacity="0.25"
-                                        />
-                                      )}
-                                      <circle
-                                        cx={cx}
-                                        cy={cy}
-                                        r={isHighlighted ? (isToday ? 5 : 3.5) : (isToday ? 4 : 2.5)}
-                                        fill={isForecast ? "#FFFFFF" : s.color}
-                                        stroke={s.color}
-                                        strokeWidth={isForecast ? 1.5 : 1}
-                                        opacity={isDimmed ? 0.2 : 1}
-                                        className="trend-dot cursor-pointer"
-                                        onMouseEnter={() => setHighlightedMarketId(s.id)}
-                                        onMouseLeave={() => setHighlightedMarketId(null)}
-                                      >
-                                        <title>{`${s.name} (${pt.formattedDate}): Rp ${pt.price.toLocaleString("id-ID")}`}</title>
-                                      </circle>
-                                    </g>
+                                    <circle
+                                      key={i}
+                                      cx={cx}
+                                      cy={cy}
+                                      r={isHighlighted ? (isToday ? 4.5 : 3.5) : (isToday ? 3.8 : 3)}
+                                      fill={s.color}
+                                      opacity={isDimmed ? 0.2 : 1}
+                                      className="trend-dot cursor-pointer transition-transform hover:scale-150"
+                                      onMouseEnter={() => setHighlightedMarketId(s.id)}
+                                      onMouseLeave={() => setHighlightedMarketId(null)}
+                                    >
+                                      <title>{`${s.name} (${pt.formattedDate}): Rp ${pt.price.toLocaleString("id-ID")}${pt.isImputed ? " (Estimasi / Laporan Tertunda)" : ""}`}</title>
+                                    </circle>
                                   );
                                 })}
                               </g>
@@ -2080,31 +2069,87 @@ export default function HomePage() {
                             </g>
                           )}
 
-                          {/* X-Axis Timeline Labels inside SVG: perfectly aligned and zero dead whitespace */}
+                          {/* X-Axis Timeline Labels inside SVG: dynamically spaced without collisions */}
                           <g className="font-label-caps text-[10px] select-none pointer-events-none">
-                            <text x={getX(0)} y="196" textAnchor="start" className="fill-[#64748B] font-medium">
-                              {formattedDates[0]}
-                            </text>
-                            <text x={getX(2)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
-                              {formattedDates[2]}
-                            </text>
-                            <text x={getX(4)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
-                              {formattedDates[4]}
-                            </text>
-                            <text x={todayX} y="196" textAnchor="middle" className="fill-[#16A34A] font-bold">
-                              {formattedDates[todayIdx]} (Hari Ini)
-                            </text>
-                            <text x={getX(8)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
-                              {formattedDates[8]}
-                            </text>
-                            <text x={getX(10)} y="196" textAnchor="middle" className="fill-[#64748B] font-medium">
-                              {formattedDates[10]}
-                            </text>
-                            <text x={getX(totalPoints - 1)} y="196" textAnchor="end" className="fill-[#64748B] font-medium">
-                              {formattedDates[totalPoints - 1]} (Proyeksi)
-                            </text>
+                            {(() => {
+                              const minGapPx = 85;
+                              const histSpanPx = getX(todayIdx) - getX(0);
+                              const histIntervals = Math.max(1, Math.round(histSpanPx / 160));
+                              const histStep = todayIdx / histIntervals;
+                              const histTicks = Array.from({ length: histIntervals }, (_, i) => Math.round(i * histStep));
+
+                              const fcSpanPx = getX(totalPoints - 1) - getX(todayIdx);
+                              let fcTicks: number[] = [];
+                              if (fcSpanPx >= minGapPx) {
+                                const fcIntervals = Math.max(1, Math.round(fcSpanPx / 160));
+                                const fcStep = (totalPoints - 1 - todayIdx) / fcIntervals;
+                                fcTicks = Array.from({ length: fcIntervals }, (_, i) => todayIdx + Math.round((i + 1) * fcStep));
+                              }
+
+                              const rawTicks = Array.from(new Set([...histTicks, todayIdx, ...fcTicks])).sort((a, b) => a - b);
+                              
+                              // Enforce strictly that no neighbor tick is closer than minGapPx to todayIdx
+                              const sortedIndices = rawTicks.filter((t) => {
+                                if (t === todayIdx) return true;
+                                return Math.abs(getX(t) - getX(todayIdx)) >= minGapPx;
+                              });
+
+                              const todayWIB = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
+                              const isAnchorToday = marketTrendsData?.anchorDate === todayWIB;
+
+                              return sortedIndices.map((idx, i) => {
+                                const isAnchor = idx === todayIdx;
+                                const isFirst = i === 0;
+                                const isLast = i === sortedIndices.length - 1;
+                                const isForecastEnd = isLast && idx > todayIdx;
+                                const anchor = isFirst ? "start" : isLast ? "end" : "middle";
+                                const xPos = getX(idx);
+                                const hasSub = isAnchor || isForecastEnd;
+
+                                return (
+                                  <text
+                                    key={`tick-${idx}`}
+                                    x={xPos}
+                                    y={hasSub ? "190" : "196"}
+                                    textAnchor={anchor}
+                                    className={isAnchor ? "fill-[#16A34A] font-bold" : "fill-[#64748B] font-medium"}
+                                  >
+                                    <tspan x={xPos}>{formattedDates[idx]}</tspan>
+                                    {isAnchor && (
+                                      <tspan x={xPos} dy="11" className="text-[9px] fill-[#16A34A] font-semibold">
+                                        {isAnchorToday ? "(Hari Ini)" : "(Data Terakhir)"}
+                                      </tspan>
+                                    )}
+                                    {isForecastEnd && (
+                                      <tspan x={xPos} dy="11" className="text-[9px] fill-[#64748B] font-medium">
+                                        (Proyeksi)
+                                      </tspan>
+                                    )}
+                                  </text>
+                                );
+                              });
+                            })()}
                           </g>
                         </svg>
+                      </div>
+                    </div>
+
+                    {/* Disclaimer Metodologi & Model AI dengan Navigasi Terhubung */}
+                    <div className="mt-4 pt-3.5 border-t border-border-subtle/80 text-[11px] text-text-muted leading-relaxed">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+                        <div className="flex items-start gap-2 flex-1">
+                          <span className="material-symbols-outlined text-[17px] text-primary shrink-0 mt-0.5">info</span>
+                          <p>
+                            <strong className="text-text-secondary font-semibold">Catatan Metodologi:</strong> Proyeksi harga dihitung menggunakan model Machine Learning (LightGBM/GBDT) berbasis dinamika harga historis, transmisi Pasar Induk Keputran, dan pola musiman kalender. Data bersifat estimasi statistik dini, bukan penetapan harga resmi pemerintah.
+                          </p>
+                        </div>
+                        <Link
+                          href="/forecasting"
+                          className="inline-flex items-center gap-1 text-primary hover:text-primary-dark font-bold shrink-0 text-xs hover:underline"
+                        >
+                          <span>Buka Detail Proyeksi 14 Hari &amp; Regulasi HAP</span>
+                          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                        </Link>
                       </div>
                     </div>
                   </div>

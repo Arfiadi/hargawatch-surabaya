@@ -9,6 +9,8 @@ import {
   CommodityForecastDetails,
   FORECAST_COMMODITIES,
   ALL_CATALOG_COMMODITIES,
+  TIMEFRAME_CONFIG,
+  TimeframeOption,
 } from "@/lib/dataService";
 
 // Batas acuan regulasi resmi pemerintah (HAP Bapanas / HET Kemendag)
@@ -171,7 +173,8 @@ const COMMODITY_MODEL_METRICS: Record<number, ModelEvaluationMeta> = {
 
 export default function ForecastingPage() {
   const [selectedCommodity, setSelectedCommodity] = useState<number>(50);
-  const [horizon, setHorizon] = useState<7 | 14>(14);
+  const horizon: 7 | 14 = 14;
+  const [timeframe, setTimeframe] = useState<TimeframeOption>("14d");
   const [statusFilter, setStatusFilter] = useState<"all" | "alert">("all");
   const [loading, setLoading] = useState<boolean>(true);
   const [showAllMobileCards, setShowAllMobileCards] = useState<boolean>(false);
@@ -188,16 +191,16 @@ export default function ForecastingPage() {
   } | null>(null);
   const [exportState, setExportState] = useState<"idle" | "downloading" | "success">("idle");
 
-  // Reset expand/collapse saat pengguna berganti komoditas, horizon, atau filter status
+  // Reset expand/collapse saat pengguna berganti komoditas, timeframe, atau filter status
   useEffect(() => {
     setShowAllMobileCards(false);
-  }, [selectedCommodity, horizon, statusFilter]);
+  }, [selectedCommodity, statusFilter, timeframe]);
 
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
 
-    getLiveForecastDetails(selectedCommodity).then((res) => {
+    getLiveForecastDetails(selectedCommodity, timeframe).then((res) => {
       if (isMounted) {
         setForecastData(res);
         setLoading(false);
@@ -207,7 +210,7 @@ export default function ForecastingPage() {
     return () => {
       isMounted = false;
     };
-  }, [selectedCommodity]);
+  }, [selectedCommodity, timeframe]);
 
   // Sinkronisasi data guard: memastikan data forecast benar-benar milik komoditas aktif
   const isDataInSync = useMemo(() => {
@@ -464,25 +467,34 @@ export default function ForecastingPage() {
     const midHistIdx = Math.floor(histLen / 2);
     const midFcIdx = Math.floor(forecastPoints.length / 2);
 
+    const formatTimeframeTitle = (daysAgo: number) => {
+      if (daysAgo >= 300) return `${Math.round(daysAgo / 365)} Thn Lalu`;
+      if (daysAgo >= 60) return `${Math.round(daysAgo / 30)} Bln Lalu`;
+      return `${daysAgo} Hari Lalu`;
+    };
+
+    const todayWIB = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
+    const isAnchorToday = forecastData.latestDate === todayWIB;
+
     const xLabels = [
       {
         x: histCoords[0]?.x || padX,
-        title: `${histLen} Hari Lalu`,
+        title: formatTimeframeTitle(histLen),
         sub: historyPoints[0]?.formattedDate || "",
         anchor: "start",
       },
       {
         x: histCoords[midHistIdx]?.x || getX(midHistIdx),
-        title: `${histLen - 1 - midHistIdx} Hari Lalu`,
+        title: formatTimeframeTitle(histLen - 1 - midHistIdx),
         sub: historyPoints[midHistIdx]?.formattedDate || "",
         anchor: "middle",
       },
       {
         x: todayCoord.x,
-        title: "Hari Ini",
+        title: isAnchorToday ? "Hari Ini" : "Data Terakhir",
         sub: forecastData.formattedLatestDate,
         anchor: "middle",
-        isToday: true,
+        isToday: isAnchorToday,
       },
       {
         x: fcCoords[midFcIdx]?.x || getX(todayIdx + 1 + midFcIdx),
@@ -565,69 +577,7 @@ export default function ForecastingPage() {
               </div>
             </div>
 
-            {/* 2. Panel Pilihan Komoditas & Jangka Waktu */}
-            <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
-                {/* Pilih Komoditas */}
-                <div className="flex flex-col gap-1.5 flex-1 max-w-md">
-                  <label
-                    className="font-label-caps text-label-caps text-text-secondary uppercase flex items-center gap-1"
-                  >
-                    <span className="material-symbols-outlined text-body-md text-primary">
-                      nutrition
-                    </span>
-                    Pilih Komoditas Pokok:
-                  </label>
-                  <CommoditySearchSelect
-                    options={ALL_CATALOG_COMMODITIES}
-                    valueId={selectedCommodity}
-                    onChange={(id) => {
-                      setSelectedCommodity(id);
-                      setHoveredPoint(null);
-                    }}
-                    searchPlaceholder="Cari dari 38 komoditas Surabaya..."
-                    emptyNoun="komoditas"
-                    className="w-full"
-                    panelClassName="w-full sm:w-96 md:w-[26rem]"
-                  />
-                </div>
-
-                {/* Toggle Horizon Waktu */}
-                <div className="flex items-center gap-space-xs self-start md:self-auto">
-                  <span className="font-label-caps text-label-caps text-text-secondary uppercase mr-1">
-                    Jangka Waktu:
-                  </span>
-                  <div className="inline-flex bg-surface-subtle p-1 rounded-lg border border-border-subtle/80" role="group" aria-label="Pilihan Horizon Waktu">
-                    <button
-                      type="button"
-                      aria-pressed={horizon === 7}
-                      onClick={() => setHorizon(7)}
-                      className={`px-3 py-1.5 rounded-md text-body-sm font-semibold transition-all cursor-pointer ${
-                        horizon === 7
-                          ? "bg-primary text-on-primary shadow-xs"
-                          : "text-text-secondary hover:text-text-primary"
-                      }`}
-                    >
-                      7 Hari
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={horizon === 14}
-                      onClick={() => setHorizon(14)}
-                      className={`px-3 py-1.5 rounded-md text-body-sm font-semibold transition-all cursor-pointer ${
-                        horizon === 14
-                          ? "bg-primary text-on-primary shadow-xs"
-                          : "text-text-secondary hover:text-text-primary"
-                      }`}
-                    >
-                      14 Hari
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Ringkasan Metrik Cepat */}
+            {/* 2. Ringkasan Metrik Cepat */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
               {/* Metrik 1: Harga Riil Saat Ini */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between">
@@ -754,49 +704,92 @@ export default function ForecastingPage() {
               </div>
             </div>
 
-            {/* 4. Grafik Riwayat 14 Hari & Proyeksi Mendatang */}
+            {/* 3. Grafik Riwayat & Proyeksi Mendatang */}
             <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col gap-space-md">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
-                <div>
-                  <h2 className="font-headline-sm text-headline-sm text-text-primary">
-                    Grafik Riwayat &amp; Proyeksi: {activeCommodityMeta.name}
-                  </h2>
-                  <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                    Menampilkan {forecastData?.history.length || 14} hari data historis transaksi pasar dan {actualHorizon} hari proyeksi ke depan.
-                  </p>
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <h2 className="font-headline-sm text-headline-sm text-text-primary">
+                      Grafik Riwayat &amp; Proyeksi
+                    </h2>
+                    <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
+                      Menampilkan {forecastData?.history.length || 14} hari data historis transaksi pasar dan {actualHorizon} hari proyeksi ke depan.
+                    </p>
+                  </div>
+
+                  {/* Legenda Simbol di Bawah Judul */}
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[11px] sm:text-xs font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
+                      <span>Rata-rata Pasar Harian</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-medium">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                      <span>Proyeksi Model</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50/60 border border-amber-200/60 text-amber-900/80 text-[11px] sm:text-xs font-medium">
+                      <span className="w-2.5 h-1.5 rounded-xs bg-amber-300/50 border border-amber-400 shrink-0"></span>
+                      <span>
+                        {chartMetrics?.hasSpread ? "Rentang Toleransi" : "Varians Stabil"}
+                      </span>
+                    </div>
+
+                    {chartMetrics?.benchmarkLabel && (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-800 text-[11px] sm:text-xs font-semibold">
+                        <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
+                        <span>{chartMetrics.benchmarkLabel}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Legenda Grafik + Label Acuan Regulasi */}
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 sm:justify-end">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[11px] sm:text-xs font-medium">
-                    <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
-                    <span>Rata-rata Pasar Harian</span>
+                {/* Controls Berdampingan: Dropdown Komoditas + Dropdown Riwayat Waktu */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 self-start lg:self-center shrink-0 w-full sm:w-auto">
+                  {/* Dropdown Komoditas */}
+                  <div className="w-full sm:w-60 md:w-64">
+                    <CommoditySearchSelect
+                      options={ALL_CATALOG_COMMODITIES}
+                      valueId={selectedCommodity}
+                      onChange={(id) => {
+                        setSelectedCommodity(id);
+                        setHoveredPoint(null);
+                      }}
+                      searchPlaceholder="Cari komoditas..."
+                      emptyNoun="komoditas"
+                      className="w-full"
+                      panelClassName="w-full sm:w-80 right-0 left-auto"
+                    />
                   </div>
 
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-medium">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-                    <span>Proyeksi Model</span>
-                  </div>
-
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50/60 border border-amber-200/60 text-amber-900/80 text-[11px] sm:text-xs font-medium">
-                    <span className="w-2.5 h-1.5 rounded-xs bg-amber-300/50 border border-amber-400 shrink-0"></span>
-                    <span>
-                      {chartMetrics?.hasSpread ? "Rentang Toleransi" : "Varians Stabil"}
+                  {/* Dropdown Riwayat Bulan/Hari */}
+                  <div className="relative shrink-0">
+                    <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[17px] pointer-events-none">
+                      calendar_month
+                    </span>
+                    <select
+                      value={timeframe}
+                      onChange={(e) => setTimeframe(e.target.value as TimeframeOption)}
+                      className="h-11 pl-8.5 pr-8 bg-white hover:bg-surface-subtle text-text-primary text-xs font-semibold rounded-xl border border-border-subtle hover:border-primary/40 shadow-xs appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      title="Pilih rentang waktu data historis"
+                    >
+                      {TIMEFRAME_CONFIG.map((tf) => (
+                        <option key={tf.id} value={tf.id} className="text-xs py-1">
+                          Riwayat: {tf.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary text-lg pointer-events-none">
+                      expand_more
                     </span>
                   </div>
-
-                  {chartMetrics?.benchmarkLabel && (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-800 text-[11px] sm:text-xs font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
-                      <span>{chartMetrics.benchmarkLabel}</span>
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* Area SVG Visualizer */}
               <div
-                className="w-full relative bg-surface-subtle/60 rounded-xl p-2 sm:p-3 border border-border-subtle/50 select-none overflow-hidden"
+                className="w-full relative bg-white rounded-xl p-2 sm:p-4 border border-border-subtle/70 select-none overflow-hidden"
                 role="region"
                 aria-label="Grafik Tren dan Proyeksi Harga Pangan"
                 onMouseLeave={() => setHoveredPoint(null)}
@@ -932,7 +925,7 @@ export default function ForecastingPage() {
                           </linearGradient>
                         </defs>
 
-                        {/* Garis Grid Horizontal */}
+                        {/* Garis Grid Horizontal (Subtle & Clean) */}
                         {chartMetrics.gridLines.map((gl, i) => (
                           <line
                             key={`gl-line-${i}`}
@@ -940,10 +933,8 @@ export default function ForecastingPage() {
                             x2={chartMetrics.svgWidth - chartMetrics.padX}
                             y1={gl.y}
                             y2={gl.y}
-                            stroke="#CBD5E1"
-                            strokeDasharray="4 4"
+                            stroke="#E2E8F0"
                             strokeWidth="1"
-                            opacity="0.6"
                           />
                         ))}
 
@@ -956,9 +947,9 @@ export default function ForecastingPage() {
                               y1={chartMetrics.benchmarkY}
                               y2={chartMetrics.benchmarkY}
                               stroke="#DC2626"
-                              strokeDasharray="6 4"
-                              strokeWidth="1.6"
-                              opacity="0.85"
+                              strokeDasharray="5 4"
+                              strokeWidth="1.5"
+                              opacity="0.8"
                             />
                             <text
                               x={chartMetrics.svgWidth - chartMetrics.padX + 5}
@@ -974,31 +965,30 @@ export default function ForecastingPage() {
                           </g>
                         )}
 
-                        {/* Shading Rentang Batas Toleransi (hanya jika ada spread variasi) */}
+                        {/* Shading Rentang Batas Toleransi (Subtle Band) */}
                         {chartMetrics.hasSpread && chartMetrics.ciPolygonPoints && (
-                          <polygon fill="url(#ciBandGrad)" points={chartMetrics.ciPolygonPoints} />
+                          <polygon fill="url(#ciBandGrad)" points={chartMetrics.ciPolygonPoints} opacity="0.6" />
                         )}
 
-                        {/* Shading Area Histori */}
-                        <path d={chartMetrics.histArea} fill="url(#histAreaGrad)" />
-
-                        {/* Garis Histori Riil */}
+                        {/* Garis Histori Riil (Sleek Linear Style, Stroke Width 2px) */}
                         <path
                           d={chartMetrics.histPath}
                           fill="none"
                           stroke="#004328"
-                          strokeWidth="2.8"
+                          strokeWidth="2"
                           strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
 
-                        {/* Garis Proyeksi (Dashed) */}
+                        {/* Garis Proyeksi (Sleek Dashed Style, Stroke Width 2px) */}
                         <path
                           d={chartMetrics.fcPath}
                           fill="none"
                           stroke="#D97706"
-                          strokeWidth="2.8"
-                          strokeDasharray="6 4"
+                          strokeWidth="2"
+                          strokeDasharray="5 4"
                           strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
 
                         {/* Garis Vertikal Pembatas: Hari Ini */}
@@ -1007,52 +997,64 @@ export default function ForecastingPage() {
                           x2={chartMetrics.todayCoord.x}
                           y1={24}
                           y2={chartMetrics.svgHeight - chartMetrics.padBottom}
-                          stroke="#0F172A"
-                          strokeDasharray="4 3"
-                          strokeWidth="1.5"
+                          stroke="#94A3B8"
+                          strokeDasharray="3 3"
+                          strokeWidth="1"
                           opacity="0.5"
                         />
 
-                        {/* Titik-titik data historis */}
-                        {chartMetrics.histCoords.map((pt, i) => (
-                          <circle
-                            key={`hist-${i}`}
-                            cx={pt.x}
-                            cy={pt.y}
-                            r={i === chartMetrics.histCoords.length - 1 ? 5.5 : 3.5}
-                            fill="#004328"
-                            stroke="#ffffff"
-                            strokeWidth="1.5"
-                            className="cursor-pointer transition-transform hover:scale-125"
-                            onMouseEnter={() =>
-                              setHoveredPoint({
-                                date: pt.data.formattedDate,
-                                label:
-                                  i === chartMetrics.histCoords.length - 1
-                                    ? "Hari Ini (Terkini)"
-                                    : pt.data.isImputed
-                                    ? "Estimasi Pasar (Forward-fill)"
-                                    : "Observasi Pasar",
-                                price: pt.data.harga,
-                                isForecast: false,
-                                screenX: pt.x,
-                                screenY: pt.y,
-                              })
-                            }
-                          />
-                        ))}
+                        {/* Titik-titik data historis (Solid Dot Markers) */}
+                        {chartMetrics.histCoords.map((pt, i) => {
+                          const isLast = i === chartMetrics.histCoords.length - 1;
+                          const isFirst = i === 0;
+                          const shouldRenderDot =
+                            chartMetrics.histCoords.length <= 35 ||
+                            isLast ||
+                            isFirst ||
+                            i % Math.ceil(chartMetrics.histCoords.length / 25) === 0;
 
-                        {/* Titik-titik proyeksi */}
+                          if (!shouldRenderDot) return null;
+
+                          return (
+                            <circle
+                              key={`hist-${i}`}
+                              cx={pt.x}
+                              cy={pt.y}
+                              r={isLast ? 3.8 : 3}
+                              fill="#004328"
+                              className="cursor-pointer transition-transform hover:scale-150"
+                              onMouseEnter={() => {
+                                const todayWIB = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
+                                const isAnchorToday = forecastData?.latestDate === todayWIB;
+                                setHoveredPoint({
+                                  date: pt.data.formattedDate,
+                                  label:
+                                    isLast
+                                      ? isAnchorToday
+                                        ? "Hari Ini (Terkini)"
+                                        : "Data Terakhir"
+                                      : pt.data.isImputed
+                                      ? "Estimasi Pasar (Forward-fill)"
+                                      : "Observasi Pasar",
+                                  price: pt.data.harga,
+                                  isForecast: false,
+                                  screenX: pt.x,
+                                  screenY: pt.y,
+                                });
+                              }}
+                            />
+                          );
+                        })}
+
+                        {/* Titik-titik proyeksi (Solid Dot Markers) */}
                         {chartMetrics.fcCoords.map((pt, i) => (
                           <circle
                             key={`fc-${i}`}
                             cx={pt.x}
                             cy={pt.y}
-                            r={i === chartMetrics.fcCoords.length - 1 ? 5 : 4}
+                            r={3}
                             fill="#D97706"
-                            stroke="#ffffff"
-                            strokeWidth="1.5"
-                            className="cursor-pointer transition-transform hover:scale-125"
+                            className="cursor-pointer transition-transform hover:scale-150"
                             onMouseEnter={() =>
                               setHoveredPoint({
                                 date: `${pt.data.weekday}, ${pt.data.formattedDate}`,
