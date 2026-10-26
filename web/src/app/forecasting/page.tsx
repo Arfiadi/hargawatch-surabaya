@@ -4,12 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CommoditySearchSelect from "@/components/CommoditySearchSelect";
+import TimeframeSelect from "@/components/TimeframeSelect";
 import {
   getLiveForecastDetails,
   CommodityForecastDetails,
   FORECAST_COMMODITIES,
   ALL_CATALOG_COMMODITIES,
-  TIMEFRAME_CONFIG,
   TimeframeOption,
 } from "@/lib/dataService";
 
@@ -763,27 +763,12 @@ export default function ForecastingPage() {
                     />
                   </div>
 
-                  {/* Dropdown Riwayat Bulan/Hari */}
-                  <div className="relative shrink-0">
-                    <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[17px] pointer-events-none">
-                      calendar_month
-                    </span>
-                    <select
-                      value={timeframe}
-                      onChange={(e) => setTimeframe(e.target.value as TimeframeOption)}
-                      className="h-11 pl-8.5 pr-8 bg-white hover:bg-surface-subtle text-text-primary text-xs font-semibold rounded-xl border border-border-subtle hover:border-primary/40 shadow-xs appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                      title="Pilih rentang waktu data historis"
-                    >
-                      {TIMEFRAME_CONFIG.map((tf) => (
-                        <option key={tf.id} value={tf.id} className="text-xs py-1">
-                          Riwayat: {tf.label}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary text-lg pointer-events-none">
-                      expand_more
-                    </span>
-                  </div>
+                  {/* Dropdown Riwayat Bulan/Hari (Custom Design System Popover) */}
+                  <TimeframeSelect
+                    value={timeframe}
+                    onChange={setTimeframe}
+                    className="shrink-0"
+                  />
                 </div>
               </div>
 
