@@ -1,0 +1,8 @@
+timestamp	commit_hash	komoditas_id	commodity	horizon	model_family	wape_pct	mae_rp	picp_pct	da_pct	status	elapsed_seconds	notes
+2026-10-23 23:53:00	f401a40	50	Cabe Rawit Merah	7	XGBoost p50 (Baseline)	14.97	6200.00	78.6	31.5	BASELINE	0.0	Starting Champion in registry.json
+2026-10-23 23:53:00	f401a40	39	Bawang Merah	7	CatBoost p50 (Baseline)	8.02	3015.00	78.6	65.2	BASELINE	0.0	Starting Champion in registry.json
+2026-10-23 23:53:00	f401a40	46	Tomat Merah	7	Naive Last Value (Baseline)	11.97	1609.00	NaN	48.5	BASELINE	0.0	Starting Champion in registry.json (Takeover target)
+2026-10-23 23:53:00	f401a40	37	Cabe Merah Keriting	7	Naive Last Value (Baseline)	12.50	5007.00	NaN	38.1	BASELINE	0.0	Starting Champion in registry.json (Takeover target)
+2026-10-23 23:53:00	f401a40	48	Buncis	7	XGBoost p50 (Baseline)	9.57	1390.00	71.7	61.4	BASELINE	0.0	Starting Champion in registry.json (Interval calibration target)
+2026-10-23 23:53:00	f401a40	38	Cabe Merah Besar	7	XGBoost p50 (Baseline)	13.63	5059.00	76.1	26.3	BASELINE	0.0	Starting Champion in registry.json
+2026-10-26 09:54:54	f401a40	50	Cabe Rawit Merah	7	CatBoost MultiQuantile	14.69	7662.09	75.89	45.39	SUCCESS	345.24	
