@@ -6,7 +6,7 @@ Operational contract, engineering conventions, system constraints, and verificat
 
 ## 1. Purpose & System Boundaries
 
-HargaWatch Surabaya is a food price intelligence and early warning platform for the city of Surabaya. The platform ingests daily market prices across 6 strategic markets (Pasar Induk Keputran, Wonokromo, Genteng, Pucang Anom, Tambahrejo, Soponyono) for 38 food commodities, detects anomalies, forecasts multi-step price trajectories (H=1..14), and evaluates risk via an adaptive 4-pillar Early Warning System (EWS).
+HargaWatch Surabaya is a food price intelligence and early warning platform for the city of Surabaya. The platform ingests daily market prices across 6 strategic markets (Pasar Induk Keputran, Wonokromo, Genteng, Pucang Anom, Tambahrejo, Soponyono) for 37 food commodities (derived from the 38-commodity SISKAPERBAPO regional benchmark by de-duplicating generic garlic ID 3 in favor of imported garlic ID 49; IDs are non-sequential up to ID 96), detects anomalies, forecasts multi-step price trajectories (H=1..14), and evaluates risk via an adaptive 4-pillar Early Warning System (EWS).
 
 Treat the current repository, existing tests, operational configs, and explicit user requirements as sources of truth. Never invent project behavior, fake test commands, or claim verification without observed execution logs.
 
@@ -24,7 +24,7 @@ hargawatch-surabaya/
 │   ├── safety/                # Adaptive 4-pillar Early Warning System (EWS)
 │   └── utils/                 # Alert masking, database connection, migration helpers
 ├── scripts/                   # Daily CLI runners (run_daily_pipeline.py, run_forecasting.py)
-├── models/                    # Model registry (registry.json) and verified champion blobs (.pkl)
+├── models/                    # Model registry (forecasting/registry.json) and verified champion blobs (.pkl)
 ├── tests/                     # Deterministic unit and integration test suite (pytest)
 ├── docs/                      # Technical specifications, PRDs, runbooks, and methodologies
 └── web/                       # Frontend web application (Next.js 15, React 19, Tailwind CSS v4)
@@ -50,13 +50,13 @@ Read documents only when relevant to the task. Verify that a file exists before 
 
 | Document | When to Read |
 |---|---|
-| [`README.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/README.md) & [`README_dev.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/README_dev.md) | Initial repository onboarding, setup instructions, or environment setup. |
-| [`docs/ARCHITECTURE.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/docs/ARCHITECTURE.md) | Modifying component boundaries, data layer interactions, or Supabase database integration. |
-| [`docs/PRD_HargaWatch_v2.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/docs/PRD_HargaWatch_v2.md) | Adding or modifying functional requirements, user stories, or platform metrics. |
-| [`docs/forecasting_methodology.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/docs/forecasting_methodology.md) | Touching feature engineering, GBDT multi-step quantiles, lead features, or model training. |
-| [`docs/EWS_methodology.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/docs/EWS_methodology.md) | Modifying composite 4-pillar risk scores, alert thresholds, or disparity calculations. |
-| [`docs/panduan_operasional.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/docs/panduan_operasional.md) | Troubleshooting daily cron execution, Windows Task Scheduler, or database upsert routines. |
-| [`docs/klasifikasi_hasil_forecasting.md`](file:///d:/ARFI/Kuliah/Project/project-semester5/hargawatch-surabaya/docs/klasifikasi_hasil_forecasting.md) | Reviewing champion model selection, WAPE benchmark results, or commodity taxonomy. |
+| [`README.md`](./README.md) & [`README_dev.md`](./README_dev.md) | Initial repository onboarding, setup instructions, or environment setup. |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Modifying component boundaries, data layer interactions, or Supabase database integration. |
+| [`docs/PRD_HargaWatch_v2.md`](./docs/PRD_HargaWatch_v2.md) | Adding or modifying functional requirements, user stories, or platform metrics. |
+| [`docs/forecasting_methodology.md`](./docs/forecasting_methodology.md) | Touching feature engineering, GBDT multi-step quantiles, lead features, or model training. |
+| [`docs/EWS_methodology.md`](./docs/EWS_methodology.md) | Modifying composite 4-pillar risk scores, alert thresholds, or disparity calculations. |
+| [`docs/panduan_operasional.md`](./docs/panduan_operasional.md) | Troubleshooting daily cron execution, Windows Task Scheduler, or database upsert routines. |
+| [`docs/klasifikasi_hasil_forecasting.md`](./docs/klasifikasi_hasil_forecasting.md) | Reviewing champion model selection, WAPE benchmark results, or commodity taxonomy. |
 
 ---
 
@@ -66,7 +66,7 @@ Read documents only when relevant to the task. Verify that a file exists before 
    * SISKAPERBAPO blocks datacenter IPs (HTTP 403 Forbidden).
    * **Do NOT move scraping to GitHub Actions.** Daily ingestion is strictly On-Premise via Windows Task Scheduler executing `scripts/run_daily_pipeline.py`.
 2. **Model Deserialization Security:**
-   * Any loading of `.pkl` files in `scripts/run_forecasting.py` must enforce directory path containment (`Path.resolve()`) and validate SHA-256 integrity digests against `registry.json` when present.
+   * Any loading of `.pkl` files in `scripts/run_forecasting.py` must enforce directory path containment (`Path.resolve()`) and validate SHA-256 integrity digests against `models/forecasting/registry.json` when present.
 3. **Database Security & Access Control:**
    * PostgreSQL tables in Supabase (`fact_forecast`, `fact_early_warning`, `fact_harga_pasar`) have Row-Level Security (RLS) enabled.
    * Client-side queries use the public anonymous/publishable key (`sb_publishable_...`). Ingestion and administrative mutations use the private service role key strictly from local `.env`.
