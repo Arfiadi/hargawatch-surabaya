@@ -147,6 +147,9 @@ def train_and_forecast_commodity(
     origin_date = df_lags["tanggal"].max()
     slice_origin = df_lags[df_lags["tanggal"] == origin_date].copy()
 
+    # Safety Guardrail: Only forecast for active markets where the commodity is actually traded (price_current > 0 and notna)
+    slice_origin = slice_origin[slice_origin["price_current"].notna() & (slice_origin["price_current"] > 0)].copy()
+
     if slice_origin.empty:
         return pd.DataFrame()
 
@@ -226,9 +229,10 @@ def train_and_forecast_commodity(
             # Naive Last Value Persistence baseline with 80% CI based on rolling std
             p_curr = slice_origin["price_current"].values
             std_7d = slice_origin["rolling_std_7d"].fillna(slice_origin["price_current"] * 0.02).values
-            p50 = np.round(p_curr).astype(int)
-            p10 = np.maximum(0, np.round(p_curr - 1.28 * std_7d)).astype(int)
-            p90 = np.round(p_curr + 1.28 * std_7d).astype(int)
+            std_7d = np.maximum(std_7d, p_curr * 0.02)
+            p50 = np.maximum(0, np.nan_to_num(np.round(p_curr), nan=0)).astype(int)
+            p10 = np.maximum(0, np.nan_to_num(np.round(p_curr - 1.28 * std_7d), nan=0)).astype(int)
+            p90 = np.maximum(p50, np.nan_to_num(np.round(p_curr + 1.28 * std_7d), nan=p50)).astype(int)
             preds = {
                 "harga_prediksi": p50,
                 "batas_bawah": p10,
@@ -244,9 +248,9 @@ def train_and_forecast_commodity(
             ratio = h / 7.0
             sqrt_ratio = np.sqrt(ratio)
 
-            p50_h = np.round(p_curr + ratio * (p50_7 - p_curr)).astype(int)
-            p10_h = np.maximum(0, np.round(p50_h - sqrt_ratio * (p50_7 - p10_7))).astype(int)
-            p90_h = np.round(p50_h + sqrt_ratio * (p90_7 - p50_7)).astype(int)
+            p50_h = np.maximum(0, np.nan_to_num(np.round(p_curr + ratio * (p50_7 - p_curr)), nan=0)).astype(int)
+            p10_h = np.maximum(0, np.nan_to_num(np.round(p50_h - sqrt_ratio * (p50_7 - p10_7)), nan=0)).astype(int)
+            p90_h = np.maximum(p50_h, np.nan_to_num(np.round(p50_h + sqrt_ratio * (p90_7 - p50_7)), nan=p50_h)).astype(int)
 
             # Monotonic non-crossing guardrail
             p10_h = np.minimum(p10_h, p50_h)
@@ -271,7 +275,9 @@ def train_and_forecast_commodity(
     if not all_forecasts:
         return pd.DataFrame()
 
-    return pd.concat(all_forecasts, ignore_index=True)
+    df_fc_all = pd.concat(all_forecasts, ignore_index=True)
+    df_fc_all = df_fc_all[df_fc_all["harga_prediksi"] > 0].copy()
+    return df_fc_all
 
 
 def upsert_to_supabase(df_forecast: pd.DataFrame, df_ews: pd.DataFrame):
@@ -375,7 +381,7 @@ def main():
             commodity_name=cname,
             horizon_days=args.horizon,
             include_weather=args.use_weather,
-            force_db=args.from_db
+            force_db=False  # Pulled fresh once in main(), use local cache to prevent N redundant queries
         )
         if not fc_df.empty:
             all_forecast_dfs.append(fc_df)
@@ -392,7 +398,9 @@ def main():
     df_lags_all = build_lag_features(df_base_all)
     slice_latest = df_lags_all[
         (df_lags_all["tanggal"] == latest_date) &
-        (df_lags_all["komoditas_id"].isin(target_ids))
+        (df_lags_all["komoditas_id"].isin(target_ids)) &
+        (df_lags_all["price_current"].notna()) &
+        (df_lags_all["price_current"] > 0)
     ].copy()
 
     # Match with day-7 forecast
