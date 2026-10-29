@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getLiveEarlyWarning, EarlyWarningItem, EarlyWarningStats, formatCommodityName } from "@/lib/dataService";
+import { OFFICIAL_REGULATORY_BENCHMARKS } from "@/lib/regulatoryData";
 
 const MARKET_CONFIGS = [
   { id: 2, name: "Wonokromo", shortName: "Wonokromo" },
@@ -14,16 +15,19 @@ const MARKET_CONFIGS = [
   { id: 146, name: "Soponyono", shortName: "Soponyono" },
 ];
 
-const COMMODITY_METADATA: Record<number, { initials: string; hapRef: string }> = {
-  50: { initials: "CR", hapRef: "HAP Bapanas: Rp 57.000 / kg" },
-  39: { initials: "BM", hapRef: "HAP Bapanas: Rp 36.500 / kg" },
-  2: { initials: "BP", hapRef: "HET Kemendag: Rp 14.900 / kg" },
-  16: { initials: "TA", hapRef: "HAP Bapanas: Rp 28.500 / kg" },
-  10: { initials: "MG", hapRef: "HET Kemendag: Rp 15.700 / liter" },
-  7: { initials: "GP", hapRef: "HAP Bapanas: Rp 17.500 / kg" },
-  13: { initials: "DA", hapRef: "HAP Bapanas: Rp 36.750 / kg" },
-  25: { initials: "DS", hapRef: "HAP Bapanas: Rp 120.000 / kg" },
-  38: { initials: "BP", hapRef: "HAP Bapanas: Rp 35.000 / kg" },
+const COMMODITY_METADATA: Record<number, { initials: string }> = {
+  50: { initials: "CR" },
+  39: { initials: "BM" },
+  2: { initials: "BP" },
+  4: { initials: "BM" },
+  16: { initials: "TA" },
+  10: { initials: "MC" },
+  96: { initials: "MK" },
+  7: { initials: "GP" },
+  13: { initials: "DA" },
+  12: { initials: "DS" },
+  25: { initials: "JP" },
+  38: { initials: "CB" },
 };
 
 const CATEGORIES = [
@@ -191,15 +195,19 @@ export default function EarlyWarningPage() {
       if (!grouped[item.komoditas_id]) {
         const meta = COMMODITY_METADATA[item.komoditas_id] || {
           initials: item.nama_komoditas.slice(0, 2).toUpperCase(),
-          hapRef: "Acuan Pantauan Pasar Surabaya",
         };
+        const regBenchmark = OFFICIAL_REGULATORY_BENCHMARKS[item.komoditas_id];
+        const officialHapRef = regBenchmark
+          ? `${regBenchmark.label}: ${regBenchmark.displayPrice}`
+          : "Acuan Pantauan Pasar Surabaya";
+
         grouped[item.komoditas_id] = {
           komoditas_id: item.komoditas_id,
           nama_komoditas: formatCommodityName(item.nama_komoditas),
           category: getCommodityCategory(item.nama_komoditas),
           initials: meta.initials,
           icon: getCommodityIcon(item.nama_komoditas),
-          hapRef: meta.hapRef,
+          hapRef: officialHapRef,
           markets: {},
           maxScore: 0,
           worstStatus: "NORMAL",
@@ -426,6 +434,38 @@ export default function EarlyWarningPage() {
 
             {/* 3 Key Executive Analytical KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
+              {isRefreshing && !ewsStats ? (
+                <>
+                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 animate-pulse space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="w-32 h-4 bg-surface-subtle rounded" />
+                      <div className="w-8 h-8 rounded-lg bg-surface-subtle" />
+                    </div>
+                    <div className="w-24 h-8 bg-surface-subtle rounded" />
+                    <div className="w-40 h-3 bg-surface-subtle rounded" />
+                    <div className="w-full h-1.5 bg-surface-subtle rounded-full" />
+                  </div>
+                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 animate-pulse space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="w-36 h-4 bg-surface-subtle rounded" />
+                      <div className="w-8 h-8 rounded-lg bg-surface-subtle" />
+                    </div>
+                    <div className="w-20 h-8 bg-surface-subtle rounded" />
+                    <div className="w-36 h-3 bg-surface-subtle rounded" />
+                    <div className="w-48 h-3 bg-surface-subtle rounded" />
+                  </div>
+                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 animate-pulse space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="w-32 h-4 bg-surface-subtle rounded" />
+                      <div className="w-8 h-8 rounded-lg bg-surface-subtle" />
+                    </div>
+                    <div className="w-24 h-8 bg-surface-subtle rounded" />
+                    <div className="w-44 h-3 bg-surface-subtle rounded" />
+                    <div className="w-40 h-3 bg-surface-subtle rounded" />
+                  </div>
+                </>
+              ) : (
+                <>
               {/* KPI 1: Indeks Stabilitas */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
@@ -439,7 +479,7 @@ export default function EarlyWarningPage() {
                 <div className="flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
                     <span className="font-metric-display text-metric-display text-on-surface">
-                      {ewsStats?.stabilityPercentage !== undefined ? `${ewsStats.stabilityPercentage.toFixed(1)}%` : "100.0%"}
+                      {ewsStats?.stabilityPercentage !== undefined ? `${ewsStats.stabilityPercentage.toFixed(1)}%` : "—"}
                     </span>
                     <span
                       className={`font-label-caps text-label-caps font-semibold ${
@@ -568,9 +608,11 @@ export default function EarlyWarningPage() {
                 </div>
                 <div className="flex items-center gap-space-xs text-status-normal font-label-caps text-label-caps font-semibold">
                   <span className="material-symbols-outlined text-body-sm">check_circle</span>
-                  <span>Akurasi prediksi: WAPE 5,36%</span>
+                  <span>Evaluasi model kota: Rata-rata WAPE 5,36% (H+7)</span>
                 </div>
               </div>
+                </>
+              )}
             </div>
 
             {/* Main Section: Dynamic Commodity Risk Matrix (6 Markets x Commodities) */}
@@ -868,7 +910,14 @@ export default function EarlyWarningPage() {
                                             </span>
                                           </div>
                                         )}
-                                        {score > 0 && (
+                                        {marketItem.hasEwsData === false ? (
+                                          <div className="mt-2 pt-1.5 border-t border-border-subtle/80 flex justify-between items-center">
+                                            <span className="text-text-muted text-[11px]">Status EWS:</span>
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-surface-subtle text-text-muted">
+                                              Belum Tersedia
+                                            </span>
+                                          </div>
+                                        ) : score > 0 ? (
                                           <div className="mt-2 pt-1.5 border-t border-border-subtle/80 flex justify-between items-center font-bold">
                                             <span className="text-text-muted text-[11px]">Skor Risiko EWS:</span>
                                             <span
@@ -881,6 +930,13 @@ export default function EarlyWarningPage() {
                                               }`}
                                             >
                                               {score}/100
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <div className="mt-2 pt-1.5 border-t border-border-subtle/80 flex justify-between items-center">
+                                            <span className="text-text-muted text-[11px]">Status EWS:</span>
+                                            <span className="text-[11px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                                              NORMAL
                                             </span>
                                           </div>
                                         )}

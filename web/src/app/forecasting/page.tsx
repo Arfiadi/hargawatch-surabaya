@@ -13,20 +13,13 @@ import {
   ALL_CATALOG_COMMODITIES,
   TimeframeOption,
 } from "@/lib/dataService";
+import {
+  OFFICIAL_REGULATORY_BENCHMARKS,
+  OFFICIAL_MODEL_CHAMPIONS,
+  DEFAULT_MODEL_METRIC,
+} from "@/lib/regulatoryData";
 
-// Batas acuan regulasi resmi pemerintah (HAP Bapanas / HET Kemendag)
-const REGULATORY_BENCHMARKS: Record<
-  number,
-  { label: string; price: number; note: string }
-> = {
-  50: { label: "HAP Bapanas", price: 57000, note: "Harga Acuan Penjualan Konsumen Nasional" },
-  39: { label: "HAP Bapanas", price: 41500, note: "Harga Acuan Penjualan Konsumen Nasional" },
-  10: { label: "HET Minyakita / Curah", price: 15700, note: "Harga Eceran Tertinggi Kemendag" },
-  2: { label: "HET Beras Premium", price: 14900, note: "Harga Eceran Tertinggi Zona 1 Kemendag" },
-  13: { label: "HAP Bapanas", price: 36750, note: "Harga Acuan Daging Ayam Ras Segar" },
-  16: { label: "HAP Bapanas", price: 27000, note: "Harga Acuan Telur Ayam Ras Konsumsi" },
-  7: { label: "HAP Bapanas", price: 17500, note: "Harga Acuan Gula Konsumsi Ritel" },
-};
+// Batas acuan regulasi pemerintah dimuat dari OFFICIAL_REGULATORY_BENCHMARKS (Single Source of Truth)
 
 // Karakteristik & Jalur Pasokan Faktual Sentra Jawa Timur per Komoditas (Dinamis)
 interface CommoditySupplyInsight {
@@ -79,98 +72,7 @@ const COMMODITY_SUPPLY_INSIGHTS: Record<number, CommoditySupplyInsight> = {
   },
 };
 
-// Metadata evaluasi performa model per komoditas berbasis eksperimen backtesting (docs/eksperimen_summary_report.md)
-interface ModelEvaluationMeta {
-  modelName: string;
-  modelType: "GBDT (Machine Learning)" | "Baseline Deret Waktu";
-  wape: number; // Weighted Absolute Percentage Error (%)
-  accuracy: number; // 100 - wape (%)
-  directionalAccuracy: number; // Directional Accuracy (%)
-  volatility: "Sangat Volatil" | "Volatil" | "Cukup Volatil" | "Stabil";
-  confidenceNote: string;
-  isNaive: boolean;
-  featureDescription: string;
-}
-
-const COMMODITY_MODEL_METRICS: Record<number, ModelEvaluationMeta> = {
-  50: {
-    modelName: "LightGBM (p50)",
-    modelType: "GBDT (Machine Learning)",
-    wape: 13.5,
-    accuracy: 86.5,
-    directionalAccuracy: 54.55,
-    volatility: "Sangat Volatil",
-    confidenceNote: "Pita Toleransi 80% - 95% (p10-p90)",
-    isNaive: false,
-    featureDescription: "Harga historis lag + fitur kalender hari raya",
-  },
-  39: {
-    modelName: "CatBoost (p50)",
-    modelType: "GBDT (Machine Learning)",
-    wape: 6.97,
-    accuracy: 93.03,
-    directionalAccuracy: 33.33,
-    volatility: "Volatil",
-    confidenceNote: "Pita Toleransi 80% - 95% (p10-p90)",
-    isNaive: false,
-    featureDescription: "Autoregresif deret waktu murni",
-  },
-  16: {
-    modelName: "CatBoost (p50)",
-    modelType: "GBDT (Machine Learning)",
-    wape: 3.22,
-    accuracy: 96.78,
-    directionalAccuracy: 43.94,
-    volatility: "Cukup Volatil",
-    confidenceNote: "Pita Toleransi 80% - 95% (p10-p90)",
-    isNaive: false,
-    featureDescription: "Autoregresif deret waktu murni",
-  },
-  2: {
-    modelName: "Naive Last Value",
-    modelType: "Baseline Deret Waktu",
-    wape: 0.1,
-    accuracy: 99.9,
-    directionalAccuracy: 95.45,
-    volatility: "Stabil",
-    confidenceNote: "Varians Konstan (Fluktuasi < 0.1%)",
-    isNaive: true,
-    featureDescription: "Baseline pasar stabil (benchmark resmi)",
-  },
-  13: {
-    modelName: "Naive Last Value",
-    modelType: "Baseline Deret Waktu",
-    wape: 2.0,
-    accuracy: 98.0,
-    directionalAccuracy: 56.06,
-    volatility: "Stabil",
-    confidenceNote: "Varians Konstan (Fluktuasi < 2.0%)",
-    isNaive: true,
-    featureDescription: "Baseline pasar stabil out-of-sample",
-  },
-  10: {
-    modelName: "Naive Last Value",
-    modelType: "Baseline Deret Waktu",
-    wape: 3.62,
-    accuracy: 96.38,
-    directionalAccuracy: 60.61,
-    volatility: "Stabil",
-    confidenceNote: "Varians Konstan (Terikat HET Kemendag)",
-    isNaive: true,
-    featureDescription: "Ekuilibrium pasokan terikat HET",
-  },
-  7: {
-    modelName: "Naive Last Value",
-    modelType: "Baseline Deret Waktu",
-    wape: 1.5,
-    accuracy: 98.5,
-    directionalAccuracy: 88.0,
-    volatility: "Stabil",
-    confidenceNote: "Varians Konstan (Terikat HAP Bapanas)",
-    isNaive: true,
-    featureDescription: "Distribusi ritel stabil",
-  },
-};
+// Metrik model champion dimuat dari OFFICIAL_MODEL_CHAMPIONS (selaras dengan models/forecasting/registry.json)
 
 export default function ForecastingPage() {
   const [selectedCommodity, setSelectedCommodity] = useState<number>(50);
@@ -227,23 +129,11 @@ export default function ForecastingPage() {
   }, [selectedCommodity]);
 
   const benchmarkMeta = useMemo(() => {
-    return REGULATORY_BENCHMARKS[selectedCommodity];
+    return OFFICIAL_REGULATORY_BENCHMARKS[selectedCommodity];
   }, [selectedCommodity]);
 
   const modelMeta = useMemo(() => {
-    return (
-      COMMODITY_MODEL_METRICS[selectedCommodity] || {
-        modelName: "GBDT Pipeline",
-        modelType: "GBDT (Machine Learning)" as const,
-        wape: 5.36,
-        accuracy: 94.64,
-        directionalAccuracy: 57.0,
-        volatility: "Stabil" as const,
-        confidenceNote: "Pita Toleransi 80% - 95%",
-        isNaive: false,
-        featureDescription: "Model deret waktu harga pangan",
-      }
-    );
+    return OFFICIAL_MODEL_CHAMPIONS[selectedCommodity] || DEFAULT_MODEL_METRIC;
   }, [selectedCommodity]);
 
   const activeForecastRows = useMemo(() => {
@@ -369,7 +259,7 @@ export default function ForecastingPage() {
     const historyPoints = forecastData.history;
     const forecastPoints = forecastData.forecast.slice(0, horizon);
 
-    const benchmark = REGULATORY_BENCHMARKS[selectedCommodity];
+    const benchmark = OFFICIAL_REGULATORY_BENCHMARKS[selectedCommodity];
 
     const allPrices = [
       ...historyPoints.map((h) => h.harga),
@@ -707,10 +597,10 @@ export default function ForecastingPage() {
                 </div>
               </div>
 
-              {/* Metrik 4: Akurasi & Model */}
+              {/* Metrik 4: Akurasi & Model (Sinkron dengan Registry Champion) */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                  Model &amp; Akurasi
+                  Model &amp; Akurasi (H+7)
                 </span>
                 <div className="my-auto py-1">
                   <div className="flex items-baseline gap-2">
@@ -721,6 +611,9 @@ export default function ForecastingPage() {
                       Akurasi Backtest
                     </span>
                   </div>
+                  <span className="font-body-sm text-body-sm text-text-muted mt-1 block truncate">
+                    {modelMeta.modelName} • WAPE {modelMeta.wape.toFixed(2)}%
+                  </span>
                 </div>
               </div>
             </div>
@@ -734,7 +627,8 @@ export default function ForecastingPage() {
                       Grafik Riwayat &amp; Proyeksi
                     </h2>
                     <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                      Menampilkan {forecastData?.history.length || 14} hari data historis transaksi pasar dan {actualHorizon} hari proyeksi ke depan.
+                      Menampilkan {forecastData?.history.length || 14} hari data historis transaksi pasar dan {actualHorizon} hari proyeksi ke depan
+                      {forecastData?.formattedModelCreatedAt ? ` • Diperbarui: ${forecastData.formattedModelCreatedAt}` : ""}.
                     </p>
                   </div>
 

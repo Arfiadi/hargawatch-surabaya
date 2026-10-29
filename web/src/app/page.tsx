@@ -179,12 +179,20 @@ export default function HomePage() {
       return;
     }
     setIsBasketLoading(true);
-    getLiveShoppingBasket(activeBasketList).then((sim) => {
-      if (isMounted) {
-        if (sim) setBasketSim(sim);
-        setIsBasketLoading(false);
-      }
-    });
+    getLiveShoppingBasket(activeBasketList)
+      .then((sim) => {
+        if (isMounted) {
+          setBasketSim(sim || null);
+          setIsBasketLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load shopping basket simulation:", err);
+        if (isMounted) {
+          setBasketSim(null);
+          setIsBasketLoading(false);
+        }
+      });
     return () => {
       isMounted = false;
     };
@@ -971,7 +979,7 @@ export default function HomePage() {
                   )}
                 </div>
 
-                {/* Banner Akses Lengkap 38 Komoditas */}
+                {/* Banner Akses Lengkap 37 Komoditas */}
                 <div className="mt-2 p-3.5 sm:p-4 bg-primary/5 rounded-2xl border border-primary/15 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -982,7 +990,7 @@ export default function HomePage() {
                         Ingin Memantau Komoditas Lain?
                       </p>
                       <p className="text-[11px] sm:text-xs text-text-secondary leading-tight mt-0.5">
-                        Tersedia riwayat harga dan estimasi tren untuk <strong>seluruh 38 komoditas</strong> pangan Surabaya.
+                        Tersedia riwayat harga dan estimasi tren untuk <strong>seluruh 37 komoditas</strong> pangan Surabaya.
                       </p>
                     </div>
                   </div>
@@ -990,7 +998,7 @@ export default function HomePage() {
                     href="#grafik-tren"
                     className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs shrink-0 cursor-pointer"
                   >
-                    <span>Buka Grafik 38 Komoditas</span>
+                    <span>Buka Grafik 37 Komoditas</span>
                     <span className="material-symbols-outlined text-sm">arrow_downward</span>
                   </a>
                 </div>
@@ -1448,7 +1456,7 @@ export default function HomePage() {
 
               {/* Panel Kontrol: Pilihan Komoditas & Rentang Waktu (Bebas Redundansi) */}
               <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 bg-surface-subtle/50 p-3.5 rounded-2xl border border-border-subtle/70">
-                {/* Left: Searchable Dropdown for 38 Commodities */}
+                {/* Left: Searchable Dropdown for 37 Commodities */}
                 <div className="w-full md:w-72 lg:w-80 shrink-0">
                   <label className="block mb-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider">
                     Pilih Komoditas Pokok:
@@ -1460,7 +1468,7 @@ export default function HomePage() {
                       setTrendCommodityId(id);
                       setHighlightedMarketId(null);
                     }}
-                    searchPlaceholder="Cari dari 38 komoditas Surabaya..."
+                    searchPlaceholder="Cari dari 37 komoditas Surabaya..."
                     emptyNoun="komoditas"
                     panelClassName="w-full sm:w-96 lg:w-[26rem]"
                   />
