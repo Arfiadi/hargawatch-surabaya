@@ -52,12 +52,14 @@ export interface EarlyWarningStats {
   highCount: number;
   warningCount: number;
   normalCount: number;
+  stabilityPercentage: number;
   maxScore: number;
   overallStatus: "SIAGA" | "WASPADA" | "NORMAL";
   focusText: string;
   subtitle: string;
   anomaliesCount: number;
   criticalCommodities: string[];
+  warningCommodities: string[];
 }
 
 export interface ForecastHistoryPoint {
@@ -532,15 +534,23 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
       }
     }
 
-    const highCount = items.filter(i => i.status_warning === "TINGGI").length;
-    const warningCount = items.filter(i => i.status_warning === "WASPADA").length;
-    const normalCount = items.filter(i => i.status_warning === "NORMAL").length;
-    const anomaliesCount = items.filter(i => (i.skor_anomali || 0) > 0).length;
+    // Urutkan item berdasarkan total_skor tertinggi agar perankingan konsisten
+    items.sort((a, b) => b.total_skor - a.total_skor);
 
-    // Nama komoditas yang mengalami alert
-    const alertCommodityNames = Array.from(
-      new Set(items.filter(i => i.status_warning !== "NORMAL").map(i => formatCommodityName(i.nama_komoditas)))
-    );
+    // Komoditas risiko TINGGI (skor >= 70 pada setidaknya satu pasar)
+    const highRiskItems = items.filter(i => i.status_warning === "TINGGI");
+    const highRiskCommodities = Array.from(new Set(highRiskItems.map(i => i.nama_komoditas)));
+
+    // Komoditas WASPADA (skor 40-69, dan belum berstatus TINGGI)
+    const warningItems = items.filter(i => i.status_warning === "WASPADA" && !highRiskCommodities.includes(i.nama_komoditas));
+    const warningCommodities = Array.from(new Set(warningItems.map(i => i.nama_komoditas)));
+
+    const highCount = highRiskCommodities.length;
+    const warningCount = warningCommodities.length;
+    const normalCount = items.filter(i => i.status_warning === "NORMAL").length;
+    const totalRecords = items.length;
+    const stabilityPercentage = totalRecords > 0 ? Number(((normalCount / totalRecords) * 100).toFixed(1)) : 100;
+    const anomaliesCount = items.filter(i => (i.skor_anomali || 0) > 0).length;
 
     // Format tanggal Indonesia: misal "10 Okt 2026"
     let formattedDate = latestDate;
@@ -561,12 +571,14 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
 
     if (highCount > 0) {
       overallStatus = "SIAGA";
-      focusText = `Fokus: ${alertCommodityNames.slice(0, 3).join(", ")}`;
-      subtitle = `Terdeteksi lonjakan harga pada ${alertCommodityNames.slice(0, 2).join(" & ")}. Rekomendasi intervensi operasi pasar disiapkan.`;
+      focusText = `Fokus: ${highRiskCommodities.slice(0, 3).join(", ")}`;
+      const topNames = highRiskCommodities.slice(0, 2).join(" & ");
+      subtitle = `Terdeteksi lonjakan harga & risiko tinggi pada ${topNames}. Rekomendasi intervensi operasi pasar disiapkan.`;
     } else if (warningCount > 0) {
       overallStatus = "WASPADA";
-      focusText = `Fokus: ${alertCommodityNames.slice(0, 3).join(", ")}`;
-      subtitle = `Pantau pergerakan harga dan deviasi pasar untuk komoditas ${alertCommodityNames.slice(0, 2).join(" & ")}.`;
+      focusText = `Fokus: ${warningCommodities.slice(0, 3).join(", ")}`;
+      const topNames = warningCommodities.slice(0, 2).join(" & ");
+      subtitle = `Pantau pergerakan harga dan deviasi pasar untuk komoditas ${topNames}.`;
     }
 
     return {
@@ -578,12 +590,14 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
         highCount,
         warningCount,
         normalCount,
+        stabilityPercentage,
         maxScore: items.length > 0 ? items[0].total_skor : 0,
         overallStatus,
         focusText,
         subtitle,
         anomaliesCount,
-        criticalCommodities: alertCommodityNames,
+        criticalCommodities: highRiskCommodities,
+        warningCommodities,
       }
     };
   } catch (err) {

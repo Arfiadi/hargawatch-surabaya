@@ -438,17 +438,38 @@ export default function EarlyWarningPage() {
                 </div>
                 <div className="flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
-                    <span className="font-metric-display text-metric-display text-on-surface">100.0%</span>
-                    <span className="font-label-caps text-label-caps text-status-normal font-semibold">
+                    <span className="font-metric-display text-metric-display text-on-surface">
+                      {ewsStats?.stabilityPercentage !== undefined ? `${ewsStats.stabilityPercentage.toFixed(1)}%` : "100.0%"}
+                    </span>
+                    <span
+                      className={`font-label-caps text-label-caps font-semibold ${
+                        (ewsStats?.stabilityPercentage ?? 100) >= 90
+                          ? "text-status-normal"
+                          : (ewsStats?.stabilityPercentage ?? 100) >= 75
+                          ? "text-status-warning"
+                          : "text-status-critical"
+                      }`}
+                    >
                       Target &gt; 90%
                     </span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-muted">
-                    Toleransi Batas Aman Pemkot Surabaya
+                    {(ewsStats?.stabilityPercentage ?? 100) >= 90
+                      ? "Toleransi Batas Aman Pemkot Surabaya"
+                      : "Di bawah batas toleransi aman Pemkot"}
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-surface-subtle rounded-full overflow-hidden">
-                  <div className="h-full bg-status-normal rounded-full" style={{ width: "100%" }}></div>
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      (ewsStats?.stabilityPercentage ?? 100) >= 90
+                        ? "bg-status-normal"
+                        : (ewsStats?.stabilityPercentage ?? 100) >= 75
+                        ? "bg-status-warning"
+                        : "bg-status-critical"
+                    }`}
+                    style={{ width: `${Math.min(100, Math.max(0, ewsStats?.stabilityPercentage ?? 100))}%` }}
+                  ></div>
                 </div>
               </div>
 
@@ -498,9 +519,16 @@ export default function EarlyWarningPage() {
                     )}
                   </div>
                 </div>
-                <span className="font-body-sm text-body-sm text-text-muted">
-                  {ewsStats && ewsStats.highCount > 0 ? "Perlu mitigasi segera" : "Tidak ada komoditas di zona bahaya"}
-                </span>
+                <div className="flex items-center justify-between font-body-sm text-body-sm text-text-muted">
+                  <span>
+                    {ewsStats && ewsStats.highCount > 0 ? "Perlu mitigasi segera" : "Tidak ada komoditas di zona bahaya"}
+                  </span>
+                  {ewsStats && ewsStats.warningCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-status-warning-bg text-status-warning font-label-caps text-label-caps font-semibold">
+                      +{ewsStats.warningCount} Waspada
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* KPI 3: Titik Anomali Pasar */}
@@ -509,19 +537,33 @@ export default function EarlyWarningPage() {
                   <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                     Titik Anomali Pasar
                   </span>
-                  <span className="w-8 h-8 rounded-lg bg-surface-subtle flex items-center justify-center text-status-normal">
+                  <span
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      (ewsStats?.anomaliesCount || 0) > 0
+                        ? "bg-status-warning-bg text-status-warning"
+                        : "bg-surface-subtle text-status-normal"
+                    }`}
+                  >
                     <span className="material-symbols-outlined text-body-lg">radar</span>
                   </span>
                 </div>
                 <div className="flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
-                    <span className="font-metric-display text-metric-display text-status-normal">
+                    <span
+                      className={`font-metric-display text-metric-display ${
+                        (ewsStats?.anomaliesCount || 0) > 0
+                          ? "text-status-warning"
+                          : "text-status-normal"
+                      }`}
+                    >
                       {ewsStats ? ewsStats.anomaliesCount : 0} Titik
                     </span>
                     <span className="font-label-caps text-label-caps text-text-muted">Outlier Deviasi</span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-secondary">
-                    Seluruh pasar selaras dalam toleransi
+                    {ewsStats && ewsStats.anomaliesCount > 0
+                      ? `${ewsStats.anomaliesCount} titik pantau terdeteksi deviasi antar-pasar`
+                      : "Seluruh pasar selaras dalam toleransi"}
                   </span>
                 </div>
                 <div className="flex items-center gap-space-xs text-status-normal font-label-caps text-label-caps font-semibold">

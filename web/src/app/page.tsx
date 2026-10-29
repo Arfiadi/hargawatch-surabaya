@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import { createPortal } from "react-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -1635,10 +1634,28 @@ export default function HomePage() {
 
                 const todayX = getX(todayIdx);
 
-                // Path lurus (linear point-to-point) bersih presisi sesuai style modern chart
-                const getLinearPath = (pts: { x: number; y: number }[]) => {
+                // Path kurva adaptif: linear untuk data pendek, spline halus (Catmull-Rom) untuk rentang waktu panjang
+                const getLinearPath = (pts: { x: number; y: number }[], isForecast = false) => {
                   if (pts.length === 0) return "";
-                  return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+                  if (pts.length <= 2 || isForecast || totalPoints <= 20) {
+                    return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+                  }
+                  let d = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+                  const tension = 0.12;
+                  for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = pts[i === 0 ? 0 : i - 1];
+                    const p1 = pts[i];
+                    const p2 = pts[i + 1];
+                    const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1];
+
+                    const cp1x = p1.x + (p2.x - p0.x) * tension;
+                    const cp1y = p1.y + (p2.y - p0.y) * tension;
+                    const cp2x = p2.x - (p3.x - p1.x) * tension;
+                    const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+                    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+                  }
+                  return d;
                 };
 
                 // Active hover point calculations
@@ -1986,13 +2003,12 @@ export default function HomePage() {
                                 {s.points.map((pt, i) => {
                                   const isToday = i === todayIdx;
                                   const isHovered = hoveredPointIndex === i;
+                                  // Untuk rentang waktu panjang (>35 hari / bulan / tahun), jangan render titik statis bertumpuk di sepanjang garis
+                                  // Cukup tampilkan titik jangkar Hari Ini (Today) agar kurva tetap bersih dan mulus
                                   const shouldRenderCircle =
-                                    totalPoints <= 35 ||
-                                    isToday ||
-                                    isHovered ||
-                                    i === 0 ||
-                                    i === totalPoints - 1 ||
-                                    i % Math.ceil(totalPoints / 25) === 0;
+                                    totalPoints <= 35
+                                      ? true
+                                      : isToday || isHovered;
 
                                   if (!shouldRenderCircle) return null;
 
@@ -2143,13 +2159,6 @@ export default function HomePage() {
                             <strong className="text-text-secondary font-semibold">Catatan Metodologi:</strong> Proyeksi harga dihitung menggunakan model Machine Learning (LightGBM/GBDT) berbasis dinamika harga historis, transmisi Pasar Induk Keputran, dan pola musiman kalender. Data bersifat estimasi statistik dini, bukan penetapan harga resmi pemerintah.
                           </p>
                         </div>
-                        <Link
-                          href="/forecasting"
-                          className="inline-flex items-center gap-1 text-primary hover:text-primary-dark font-bold shrink-0 text-xs hover:underline"
-                        >
-                          <span>Buka Detail Proyeksi 14 Hari &amp; Regulasi HAP</span>
-                          <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                        </Link>
                       </div>
                     </div>
                   </div>

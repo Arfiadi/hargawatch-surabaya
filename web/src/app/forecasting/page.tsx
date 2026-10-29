@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CommoditySearchSelect from "@/components/CommoditySearchSelect";
 import TimeframeSelect from "@/components/TimeframeSelect";
+import HorizonSelect from "@/components/HorizonSelect";
 import {
   getLiveForecastDetails,
   CommodityForecastDetails,
@@ -173,7 +174,7 @@ const COMMODITY_MODEL_METRICS: Record<number, ModelEvaluationMeta> = {
 
 export default function ForecastingPage() {
   const [selectedCommodity, setSelectedCommodity] = useState<number>(50);
-  const horizon: 7 | 14 = 14;
+  const [horizon, setHorizon] = useState<7 | 14>(14);
   const [timeframe, setTimeframe] = useState<TimeframeOption>("14d");
   const [statusFilter, setStatusFilter] = useState<"all" | "alert">("all");
   const [loading, setLoading] = useState<boolean>(true);
@@ -422,18 +423,38 @@ export default function ForecastingPage() {
       data: f,
     }));
 
-    // Path kurva histori
-    const histPath = histCoords.reduce((acc, curr, idx) => {
-      return idx === 0 ? `M ${curr.x},${curr.y}` : `${acc} L ${curr.x},${curr.y}`;
-    }, "");
+    // Path kurva histori adaptif: spline halus (Catmull-Rom) untuk timeframe panjang (>20 hari)
+    const isSmooth = historyPoints.length > 20;
+    const histPath = (() => {
+      if (histCoords.length === 0) return "";
+      if (histCoords.length <= 2 || !isSmooth) {
+        return histCoords.map((c, idx) => `${idx === 0 ? "M" : "L"} ${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+      }
+      let d = `M ${histCoords[0].x.toFixed(1)},${histCoords[0].y.toFixed(1)}`;
+      const tension = 0.12;
+      for (let i = 0; i < histCoords.length - 1; i++) {
+        const p0 = histCoords[i === 0 ? 0 : i - 1];
+        const p1 = histCoords[i];
+        const p2 = histCoords[i + 1];
+        const p3 = histCoords[i + 2 < histCoords.length ? i + 2 : i + 1];
 
-    const histArea = `${histPath} L ${todayCoord.x},${svgHeight - padBottom} L ${padX},${
+        const cp1x = p1.x + (p2.x - p0.x) * tension;
+        const cp1y = p1.y + (p2.y - p0.y) * tension;
+        const cp2x = p2.x - (p3.x - p1.x) * tension;
+        const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+        d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+      }
+      return d;
+    })();
+
+    const histArea = `${histPath} L ${todayCoord.x.toFixed(1)},${svgHeight - padBottom} L ${padX},${
       svgHeight - padBottom
     } Z`;
 
     // Path kurva proyeksi
     const fcPath = [todayCoord, ...fcCoords].reduce((acc, curr, idx) => {
-      return idx === 0 ? `M ${curr.x},${curr.y}` : `${acc} L ${curr.x},${curr.y}`;
+      return idx === 0 ? `M ${curr.x.toFixed(1)},${curr.y.toFixed(1)}` : `${acc} L ${curr.x.toFixed(1)},${curr.y.toFixed(1)}`;
     }, "");
 
     // Path Batas Toleransi (Shaded Band) - hanya dibuat bila hasSpread true
@@ -769,6 +790,13 @@ export default function ForecastingPage() {
                     onChange={setTimeframe}
                     className="shrink-0"
                   />
+
+                  {/* Dropdown Horizon Proyeksi (7 Hari / 14 Hari) */}
+                  <HorizonSelect
+                    value={horizon}
+                    onChange={setHorizon}
+                    className="shrink-0"
+                  />
                 </div>
               </div>
 
@@ -991,12 +1019,13 @@ export default function ForecastingPage() {
                         {/* Titik-titik data historis (Solid Dot Markers) */}
                         {chartMetrics.histCoords.map((pt, i) => {
                           const isLast = i === chartMetrics.histCoords.length - 1;
-                          const isFirst = i === 0;
+                          // Untuk rentang waktu panjang (>35 hari / 3 bulan / 6 bulan / 1 tahun), hindari tumpukan titik statis
+                          // Cukup tampilkan titik jangkar Hari Ini (isLast) agar kurva tetap bersih dan mulus
+                          const isLongTimeframe = chartMetrics.histCoords.length > 35;
                           const shouldRenderDot =
-                            chartMetrics.histCoords.length <= 35 ||
-                            isLast ||
-                            isFirst ||
-                            i % Math.ceil(chartMetrics.histCoords.length / 25) === 0;
+                            !isLongTimeframe
+                              ? true
+                              : isLast;
 
                           if (!shouldRenderDot) return null;
 
