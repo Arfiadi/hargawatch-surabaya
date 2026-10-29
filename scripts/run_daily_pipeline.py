@@ -100,6 +100,7 @@ def main():
             "--horizon",
             str(args.horizon),
             "--from-db",
+            "--all-commodities",
         ]
         if args.local_only:
             forecast_cmd.append("--local-only")
