@@ -12,7 +12,7 @@ interface CommodityIconProps {
  * Crafted according to professional logo-design principles:
  * - Scalable 24x24 viewBox (crisp at 14px, 16px, 24px, 32px+)
  * - Unified stroke geometry (strokeWidth="2", round linecap/join)
- * - Optical balancing & harmonic proportions across all 38 catalog commodities.
+ * - Optical balancing & harmonic proportions across all 37 catalog commodities.
  */
 export default function CommodityIcon({ id, className = "w-5 h-5" }: CommodityIconProps) {
   const numId = typeof id === "number" ? id : parseInt(id, 10);

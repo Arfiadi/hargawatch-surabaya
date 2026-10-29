@@ -37,12 +37,13 @@ export interface EarlyWarningItem {
   pasar_id: number;
   nama_pasar: string;
   total_skor: number;
-  status_warning: "NORMAL" | "WASPADA" | "TINGGI";
+  status_warning: "NORMAL" | "WASPADA" | "TINGGI" | "BELUM_TERSEDIA";
   skor_tren: number;
   skor_volatilitas: number;
   skor_anomali: number;
   skor_prediksi: number;
   harga_terakhir?: number;
+  hasEwsData?: boolean;
 }
 
 export interface EarlyWarningStats {
@@ -517,18 +518,20 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
         const e = ewsMap.get(key);
         const harga = hargaMap.get(key);
         if (harga !== undefined || e !== undefined) {
+          const hasEws = e !== undefined;
           items.push({
             komoditas_id: kom.komoditas_id,
             nama_komoditas: formatCommodityName(kom.nama_komoditas),
             pasar_id: pas.pasar_id,
             nama_pasar: pas.nama_pasar,
             total_skor: e?.total_skor || 0,
-            status_warning: e?.status_warning || "NORMAL",
+            status_warning: hasEws ? (e?.status_warning || "NORMAL") : "BELUM_TERSEDIA",
             skor_tren: e?.skor_tren || 0,
             skor_volatilitas: e?.skor_volatilitas || 0,
             skor_anomali: e?.skor_anomali || 0,
             skor_prediksi: e?.skor_prediksi || 0,
             harga_terakhir: harga !== undefined ? harga : e?.harga_terakhir,
+            hasEwsData: hasEws,
           });
         }
       }
@@ -537,20 +540,23 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
     // Urutkan item berdasarkan total_skor tertinggi agar perankingan konsisten
     items.sort((a, b) => b.total_skor - a.total_skor);
 
+    // Hanya evaluasi statistik stabilitas dari record yang benar-benar memiliki asesmen EWS (F-02 Fix)
+    const evaluatedItems = items.filter(i => i.hasEwsData);
+
     // Komoditas risiko TINGGI (skor >= 70 pada setidaknya satu pasar)
-    const highRiskItems = items.filter(i => i.status_warning === "TINGGI");
+    const highRiskItems = evaluatedItems.filter(i => i.status_warning === "TINGGI");
     const highRiskCommodities = Array.from(new Set(highRiskItems.map(i => i.nama_komoditas)));
 
     // Komoditas WASPADA (skor 40-69, dan belum berstatus TINGGI)
-    const warningItems = items.filter(i => i.status_warning === "WASPADA" && !highRiskCommodities.includes(i.nama_komoditas));
+    const warningItems = evaluatedItems.filter(i => i.status_warning === "WASPADA" && !highRiskCommodities.includes(i.nama_komoditas));
     const warningCommodities = Array.from(new Set(warningItems.map(i => i.nama_komoditas)));
 
     const highCount = highRiskCommodities.length;
     const warningCount = warningCommodities.length;
-    const normalCount = items.filter(i => i.status_warning === "NORMAL").length;
-    const totalRecords = items.length;
+    const normalCount = evaluatedItems.filter(i => i.status_warning === "NORMAL").length;
+    const totalRecords = evaluatedItems.length; // 208 record riil ter-evaluasi
     const stabilityPercentage = totalRecords > 0 ? Number(((normalCount / totalRecords) * 100).toFixed(1)) : 100;
-    const anomaliesCount = items.filter(i => (i.skor_anomali || 0) > 0).length;
+    const anomaliesCount = evaluatedItems.filter(i => (i.skor_anomali || 0) > 0).length;
 
     // Format tanggal Indonesia: misal "10 Okt 2026"
     let formattedDate = latestDate;
@@ -928,7 +934,7 @@ export async function getLiveMultiCommodityTrends(pasarId?: number): Promise<Mul
       dates,
       formattedDates,
       series,
-      latestSyncDate: dates.includes("2026-10-04") ? "04 Okt 2026" : formattedDates[formattedDates.length - 1]
+      latestSyncDate: formattedDates[formattedDates.length - 1] || "Data Terkini"
     };
   } catch (err) {
     console.error("Failed to load multi-commodity trends:", err);
@@ -1060,6 +1066,16 @@ export async function getLiveMarketComparisonTrends(
     let histData: RawMarketPriceRow[] = [];
     let fcData: RawForecastRow[] = [];
 
+    // 1. Dapatkan tanggal terbaru dari fact_harga_pasar sebagai jangkar
+    const { data: latestDateRows } = await supabase
+      .from("fact_harga_pasar")
+      .select("tanggal")
+      .order("tanggal", { ascending: false })
+      .limit(1);
+
+    const anchorDate = latestDateRows?.[0]?.tanggal || "2026-10-29";
+
+    // 2. Query data historis (<= anchorDate) dan proyeksi masa depan (> anchorDate) secara paralel (Fix F-01)
     if (targetDays <= 120) {
       const fetchLimit = Math.max(100, targetDays * 7);
       const [histRes, fcRes] = await Promise.all([
@@ -1067,12 +1083,14 @@ export async function getLiveMarketComparisonTrends(
           .from("fact_harga_pasar")
           .select("tanggal, pasar_id, harga_asli, harga_imputasi, is_imputed")
           .eq("komoditas_id", komoditasId)
+          .lte("tanggal", anchorDate)
           .order("tanggal", { ascending: false })
           .limit(Math.min(1000, fetchLimit)),
         supabase
           .from("fact_forecast")
           .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas")
           .eq("komoditas_id", komoditasId)
+          .gt("tanggal", anchorDate)
           .order("tanggal", { ascending: true })
           .limit(100)
       ]);
@@ -1084,18 +1102,21 @@ export async function getLiveMarketComparisonTrends(
           .from("fact_harga_pasar")
           .select("tanggal, pasar_id, harga_asli, harga_imputasi, is_imputed")
           .eq("komoditas_id", komoditasId)
+          .lte("tanggal", anchorDate)
           .order("tanggal", { ascending: false })
           .range(0, 999),
         supabase
           .from("fact_harga_pasar")
           .select("tanggal, pasar_id, harga_asli, harga_imputasi, is_imputed")
           .eq("komoditas_id", komoditasId)
+          .lte("tanggal", anchorDate)
           .order("tanggal", { ascending: false })
           .range(1000, 2400),
         supabase
           .from("fact_forecast")
           .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas")
           .eq("komoditas_id", komoditasId)
+          .gt("tanggal", anchorDate)
           .order("tanggal", { ascending: true })
           .limit(100)
       ]);
@@ -1105,25 +1126,11 @@ export async function getLiveMarketComparisonTrends(
 
     // Kumpulkan tanggal observasi unik (sesuai targetDays, diurutkan ascending)
     const histDates = Array.from(new Set(histData.map(d => d.tanggal))).sort().slice(-targetDays);
-    const anchorDate = histDates.length > 0 ? histDates[histDates.length - 1] : "2026-10-11";
     
-    // Ambil tanggal proyeksi dari DB yang benar-benar lebih besar dari anchorDate
-    let fcDates = Array.from(new Set(fcData.map(d => d.tanggal)))
-      .filter(d => d > anchorDate)
+    // Ambil tanggal proyeksi dari DB yang benar-benar berasal dari hasil forecast masa depan
+    const fcDates = Array.from(new Set(fcData.map(d => d.tanggal)))
       .sort()
       .slice(0, 7);
-
-    // Jika DB belum memiliki record forecast di masa depan setelah anchorDate,
-    // buat 7 tanggal kalender berikutnya secara kronologis
-    if (fcDates.length < 7) {
-      const baseDateObj = new Date(anchorDate);
-      fcDates = [];
-      for (let i = 1; i <= 7; i++) {
-        const nextDate = new Date(baseDateObj);
-        nextDate.setDate(nextDate.getDate() + i);
-        fcDates.push(nextDate.toISOString().slice(0, 10));
-      }
-    }
 
     const allDates = [...histDates, ...fcDates];
     const splitIdx = Math.max(0, histDates.length - 1);
@@ -1160,27 +1167,16 @@ export async function getLiveMarketComparisonTrends(
       }
     }
 
-    // Baseline harga acuan per komoditas
-    const basePrices: Record<number, number> = {
-      50: 55000, // Cabai Rawit
-      2: 16500,  // Beras Premium
-      39: 31000, // Bawang Merah
-      16: 25800, // Telur Ayam
-      10: 17500, // Minyak Goreng
-      7: 17000,  // Gula Pasir
-    };
-    const baseP = basePrices[komoditasId] || 30000;
-
-    // Hitung rata-rata proyeksi agregat kota dan rentang interval keyakinan (P10 - P90)
+    // Hitung rata-rata proyeksi agregat kota dan rentang interval keyakinan (P10 - P90) murni dari hasil forecast
     const cityForecastBand: CityForecastPoint[] = fcDates.map((dt, idx) => {
       const rows = fcData.filter(f => f.tanggal === dt);
       const preds = rows.map(r => Number(r.harga_prediksi)).filter(v => v > 0);
       const lowers = rows.map(r => Number(r.batas_bawah)).filter(v => v > 0);
       const uppers = rows.map(r => Number(r.batas_atas)).filter(v => v > 0);
 
-      const avgPred = preds.length > 0 ? Math.round(preds.reduce((a, b) => a + b, 0) / preds.length) : baseP;
-      const avgLower = lowers.length > 0 ? Math.round(lowers.reduce((a, b) => a + b, 0) / lowers.length) : Math.round(avgPred * 0.94);
-      const avgUpper = uppers.length > 0 ? Math.round(uppers.reduce((a, b) => a + b, 0) / uppers.length) : Math.round(avgPred * 1.06);
+      const avgPred = preds.length > 0 ? Math.round(preds.reduce((a, b) => a + b, 0) / preds.length) : 0;
+      const avgLower = lowers.length > 0 ? Math.round(lowers.reduce((a, b) => a + b, 0) / lowers.length) : avgPred;
+      const avgUpper = uppers.length > 0 ? Math.round(uppers.reduce((a, b) => a + b, 0) / uppers.length) : avgPred;
 
       return {
         tanggal: dt,
@@ -1191,20 +1187,8 @@ export async function getLiveMarketComparisonTrends(
       };
     });
 
-    // Multiplier karakteristik pasar di Surabaya:
-    // Keputran (grosir) paling murah, Genteng paling tinggi, Wonokromo & Tambahrejo menengah
-    const marketOffsets: Record<number, number> = {
-      5: -0.06,  // Keputran (-6%)
-      2: -0.01,  // Wonokromo (-1%)
-      1: +0.01,  // Tambahrejo (+1%)
-      4: +0.03,  // Pucang Anom (+3%)
-      146: +0.05, // Soponyono (+5%)
-      3: +0.07,  // Genteng (+7%)
-    };
-
     const series: MarketTrendSeries[] = TREND_MARKET_CONFIGS.map(cfg => {
-      const offset = marketOffsets[cfg.pasar_id] || 0;
-      let lastKnownPrice = Math.round(baseP * (1 + offset));
+      let lastKnownPrice = 0;
 
       const points: TrendSeriesPoint[] = allDates.map((dt, idx) => {
         const key = `${cfg.pasar_id}_${dt}`;
@@ -1212,7 +1196,6 @@ export async function getLiveMarketComparisonTrends(
         let wasSynthesized = false;
 
         if (!p || p === 0) {
-          // Zero Lookahead Bias (AGENTS.md 6.1): Gunakan carry-forward flat murni, bukan gelombang sinusoidal artifisial
           p = lastKnownPrice;
           wasSynthesized = true;
         } else {
@@ -1237,8 +1220,10 @@ export async function getLiveMarketComparisonTrends(
       };
     });
 
+    // Format tanggal sinkronisasi tanpa hardcode tahun (Fix F-13)
+    const syncYear = anchorDate ? anchorDate.split("-")[0] : new Date().getFullYear();
     const latestSyncDate = formattedDates[splitIdx]
-      ? `${formattedDates[splitIdx]} 2026`
+      ? `${formattedDates[splitIdx]} ${syncYear}`
       : "Data Terkini";
 
     return {
@@ -1307,7 +1292,7 @@ export async function getLiveMarketComparison(): Promise<MarketComparisonRow[] |
     const latestPrices = priceRes.data.filter(p => !isNaN(Number(p.harga_imputasi)));
     const komMap = new Map(komRes.data ? komRes.data.map(k => [k.komoditas_id, { ...k, nama_komoditas: formatCommodityName(k.nama_komoditas) }]) : []);
 
-    // 3. Muat seluruh komoditas katalog lengkap (37/38 komoditas)
+    // 3. Muat seluruh komoditas katalog lengkap (37 komoditas)
     const catalogCids = ALL_CATALOG_COMMODITIES.map(c => c.id);
     const extraCids = (komRes.data || [])
       .map(k => k.komoditas_id)
@@ -1543,7 +1528,7 @@ export async function getLiveShoppingBasket(basketList: BasketItem[] = DEFAULT_B
       .order("tanggal", { ascending: false })
       .limit(1);
 
-    const latestDate = latestDateRow?.[0]?.tanggal || "2026-10-04";
+    const latestDate = latestDateRow?.[0]?.tanggal || new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
 
     const [pasarRes, priceRes] = await Promise.all([
       supabase.from("dim_pasar").select("pasar_id, nama_pasar"),

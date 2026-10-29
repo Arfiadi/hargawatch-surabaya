@@ -556,7 +556,7 @@ export default function SpatialMapPage() {
                     options={ALL_CATALOG_COMMODITIES}
                     valueId={selectedCommodityId}
                     onChange={setSelectedCommodityId}
-                    searchPlaceholder="Cari dari 38 komoditas Surabaya..."
+                    searchPlaceholder="Cari dari 37 komoditas Surabaya..."
                     emptyNoun="komoditas"
                     className="h-10"
                     panelClassName="w-full sm:w-96 md:w-[26rem]"
