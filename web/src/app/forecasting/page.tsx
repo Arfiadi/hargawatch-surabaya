@@ -597,23 +597,20 @@ export default function ForecastingPage() {
                 </div>
               </div>
 
-              {/* Metrik 4: Akurasi & Model (Sinkron dengan Registry Champion) */}
-              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between">
+              {/* Metrik 4: Akurasi & Model */}
+              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                  Model &amp; Akurasi (H+7)
+                  Model &amp; Akurasi
                 </span>
-                <div className="my-auto py-1">
+                <div className="flex-1 flex flex-col justify-center py-2">
                   <div className="flex items-baseline gap-2">
                     <span className="font-metric-display text-metric-display text-status-normal font-bold">
                       {modelMeta.accuracy.toFixed(1)}%
                     </span>
                     <span className="font-label-caps text-label-caps text-text-secondary">
-                      Akurasi Backtest
+                      Akurasi
                     </span>
                   </div>
-                  <span className="font-body-sm text-body-sm text-text-muted mt-1 block truncate">
-                    WAPE {modelMeta.wape.toFixed(2)}%
-                  </span>
                 </div>
               </div>
             </div>
@@ -1086,7 +1083,7 @@ export default function ForecastingPage() {
                     <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                       <span className="material-symbols-outlined text-body-lg">shopping_basket</span>
                     </span>
-                    <span className="font-headline-sm text-xs sm:text-body-md text-text-primary font-bold truncate">
+                    <span className="font-headline-sm text-xs sm:text-body-md text-text-primary font-bold">
                       Panduan bagi Masyarakat &amp; UMKM
                     </span>
                   </div>
@@ -1103,7 +1100,7 @@ export default function ForecastingPage() {
                   </span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed">
+                  <p className="font-body-sm text-body-sm text-text-secondary leading-relaxed text-justify">
                     Harga {activeCommodityMeta.name} diprediksi{" "}
                     <strong>
                       {(targetHorizonRow?.deltaPct || 0) >= 3
@@ -1118,7 +1115,7 @@ export default function ForecastingPage() {
                     <span className="material-symbols-outlined text-primary text-body-md shrink-0 mt-0.5">
                       lightbulb
                     </span>
-                    <span>
+                    <span className="text-justify">
                       <strong>Saran Belanja:</strong> {consumerAdvice}
                     </span>
                   </div>
@@ -1132,7 +1129,7 @@ export default function ForecastingPage() {
                     <span className="w-8 h-8 rounded-lg bg-status-warning-bg text-status-warning flex items-center justify-center font-bold shrink-0">
                       <span className="material-symbols-outlined text-body-lg">account_balance</span>
                     </span>
-                    <span className="font-headline-sm text-xs sm:text-body-md text-text-primary font-bold truncate">
+                    <span className="font-headline-sm text-xs sm:text-body-md text-text-primary font-bold">
                       Panduan bagi Pemkot Surabaya &amp; TPID
                     </span>
                   </div>

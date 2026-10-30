@@ -604,7 +604,7 @@ export default function EarlyWarningPage() {
               </div>
 
               {/* KPI 3: Titik Anomali Pasar */}
-              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
+              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                     Titik Anomali Pasar
@@ -621,7 +621,7 @@ export default function EarlyWarningPage() {
                     <span className="material-symbols-outlined text-body-lg">radar</span>
                   </span>
                 </div>
-                <div className="my-auto py-1 flex flex-col gap-space-2xs">
+                <div className="flex-1 flex flex-col justify-center py-2 gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
                     <span
                       className={`font-metric-display text-metric-display ${
