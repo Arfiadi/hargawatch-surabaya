@@ -1750,16 +1750,9 @@ export default function HomePage() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 py-2.5 px-3 bg-surface-canvas/60 rounded-xl border border-border-subtle/80 mb-3">
                       {/* Mobile Header: Label & Action */}
                       <div className="flex items-center justify-between md:hidden">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-text-secondary">
-                            Fokus Pasar:
-                          </span>
-                          {highlightedMarketId && (
-                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold animate-pulse">
-                              Fokus Aktif
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-xs font-semibold text-text-secondary">
+                          Fokus Pasar:
+                        </span>
                         <button
                           type="button"
                           onClick={() => {
