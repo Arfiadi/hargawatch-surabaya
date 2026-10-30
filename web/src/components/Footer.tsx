@@ -13,7 +13,7 @@ export default function Footer() {
             HargaWatch Surabaya
           </span>
         </div>
-        <p className="font-body-sm text-body-sm text-text-secondary max-w-xl mx-auto mb-space-md text-justify sm:text-center">
+        <p className="font-body-sm text-body-sm text-text-secondary max-w-xl mx-auto mb-space-md text-center">
           Portal keterbukaan data komoditas pangan dan instrumen mitigasi volatilitas inflasi pangan daerah berbasis data harian dari 6 pasar induk dan strategis di Kota Surabaya.
         </p>
 
