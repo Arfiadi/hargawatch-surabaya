@@ -1167,8 +1167,18 @@ export default function SpatialMapPage() {
                     return (
                       <div
                         key={row.komoditas_id || idx}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isSelected}
+                        aria-label={`Sorot peta untuk komoditas ${row.komoditas}`}
                         onClick={() => setSelectedCommodityId(row.komoditas_id)}
-                        className={`p-3.5 rounded-xl bg-white border shadow-2xs hover:shadow-xs transition-[box-shadow,border-color,background-color] duration-150 flex flex-col gap-2.5 cursor-pointer ${
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedCommodityId(row.komoditas_id);
+                          }
+                        }}
+                        className={`p-3.5 rounded-xl bg-white border shadow-2xs hover:shadow-xs transition-[box-shadow,border-color,background-color] duration-150 flex flex-col gap-2.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                           isSelected
                             ? "border-primary ring-2 ring-primary/20 bg-primary/2 border-l-4 border-l-primary"
                             : "border-slate-200 border-l-4 border-l-emerald-600"

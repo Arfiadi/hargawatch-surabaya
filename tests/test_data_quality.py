@@ -51,3 +51,54 @@ def test_parse_angka_missing_values():
         assert parse_fn("Rp 0") is None
         assert parse_fn("16.500") == 16500
         assert parse_fn("12.500,50") == 12500.5
+
+
+def test_validate_and_sanitize_outputs_gate():
+    """Memastikan Quality Gate menolak NaN, kuantil terbalik, duplikasi, dan status invalid."""
+    from scripts.run_forecasting import validate_and_sanitize_outputs
+
+    # 1. Valid dataframes pass cleanly
+    df_fc = pd.DataFrame({
+        "tanggal": ["2026-11-01", "2026-11-02"],
+        "pasar_id": [1, 1],
+        "komoditas_id": [50, 50],
+        "harga_prediksi": [50000, 52000],
+        "batas_bawah": [48000, 50000],
+        "batas_atas": [54000, 55000],
+    })
+    df_ews = pd.DataFrame({
+        "tanggal": ["2026-11-01", "2026-11-02"],
+        "pasar_id": [1, 1],
+        "komoditas_id": [50, 50],
+        "total_skor": [35, 75],
+        "status_warning": ["NORMAL", "TINGGI"],
+    })
+    clean_fc, clean_ew = validate_and_sanitize_outputs(df_fc, df_ews)
+    assert len(clean_fc) == 2
+    assert len(clean_ew) == 2
+
+    # 2. Duplicate keys are deduplicated
+    df_fc_dup = pd.concat([df_fc, df_fc.iloc[[0]]], ignore_index=True)
+    clean_fc_dup, _ = validate_and_sanitize_outputs(df_fc_dup, df_ews)
+    assert len(clean_fc_dup) == 2
+
+    # 3. Crossing quantiles are clipped monotonically
+    df_fc_cross = df_fc.copy()
+    df_fc_cross.loc[0, "batas_bawah"] = 60000  # greater than harga_prediksi (50000)
+    df_fc_cross.loc[0, "batas_atas"] = 40000   # less than harga_prediksi (50000)
+    clean_cross, _ = validate_and_sanitize_outputs(df_fc_cross, df_ews)
+    assert clean_cross.loc[0, "batas_bawah"] <= clean_cross.loc[0, "harga_prediksi"]
+    assert clean_cross.loc[0, "harga_prediksi"] <= clean_cross.loc[0, "batas_atas"]
+
+    # 4. NaN in critical forecast columns raises ValueError
+    df_fc_nan = df_fc.copy()
+    df_fc_nan.loc[0, "harga_prediksi"] = np.nan
+    with pytest.raises(ValueError, match="contains nulls"):
+        validate_and_sanitize_outputs(df_fc_nan, df_ews)
+
+    # 5. Invalid status_warning raises ValueError
+    df_ews_bad_status = df_ews.copy()
+    df_ews_bad_status.loc[0, "status_warning"] = "SUPER_CRITICAL"
+    with pytest.raises(ValueError, match="invalid status_warning"):
+        validate_and_sanitize_outputs(df_fc, df_ews_bad_status)
+

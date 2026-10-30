@@ -368,7 +368,9 @@ export default function EarlyWarningPage() {
                     ? "from-status-critical-bg via-surface-card to-surface-card"
                     : ewsStats?.overallStatus === "WASPADA"
                     ? "from-status-warning-bg via-surface-card to-surface-card"
-                    : "from-status-normal-bg/40 via-surface-card to-surface-card"
+                    : ewsStats
+                    ? "from-status-normal-bg/40 via-surface-card to-surface-card"
+                    : "from-surface-subtle via-surface-card to-surface-card"
                 } shadow-sm p-space-md lg:p-space-lg border border-border-subtle/70`}
               >
                 <div
@@ -377,7 +379,9 @@ export default function EarlyWarningPage() {
                       ? "bg-status-critical/10"
                       : ewsStats?.overallStatus === "WASPADA"
                       ? "bg-status-warning/10"
-                      : "bg-status-normal/10"
+                      : ewsStats
+                      ? "bg-status-normal/10"
+                      : "bg-surface-subtle"
                   }`}
                 ></div>
                 <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
@@ -388,7 +392,9 @@ export default function EarlyWarningPage() {
                           ? "bg-status-critical/20 text-status-critical"
                           : ewsStats?.overallStatus === "WASPADA"
                           ? "bg-status-warning/20 text-status-warning"
-                          : "bg-status-normal-bg text-status-normal"
+                          : ewsStats
+                          ? "bg-status-normal-bg text-status-normal"
+                          : "bg-surface-subtle text-text-muted"
                       }`}
                     >
                       <span className="material-symbols-outlined text-headline-lg">
@@ -396,7 +402,9 @@ export default function EarlyWarningPage() {
                           ? "crisis_alert"
                           : ewsStats?.overallStatus === "WASPADA"
                           ? "warning"
-                          : "verified_user"}
+                          : ewsStats
+                          ? "verified_user"
+                          : "cloud_off"}
                       </span>
                     </div>
                     <div className="flex flex-col gap-space-2xs">
@@ -407,7 +415,9 @@ export default function EarlyWarningPage() {
                               ? "bg-status-critical"
                               : ewsStats?.overallStatus === "WASPADA"
                               ? "bg-status-warning"
-                              : "bg-status-normal"
+                              : ewsStats
+                              ? "bg-status-normal"
+                              : "bg-slate-600"
                           }`}
                         >
                           <span className="material-symbols-outlined text-body-sm">
@@ -415,16 +425,18 @@ export default function EarlyWarningPage() {
                               ? "emergency"
                               : ewsStats?.overallStatus === "WASPADA"
                               ? "warning"
-                              : "check_circle"}
+                              : ewsStats
+                              ? "check_circle"
+                              : "sync_problem"}
                           </span>
-                          STATUS PERINGATAN DINI: {ewsStats?.overallStatus || "NORMAL"}
+                          STATUS PERINGATAN DINI: {ewsStats ? ewsStats.overallStatus : "DATA BELUM TERSEDIA"}
                         </span>
                       </div>
                       <h2 className="font-headline-md text-headline-md text-on-surface tracking-tight">
                         Status Peringatan &amp; Indeks Risiko Pasar
                       </h2>
                       <p className="font-body-md text-body-md text-text-secondary max-w-3xl text-justify">
-                        {ewsStats?.subtitle || "Pantau kenaikan harga, titik anomali, dan faktor yang memengaruhi pasokan secara real-time."}
+                        {ewsStats?.subtitle || "Data peringatan dini belum tersedia atau sedang dalam proses sinkronisasi server pantauan."}
                       </p>
                     </div>
                   </div>
@@ -483,32 +495,38 @@ export default function EarlyWarningPage() {
                     </span>
                     <span
                       className={`font-label-caps text-label-caps font-semibold ${
-                        (ewsStats?.stabilityPercentage ?? 100) >= 90
+                        !ewsStats
+                          ? "text-text-muted"
+                          : ewsStats.stabilityPercentage >= 90
                           ? "text-status-normal"
-                          : (ewsStats?.stabilityPercentage ?? 100) >= 75
+                          : ewsStats.stabilityPercentage >= 75
                           ? "text-status-warning"
                           : "text-status-critical"
                       }`}
                     >
-                      Target &gt; 90%
+                      {ewsStats ? "Target > 90%" : "Status Standby"}
                     </span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-muted">
-                    {(ewsStats?.stabilityPercentage ?? 100) >= 90
-                      ? "Toleransi Batas Aman Pemkot Surabaya"
-                      : "Di bawah batas toleransi aman Pemkot"}
+                    {ewsStats
+                      ? ewsStats.stabilityPercentage >= 90
+                        ? "Toleransi Batas Aman Pemkot Surabaya"
+                        : "Di bawah batas toleransi aman Pemkot"
+                      : "Menunggu pembaruan data terkini"}
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-surface-subtle rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      (ewsStats?.stabilityPercentage ?? 100) >= 90
+                      !ewsStats
+                        ? "bg-slate-300"
+                        : ewsStats.stabilityPercentage >= 90
                         ? "bg-status-normal"
-                        : (ewsStats?.stabilityPercentage ?? 100) >= 75
+                        : ewsStats.stabilityPercentage >= 75
                         ? "bg-status-warning"
                         : "bg-status-critical"
                     }`}
-                    style={{ width: `${Math.min(100, Math.max(0, ewsStats?.stabilityPercentage ?? 100))}%` }}
+                    style={{ width: `${ewsStats ? Math.min(100, Math.max(0, ewsStats.stabilityPercentage)) : 0}%` }}
                   ></div>
                 </div>
               </div>
@@ -521,7 +539,9 @@ export default function EarlyWarningPage() {
                   </span>
                   <span
                     className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      (ewsStats?.highCount || 0) > 0
+                      !ewsStats
+                        ? "bg-surface-subtle text-text-muted"
+                        : ewsStats.highCount > 0
                         ? "bg-status-critical-bg text-status-critical"
                         : "bg-status-normal-bg text-status-normal"
                     }`}
@@ -535,10 +555,14 @@ export default function EarlyWarningPage() {
                   <div className="flex items-baseline gap-space-xs">
                     <span
                       className={`font-metric-display text-metric-display ${
-                        (ewsStats?.highCount || 0) > 0 ? "text-status-critical" : "text-status-normal"
+                        !ewsStats
+                          ? "text-text-muted"
+                          : ewsStats.highCount > 0
+                          ? "text-status-critical"
+                          : "text-status-normal"
                       }`}
                     >
-                      {ewsStats ? ewsStats.highCount : 0}
+                      {ewsStats ? ewsStats.highCount : "—"}
                     </span>
                     <span className="font-title-md text-title-md text-text-secondary">Komoditas</span>
                   </div>
@@ -552,16 +576,24 @@ export default function EarlyWarningPage() {
                           {c}
                         </span>
                       ))
-                    ) : (
+                    ) : ewsStats ? (
                       <span className="px-space-xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">
                         Semua Terkendali
+                      </span>
+                    ) : (
+                      <span className="px-space-xs py-0.5 rounded-full bg-surface-subtle text-text-muted font-label-caps text-label-caps">
+                        Menunggu Data
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center justify-between font-body-sm text-body-sm text-text-muted">
                   <span>
-                    {ewsStats && ewsStats.highCount > 0 ? "Perlu mitigasi segera" : "Tidak ada komoditas di zona bahaya"}
+                    {ewsStats
+                      ? ewsStats.highCount > 0
+                        ? "Perlu mitigasi segera"
+                        : "Tidak ada komoditas di zona bahaya"
+                      : "Menunggu sinkronisasi data"}
                   </span>
                   {ewsStats && ewsStats.warningCount > 0 && (
                     <span className="px-1.5 py-0.5 rounded bg-status-warning-bg text-status-warning font-label-caps text-label-caps font-semibold">
@@ -579,7 +611,9 @@ export default function EarlyWarningPage() {
                   </span>
                   <span
                     className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      (ewsStats?.anomaliesCount || 0) > 0
+                      !ewsStats
+                        ? "bg-surface-subtle text-text-muted"
+                        : ewsStats.anomaliesCount > 0
                         ? "bg-status-warning-bg text-status-warning"
                         : "bg-surface-subtle text-status-normal"
                     }`}
@@ -591,19 +625,23 @@ export default function EarlyWarningPage() {
                   <div className="flex items-baseline gap-space-xs">
                     <span
                       className={`font-metric-display text-metric-display ${
-                        (ewsStats?.anomaliesCount || 0) > 0
+                        !ewsStats
+                          ? "text-text-muted"
+                          : ewsStats.anomaliesCount > 0
                           ? "text-status-warning"
                           : "text-status-normal"
                       }`}
                     >
-                      {ewsStats ? ewsStats.anomaliesCount : 0} Titik
+                      {ewsStats ? `${ewsStats.anomaliesCount} Titik` : "—"}
                     </span>
                     <span className="font-label-caps text-label-caps text-text-muted">Outlier Deviasi</span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-secondary">
-                    {ewsStats && ewsStats.anomaliesCount > 0
-                      ? `${ewsStats.anomaliesCount} titik pantau terdeteksi deviasi antar-pasar`
-                      : "Seluruh pasar selaras dalam toleransi"}
+                    {ewsStats
+                      ? ewsStats.anomaliesCount > 0
+                        ? `${ewsStats.anomaliesCount} titik pantau terdeteksi deviasi antar-pasar`
+                        : "Seluruh pasar selaras dalam toleransi"
+                      : "Menunggu pemindaian anomali"}
                   </span>
                 </div>
                 <div className="flex items-center gap-space-xs text-status-normal font-label-caps text-label-caps font-semibold">
