@@ -42,7 +42,7 @@ export default function HomePage() {
   const [isBasketLoading, setIsBasketLoading] = useState<boolean>(false);
   const [showFloatingBasket, setShowFloatingBasket] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
-  const [shoppingFreq, setShoppingFreq] = useState<number>(4);
+  const shoppingFreq = 4;
   const [basketViewMode, setBasketViewMode] = useState<"single" | "split">("single");
 
   const activeBasketList = useMemo(() => {
@@ -1501,64 +1501,6 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Monthly Savings Ticket / Voucher Card (Interactive Shopping Frequency) */}
-                  {basketSim && (basketSim.tripSaving > 0 || basketSim.monthlySaving > 0) && (
-                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-5 py-3.5 sm:px-6 sm:py-4 mb-3.5 sm:mb-4 shadow-sm">
-                      {/* Symmetrical Ticket cutouts decoration */}
-                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-surface-card"></div>
-                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-surface-card"></div>
-
-                      <div className="flex items-center gap-3 sm:gap-3.5 pl-1 pr-1">
-                        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20 shadow-2xs">
-                          <span className="material-symbols-outlined text-2xl text-emerald-200">savings</span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                            <span className="text-[9.5px] uppercase tracking-wider font-extrabold bg-emerald-950/40 text-emerald-200 px-2 py-0.5 rounded-full inline-block">
-                              POTENSI HEMAT BULANAN
-                            </span>
-                            {/* Interactive Frequency Selector */}
-                            <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xs p-0.5 rounded-lg border border-white/20">
-                              {[
-                                { f: 2, l: "2x/bln" },
-                                { f: 4, l: "4x/bln" },
-                                { f: 8, l: "8x/bln" },
-                              ].map((item) => (
-                                <button
-                                  key={item.f}
-                                  type="button"
-                                  onClick={() => setShoppingFreq(item.f)}
-                                  className={`px-1.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-bold transition-all cursor-pointer ${
-                                    shoppingFreq === item.f
-                                      ? "bg-white text-emerald-900 shadow-xs"
-                                      : "text-emerald-100 hover:text-white"
-                                  }`}
-                                >
-                                  {item.l}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          {(() => {
-                            const tripSaving = basketSim.tripSaving || (basketSim.rankings[basketSim.rankings.length - 1].totalBelanja - basketSim.rankings[0].totalBelanja);
-                            const totalMonthly = tripSaving * shoppingFreq;
-                            return (
-                              <>
-                                <div className="text-base sm:text-lg font-extrabold tracking-tight text-white mt-0.5">
-                                  Rp {totalMonthly.toLocaleString("id-ID")}{" "}
-                                  <span className="text-[11px] font-normal text-emerald-100">/ bulan</span>
-                                </div>
-                                <p className="text-[10.5px] sm:text-[11px] text-emerald-100/90 leading-tight mt-0.5">
-                                  Hemat <strong>Rp {tripSaving.toLocaleString("id-ID")}</strong> / trip × {shoppingFreq}x belanja sebulan ({basketSim.cheapestMarket} vs {basketSim.mostExpensiveMarket}).
-                                </p>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Action Buttons */}
                   <div className="flex flex-col gap-2">
