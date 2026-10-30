@@ -280,11 +280,69 @@ def train_and_forecast_commodity(
     return df_fc_all
 
 
+def validate_and_sanitize_outputs(
+    df_forecast: pd.DataFrame,
+    df_ews: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Atomic data-quality gate verifying forecasts and EWS integrity before persistence/upsert.
+    
+    Validations enforced:
+    1. Primary Key Deduplication: (tanggal, pasar_id, komoditas_id)
+    2. Monotonic Non-Crossing: 0 <= batas_bawah <= harga_prediksi <= batas_atas
+    3. Completeness & NaN Rejection: No nulls in key analytical metrics
+    4. Sane bounds: positive prices and valid EWS score limits [0, 100]
+    5. Valid EWS Status Enum: NORMAL, WASPADA, TINGGI
+    """
+    if df_forecast.empty:
+        raise ValueError("[QUALITY GATE ERROR] df_forecast is empty. Aborting publish.")
+    if df_ews.empty:
+        raise ValueError("[QUALITY GATE ERROR] df_ews is empty. Aborting publish.")
+
+    # 1. Deduplicate records on primary key (tanggal, pasar_id, komoditas_id)
+    df_fc = df_forecast.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last").copy()
+    df_ew = df_ews.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last").copy()
+
+    # 2. Reject Nulls / NaNs in critical columns
+    fc_critical = ["tanggal", "pasar_id", "komoditas_id", "harga_prediksi", "batas_bawah", "batas_atas"]
+    if df_fc[fc_critical].isnull().values.any():
+        null_counts = df_fc[fc_critical].isnull().sum().to_dict()
+        raise ValueError(f"[QUALITY GATE ERROR] df_forecast contains nulls: {null_counts}")
+
+    ews_critical = ["tanggal", "pasar_id", "komoditas_id", "total_skor", "status_warning"]
+    if df_ew[ews_critical].isnull().values.any():
+        null_counts = df_ew[ews_critical].isnull().sum().to_dict()
+        raise ValueError(f"[QUALITY GATE ERROR] df_ews contains nulls: {null_counts}")
+
+    # 3. Enforce monotonic non-crossing ordering: batas_bawah <= harga_prediksi <= batas_atas
+    df_fc["batas_bawah"] = np.minimum(df_fc["batas_bawah"], df_fc["harga_prediksi"])
+    df_fc["batas_atas"] = np.maximum(df_fc["batas_atas"], df_fc["harga_prediksi"])
+
+    # 4. Enforce strictly positive prices
+    if (df_fc["harga_prediksi"] <= 0).any():
+        raise ValueError("[QUALITY GATE ERROR] df_forecast contains non-positive harga_prediksi.")
+
+    # 5. Enforce valid EWS scores and statuses
+    if ((df_ew["total_skor"] < 0) | (df_ew["total_skor"] > 100)).any():
+        raise ValueError("[QUALITY GATE ERROR] df_ews total_skor out of [0, 100] range.")
+    
+    valid_statuses = {"NORMAL", "WASPADA", "TINGGI"}
+    invalid_statuses = set(df_ew["status_warning"].unique()) - valid_statuses
+    if invalid_statuses:
+        raise ValueError(f"[QUALITY GATE ERROR] df_ews contains invalid status_warning: {invalid_statuses}")
+
+    print(f"[QUALITY GATE] PASSED: Verified {len(df_fc)} forecast rows & {len(df_ew)} EWS rows (zero nulls, non-crossing quantiles, deduplicated).")
+    return df_fc, df_ew
+
+
 def upsert_to_supabase(df_forecast: pd.DataFrame, df_ews: pd.DataFrame):
     """Upserts forecasts and early warning scores to Supabase."""
     try:
         from src.utils.ingest_supabase import koneksi
         from psycopg2.extras import execute_values
+
+        # Defensive deduplication before batching into PostgreSQL
+        df_forecast = df_forecast.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last")
+        df_ews = df_ews.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last")
 
         conn = koneksi()
         cur = conn.cursor()
@@ -413,6 +471,10 @@ def main():
     # Drop tanggal from forecast slice so merge aligns each market/commodity to current origin t
     fc_day7_clean = fc_day7.drop(columns=["tanggal"], errors="ignore")
     df_final_ews = compute_early_warning_scores(slice_latest, fc_day7_clean)
+
+    # Pre-Publish Quality Gate & Deduplication (Gate F-05 / S1)
+    print("\n[INFO] Validating forecasting and EWS integrity against Quality Gate...")
+    df_final_forecasts, df_final_ews = validate_and_sanitize_outputs(df_final_forecasts, df_final_ews)
 
     # Save to local CSV
     out_fc_path = DATA_PROCESSED / "fact_forecast.csv"
