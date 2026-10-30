@@ -755,7 +755,6 @@ export default function HomePage() {
                             <div className="flex-1 space-y-1.5">
                               <div className="h-3 w-16 bg-surface-subtle rounded" />
                               <div className="h-4 w-32 bg-surface-subtle rounded" />
-                              <div className="h-3 w-24 bg-surface-subtle rounded" />
                             </div>
                             <div className="w-20 space-y-1 text-right">
                               <div className="h-4 w-16 bg-surface-subtle rounded ml-auto" />
@@ -887,15 +886,6 @@ export default function HomePage() {
                               >
                                 {item.name}
                               </h3>
-
-                              <div className="flex items-center gap-1 text-[11px] text-primary font-medium mt-1">
-                                <span className="material-symbols-outlined text-[13px] text-primary shrink-0">
-                                  location_on
-                                </span>
-                                <span className="truncate">
-                                  Termurah: {item.marketName.replace("Pasar ", "")}
-                                </span>
-                              </div>
                             </div>
 
                             {/* Harga Kanan */}
