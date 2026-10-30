@@ -741,14 +741,35 @@ export default function HomePage() {
                 </div>
 
                 {/* Commodity Cards List */}
-                <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-space-md" id="commodity-grid">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-space-md" id="commodity-grid">
                   {loadingCommodities ? (
                     Array.from({ length: 6 }).map((_, i) => (
                       <div
                         key={`commodity-skel-${i}`}
-                        className="bg-surface-card rounded-xl p-2.5 sm:p-space-md shadow-sm border border-border-subtle/50 flex flex-col justify-between animate-pulse"
+                        className="bg-surface-card rounded-xl p-3 sm:p-space-md shadow-xs border border-border-subtle/50 flex flex-col justify-between animate-pulse"
                       >
-                        <div>
+                        {/* Mobile Skeleton (Sleek Horizontal) */}
+                        <div className="sm:hidden flex flex-col gap-2.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-surface-subtle shrink-0" />
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-3 w-16 bg-surface-subtle rounded" />
+                              <div className="h-4 w-32 bg-surface-subtle rounded" />
+                              <div className="h-3 w-24 bg-surface-subtle rounded" />
+                            </div>
+                            <div className="w-20 space-y-1 text-right">
+                              <div className="h-4 w-16 bg-surface-subtle rounded ml-auto" />
+                              <div className="h-3 w-12 bg-surface-subtle rounded ml-auto" />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t border-border-subtle/50">
+                            <div className="h-3.5 w-32 bg-surface-subtle rounded" />
+                            <div className="h-7 w-24 bg-surface-subtle rounded-lg" />
+                          </div>
+                        </div>
+
+                        {/* Desktop Skeleton */}
+                        <div className="hidden sm:block">
                           <div className="flex items-start justify-between gap-1.5 sm:gap-space-xs mb-1.5 sm:mb-space-xs">
                             <div className="flex items-center gap-1.5 sm:gap-space-xs min-w-0">
                               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-surface-subtle shrink-0" />
@@ -774,8 +795,8 @@ export default function HomePage() {
                             <div className="h-3 sm:h-4 w-10 sm:w-14 bg-surface-subtle rounded" />
                           </div>
                           <div className="w-full h-5 sm:h-8 bg-surface-subtle/40 rounded mb-1.5 sm:mb-space-sm" />
+                          <div className="w-full h-7 sm:h-9 bg-surface-subtle rounded-lg mt-1" />
                         </div>
-                        <div className="w-full h-7 sm:h-9 bg-surface-subtle rounded-lg mt-1" />
                       </div>
                     ))
                   ) : errorCommodities ? (
@@ -807,173 +828,303 @@ export default function HomePage() {
                     filteredCommodities.map((item) => (
                       <div
                         key={item.id}
-                        className="bg-surface-card rounded-xl p-2.5 sm:p-space-md shadow-sm hover:shadow-md transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden group border border-border-subtle/40 will-change-transform"
+                        className="bg-surface-card rounded-xl p-3 sm:p-space-md shadow-xs hover:shadow-md transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden group border border-border-subtle/50 will-change-transform"
                       >
                         {item.isCritical && (
                           <div className="absolute top-0 left-0 right-0 h-1 bg-status-critical"></div>
                         )}
-                        <div>
-                          {/* Top Meta: Icon + Category Tag on Left, Status Pill on Right */}
-                          <div className="flex items-center justify-between gap-1 mb-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <div className="w-6.5 h-6.5 sm:w-8 sm:h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                                <CommodityIcon id={item.komoditas_id || item.id} className="w-4 h-4 sm:w-5 sm:h-5" />
-                              </div>
-                              <span
-                                className={`text-[10px] sm:text-label-caps uppercase tracking-wider truncate font-bold ${
-                                  item.isCritical
-                                    ? "text-status-critical"
-                                    : item.isWarning
-                                    ? "text-status-warning"
-                                    : "text-slate-500"
-                                }`}
-                              >
-                                {item.tag}
-                              </span>
-                            </div>
-                            <span
-                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9.5px] sm:text-label-caps shrink-0 font-medium ${
-                                item.isCritical
-                                  ? "bg-status-critical-bg text-status-critical border border-rose-200"
-                                  : item.isWarning
-                                  ? "bg-status-warning-bg text-status-warning border border-amber-200"
-                                  : "bg-status-normal-bg text-status-normal border border-emerald-200"
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  item.isCritical
-                                    ? "bg-status-critical"
-                                    : item.isWarning
-                                    ? "bg-status-warning"
-                                    : "bg-status-normal"
-                                }`}
-                              ></span>
-                              <span>{item.status}</span>
-                            </span>
-                          </div>
 
-                          {/* Full-width Commodity Name (Never gets truncated by status pill!) */}
-                          <h3
-                            className="font-bold text-xs sm:text-sm text-slate-900 leading-tight line-clamp-1 mb-2"
-                            title={item.name}
-                          >
-                            {item.name}
-                          </h3>
-
-                          {/* Price & Market Focus Box (Shopee-style) */}
-                          <div
-                            className={`rounded-lg p-2 sm:p-space-xs mb-1.5 sm:mb-space-sm ${
-                              item.isCritical ? "bg-rose-50/70 border border-rose-100" : "bg-surface-subtle"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1 gap-1">
-                              <span className="text-[10px] sm:text-label-caps text-slate-500 font-medium truncate">
-                                <span className="sm:hidden">Termurah</span>
-                                <span className="hidden sm:inline">{item.cheapestBadge}</span>
-                              </span>
-                              <span
-                                className={`text-[10px] sm:text-label-caps font-bold shrink-0 ${
-                                  item.isCritical ? "text-rose-600" : "text-emerald-700"
-                                }`}
-                              >
-                                {item.cheapestSub.replace("/kg", "")}
-                              </span>
+                        {/* ========================================================
+                            TAMPILAN MOBILE: Desain Bersih, Elegan, dan Terstruktur (Referensi Modern E-Commerce)
+                           ======================================================== */}
+                        <div className="sm:hidden flex flex-col gap-2.5">
+                          {/* Baris Atas: Icon (Kiri), Info Komoditas (Tengah), Harga & Hemat (Kanan) */}
+                          <div className="flex items-start justify-between gap-2.5">
+                            {/* Icon Kotak Thumbnail Modern */}
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                              <CommodityIcon id={item.komoditas_id || item.id} className="w-6 h-6" />
                             </div>
 
-                            {/* Responsive layout: mobile stacked (Price prominent, Market below), sm+ side-by-side */}
-                            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2">
-                              <div className="order-1 sm:order-2 sm:text-right">
-                                <span className="font-extrabold text-sm sm:text-metric-value text-slate-900">
-                                  {item.price}
-                                </span>
-                                <span className="text-[10px] sm:text-body-sm text-slate-500 ml-0.5">{item.unit}</span>
-                              </div>
-                              <div className="order-2 sm:order-1 min-w-0">
-                                <span className="font-semibold text-xs sm:text-body-md text-primary truncate flex items-center gap-1" title={item.marketName}>
-                                  <span className="material-symbols-outlined text-[13px] sm:text-[15px] shrink-0 text-primary">
-                                    location_on
-                                  </span>
-                                  <span className="truncate">{item.marketName.replace("Pasar ", "")}</span>
-                                </span>
-                                <p
-                                  className={`text-[9.5px] sm:text-label-caps truncate ${
-                                    item.isCritical ? "text-rose-600" : "text-slate-500"
+                            {/* Info Tengah */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span
+                                  className={`text-[9.5px] uppercase tracking-wider truncate font-bold ${
+                                    item.isCritical
+                                      ? "text-status-critical"
+                                      : item.isWarning
+                                      ? "text-status-warning"
+                                      : "text-slate-500"
                                   }`}
                                 >
-                                  {item.marketSub}
-                                </p>
+                                  {item.tag}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold shrink-0 ${
+                                    item.isCritical
+                                      ? "bg-status-critical-bg text-status-critical border border-rose-200"
+                                      : item.isWarning
+                                      ? "bg-status-warning-bg text-status-warning border border-amber-200"
+                                      : "bg-status-normal-bg text-status-normal border border-emerald-200"
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                      item.isCritical
+                                        ? "bg-status-critical"
+                                        : item.isWarning
+                                        ? "bg-status-warning"
+                                        : "bg-status-normal"
+                                    }`}
+                                  />
+                                  {item.status}
+                                </span>
                               </div>
+
+                              <h3
+                                className="font-bold text-sm text-slate-900 leading-tight truncate"
+                                title={item.name}
+                              >
+                                {item.name}
+                              </h3>
+
+                              <div className="flex items-center gap-1 text-[11px] text-primary font-medium mt-1">
+                                <span className="material-symbols-outlined text-[13px] text-primary shrink-0">
+                                  location_on
+                                </span>
+                                <span className="truncate">
+                                  Termurah: {item.marketName.replace("Pasar ", "")}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Harga Kanan */}
+                            <div className="flex flex-col items-end shrink-0 text-right">
+                              <div className="flex items-baseline gap-0.5">
+                                <span className="font-extrabold text-base text-slate-900 tabular-nums">
+                                  {item.price}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-medium">{item.unit}</span>
+                              </div>
+                              {item.cheapestSub && (
+                                <span
+                                  className={`text-[10px] font-bold mt-0.5 ${
+                                    item.isCritical ? "text-rose-600" : "text-emerald-700"
+                                  }`}
+                                >
+                                  {item.cheapestSub.replace("/kg", "")}
+                                </span>
+                              )}
                             </div>
                           </div>
 
+                          {/* Alert Fluktuasi Pasar (jika ada) */}
                           {item.hasMarketAlert && item.marketAlertNote && (
-                            <div className="mt-1 mb-1.5 px-2 py-0.5 rounded bg-amber-50 border border-amber-200/70 flex items-center gap-1.5 text-[9.5px] sm:text-[10px] text-amber-800">
-                              <span className="material-symbols-outlined text-[12px] text-amber-600 shrink-0">info</span>
+                            <div className="px-2 py-1 rounded-md bg-amber-50/90 border border-amber-200/70 flex items-center gap-1 text-[10px] text-amber-800">
+                              <span className="material-symbols-outlined text-[13px] text-amber-600 shrink-0">info</span>
                               <span className="truncate">{item.marketAlertNote}</span>
                             </div>
                           )}
 
-                          {/* City Average & Savings Badge */}
-                          <div className="flex items-center justify-between text-text-secondary text-[10px] sm:text-body-sm mb-1.5 sm:mb-space-sm pt-0.5">
-                            <span className="truncate mr-1">
-                              <span className="hidden sm:inline">Rata-rata Kota: </span>
-                              <span className="sm:hidden">Rerata: </span>
-                              <strong className="font-semibold text-text-primary">{item.cityAvg}</strong>
-                            </span>
-                            <span className="inline-flex items-center font-bold text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-1.5 py-0.5 rounded shrink-0">
-                              {item.savingBadge || item.delta}
-                            </span>
-                          </div>
-
-                          {/* Real 7-day Historical Trend & Sparkline */}
-                          <div className="mb-1.5 sm:mb-space-sm">
-                            <div className="flex items-center justify-between text-[9.5px] text-text-muted mb-0.5">
-                              <span>Tren 7 Hari Kota</span>
-                              <span className={`inline-flex items-center font-semibold text-[10px] ${item.deltaClass}`}>
-                                <span className="material-symbols-outlined text-[13px] mr-0.5">
+                          {/* Baris Bawah: Rerata & Tren (Kiri) + Tombol Keranjang (Kanan) */}
+                          <div className="flex items-center justify-between pt-2 border-t border-border-subtle/60 text-[11px]">
+                            <div className="flex items-center gap-2 text-text-secondary min-w-0 pr-2">
+                              <span className="truncate">
+                                Rerata: <strong className="font-semibold text-text-primary">{item.cityAvg}</strong>
+                              </span>
+                              <span className="text-border-subtle">•</span>
+                              <span className="inline-flex items-center gap-0.5 text-text-muted shrink-0">
+                                <span className={`material-symbols-outlined text-[13px] ${item.deltaClass}`}>
                                   {item.deltaIcon}
                                 </span>
                                 {item.trend7d || "Stabil"}
                               </span>
                             </div>
-                            <div className="w-full h-5 sm:h-7">
-                              <svg
-                                className={`w-full h-full ${item.sparkClass}`}
-                                preserveAspectRatio="none"
-                                viewBox="0 0 200 32"
-                              >
-                                <path
-                                  d={item.sparkPath}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeLinecap="round"
-                                  strokeWidth="2"
-                                ></path>
-                              </svg>
-                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAddToBasket(item)}
+                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1 shrink-0 transition-all cursor-pointer ${
+                                addedItems[item.id]
+                                  ? "bg-primary text-on-primary shadow-2xs"
+                                  : "bg-surface-subtle hover:bg-primary hover:text-on-primary text-text-primary active:scale-95"
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-sm">
+                                {addedItems[item.id] ? "check" : "add_shopping_cart"}
+                              </span>
+                              <span>{addedItems[item.id] ? "Ditambahkan" : "+ Keranjang"}</span>
+                            </button>
                           </div>
                         </div>
 
-                        {/* Button Masukkan Keranjang */}
-                        <button
-                          className={`w-full py-1.5 sm:py-2 text-xs sm:text-body-sm font-semibold rounded-lg flex items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer ${
-                            addedItems[item.id]
-                              ? "bg-primary text-on-primary"
-                              : "bg-surface-subtle hover:bg-primary hover:text-on-primary text-text-primary"
-                          }`}
-                          onClick={() => handleAddToBasket(item)}
-                        >
-                          <span className="material-symbols-outlined text-sm sm:text-body-md">
-                            {addedItems[item.id] ? "check" : "add_shopping_cart"}
-                          </span>
-                          <span className="hidden sm:inline">
-                            {addedItems[item.id] ? "Ditambahkan!" : "+ Masukkan Keranjang"}
-                          </span>
-                          <span className="sm:hidden">
-                            {addedItems[item.id] ? "Ditambahkan" : "+ Keranjang"}
-                          </span>
-                        </button>
+                        {/* ========================================================
+                            TAMPILAN DESKTOP (Layout Lengkap dengan Grafik Sparkline)
+                           ======================================================== */}
+                        <div className="hidden sm:flex sm:flex-col sm:justify-between h-full">
+                          <div>
+                            {/* Top Meta: Icon + Category Tag on Left, Status Pill on Right */}
+                            <div className="flex items-center justify-between gap-1 mb-1">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="w-6.5 h-6.5 sm:w-8 sm:h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                  <CommodityIcon id={item.komoditas_id || item.id} className="w-4 h-4 sm:w-5 sm:h-5" />
+                                </div>
+                                <span
+                                  className={`text-[10px] sm:text-label-caps uppercase tracking-wider truncate font-bold ${
+                                    item.isCritical
+                                      ? "text-status-critical"
+                                      : item.isWarning
+                                      ? "text-status-warning"
+                                      : "text-slate-500"
+                                  }`}
+                                >
+                                  {item.tag}
+                                </span>
+                              </div>
+                              <span
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9.5px] sm:text-label-caps shrink-0 font-medium ${
+                                  item.isCritical
+                                    ? "bg-status-critical-bg text-status-critical border border-rose-200"
+                                    : item.isWarning
+                                    ? "bg-status-warning-bg text-status-warning border border-amber-200"
+                                    : "bg-status-normal-bg text-status-normal border border-emerald-200"
+                                }`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    item.isCritical
+                                      ? "bg-status-critical"
+                                      : item.isWarning
+                                      ? "bg-status-warning"
+                                      : "bg-status-normal"
+                                  }`}
+                                ></span>
+                                <span>{item.status}</span>
+                              </span>
+                            </div>
+
+                            {/* Full-width Commodity Name (Never gets truncated by status pill!) */}
+                            <h3
+                              className="font-bold text-xs sm:text-sm text-slate-900 leading-tight line-clamp-1 mb-2"
+                              title={item.name}
+                            >
+                              {item.name}
+                            </h3>
+
+                            {/* Price & Market Focus Box (Shopee-style) */}
+                            <div
+                              className={`rounded-lg p-2 sm:p-space-xs mb-1.5 sm:mb-space-sm ${
+                                item.isCritical ? "bg-rose-50/70 border border-rose-100" : "bg-surface-subtle"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-1 gap-1">
+                                <span className="text-[10px] sm:text-label-caps text-slate-500 font-medium truncate">
+                                  <span className="sm:hidden">Termurah</span>
+                                  <span className="hidden sm:inline">{item.cheapestBadge}</span>
+                                </span>
+                                <span
+                                  className={`text-[10px] sm:text-label-caps font-bold shrink-0 ${
+                                    item.isCritical ? "text-rose-600" : "text-emerald-700"
+                                  }`}
+                                >
+                                  {item.cheapestSub.replace("/kg", "")}
+                                </span>
+                              </div>
+
+                              {/* Responsive layout: mobile stacked (Price prominent, Market below), sm+ side-by-side */}
+                              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-2">
+                                <div className="order-1 sm:order-2 sm:text-right">
+                                  <span className="font-extrabold text-sm sm:text-metric-value text-slate-900">
+                                    {item.price}
+                                  </span>
+                                  <span className="text-[10px] sm:text-body-sm text-slate-500 ml-0.5">{item.unit}</span>
+                                </div>
+                                <div className="order-2 sm:order-1 min-w-0">
+                                  <span className="font-semibold text-xs sm:text-body-md text-primary truncate flex items-center gap-1" title={item.marketName}>
+                                    <span className="material-symbols-outlined text-[13px] sm:text-[15px] shrink-0 text-primary">
+                                      location_on
+                                    </span>
+                                    <span className="truncate">{item.marketName.replace("Pasar ", "")}</span>
+                                  </span>
+                                  <p
+                                    className={`text-[9.5px] sm:text-label-caps truncate ${
+                                      item.isCritical ? "text-rose-600" : "text-slate-500"
+                                    }`}
+                                  >
+                                    {item.marketSub}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {item.hasMarketAlert && item.marketAlertNote && (
+                              <div className="mt-1 mb-1.5 px-2 py-0.5 rounded bg-amber-50 border border-amber-200/70 flex items-center gap-1.5 text-[9.5px] sm:text-[10px] text-amber-800">
+                                <span className="material-symbols-outlined text-[12px] text-amber-600 shrink-0">info</span>
+                                <span className="truncate">{item.marketAlertNote}</span>
+                              </div>
+                            )}
+
+                            {/* City Average & Savings Badge */}
+                            <div className="flex items-center justify-between text-text-secondary text-[10px] sm:text-body-sm mb-1.5 sm:mb-space-sm pt-0.5">
+                              <span className="truncate mr-1">
+                                <span className="hidden sm:inline">Rata-rata Kota: </span>
+                                <span className="sm:hidden">Rerata: </span>
+                                <strong className="font-semibold text-text-primary">{item.cityAvg}</strong>
+                              </span>
+                              <span className="inline-flex items-center font-bold text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-1.5 py-0.5 rounded shrink-0">
+                                {item.savingBadge || item.delta}
+                              </span>
+                            </div>
+
+                            {/* Real 7-day Historical Trend & Sparkline */}
+                            <div className="mb-1.5 sm:mb-space-sm">
+                              <div className="flex items-center justify-between text-[9.5px] text-text-muted mb-0.5">
+                                <span>Tren 7 Hari Kota</span>
+                                <span className={`inline-flex items-center font-semibold text-[10px] ${item.deltaClass}`}>
+                                  <span className="material-symbols-outlined text-[13px] mr-0.5">
+                                    {item.deltaIcon}
+                                  </span>
+                                  {item.trend7d || "Stabil"}
+                                </span>
+                              </div>
+                              <div className="w-full h-5 sm:h-7">
+                                <svg
+                                  className={`w-full h-full ${item.sparkClass}`}
+                                  preserveAspectRatio="none"
+                                  viewBox="0 0 200 32"
+                                >
+                                  <path
+                                    d={item.sparkPath}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeWidth="2"
+                                  ></path>
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Button Masukkan Keranjang */}
+                          <button
+                            className={`w-full py-1.5 sm:py-2 text-xs sm:text-body-sm font-semibold rounded-lg flex items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer ${
+                              addedItems[item.id]
+                                ? "bg-primary text-on-primary"
+                                : "bg-surface-subtle hover:bg-primary hover:text-on-primary text-text-primary"
+                            }`}
+                            onClick={() => handleAddToBasket(item)}
+                          >
+                            <span className="material-symbols-outlined text-sm sm:text-body-md">
+                              {addedItems[item.id] ? "check" : "add_shopping_cart"}
+                            </span>
+                            <span className="hidden sm:inline">
+                              {addedItems[item.id] ? "Ditambahkan!" : "+ Masukkan Keranjang"}
+                            </span>
+                            <span className="sm:hidden">
+                              {addedItems[item.id] ? "Ditambahkan" : "+ Keranjang"}
+                            </span>
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}

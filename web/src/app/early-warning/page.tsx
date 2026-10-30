@@ -644,10 +644,6 @@ export default function EarlyWarningPage() {
                       : "Menunggu pemindaian anomali"}
                   </span>
                 </div>
-                <div className="flex items-center gap-space-xs text-status-normal font-label-caps text-label-caps font-semibold">
-                  <span className="material-symbols-outlined text-body-sm">check_circle</span>
-                  <span>Evaluasi model kota: Rata-rata WAPE 5,36% (H+7)</span>
-                </div>
               </div>
                 </>
               )}
@@ -1110,32 +1106,28 @@ export default function EarlyWarningPage() {
                           {hasSpread ? (
                             <div className="grid grid-cols-2 gap-2">
                               {/* Termurah */}
-                              <div className="bg-emerald-50/90 border border-emerald-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
-                                <div className="min-w-0">
-                                  <span className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-0.5 font-label-caps">
-                                    <span className="material-symbols-outlined text-[13px] text-emerald-700">arrow_downward</span> Termurah
-                                  </span>
-                                  <span className="text-[11px] text-emerald-950 font-medium truncate block">
-                                    {minMarkets.map((m) => m.shortName).join(", ")}
-                                  </span>
-                                </div>
-                                <span className="text-xs sm:text-sm font-extrabold text-emerald-700 shrink-0 ml-1">
+                              <div className="bg-emerald-50/90 border border-emerald-200/90 p-2 sm:px-2.5 sm:py-2 rounded-lg flex flex-col justify-between">
+                                <span className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-emerald-700">arrow_downward</span> Termurah
+                                </span>
+                                <span className="text-xs sm:text-sm font-extrabold text-emerald-700 tabular-nums my-0.5">
                                   Rp {minPrice.toLocaleString("id-ID")}
+                                </span>
+                                <span className="text-[11px] text-emerald-950 font-medium truncate block" title={minMarkets.map((m) => m.shortName).join(", ")}>
+                                  {minMarkets.map((m) => m.shortName).join(", ")}
                                 </span>
                               </div>
 
                               {/* Tertinggi */}
-                              <div className="bg-rose-50/90 border border-rose-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
-                                <div className="min-w-0">
-                                  <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-0.5 font-label-caps">
-                                    <span className="material-symbols-outlined text-[13px] text-rose-700">arrow_upward</span> Tertinggi
-                                  </span>
-                                  <span className="text-[11px] text-rose-950 font-medium truncate block">
-                                    {maxMarkets.map((m) => m.shortName).join(", ")}
-                                  </span>
-                                </div>
-                                <span className="text-xs sm:text-sm font-extrabold text-rose-700 shrink-0 ml-1">
+                              <div className="bg-rose-50/90 border border-rose-200/90 p-2 sm:px-2.5 sm:py-2 rounded-lg flex flex-col justify-between">
+                                <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-rose-700">arrow_upward</span> Tertinggi
+                                </span>
+                                <span className="text-xs sm:text-sm font-extrabold text-rose-700 tabular-nums my-0.5">
                                   Rp {maxPrice.toLocaleString("id-ID")}
+                                </span>
+                                <span className="text-[11px] text-rose-950 font-medium truncate block" title={maxMarkets.map((m) => m.shortName).join(", ")}>
+                                  {maxMarkets.map((m) => m.shortName).join(", ")}
                                 </span>
                               </div>
                             </div>

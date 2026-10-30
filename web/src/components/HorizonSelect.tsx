@@ -76,7 +76,7 @@ export default function HorizonSelect({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className="h-11 px-3 flex items-center justify-between gap-2.5 bg-white hover:bg-surface-subtle text-text-primary text-xs font-semibold rounded-xl border border-border-subtle hover:border-amber-500/40 shadow-xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/20 select-none"
+        className="w-full h-11 px-3 flex items-center justify-between gap-2.5 bg-white hover:bg-surface-subtle text-text-primary text-xs font-semibold rounded-xl border border-border-subtle hover:border-amber-500/40 shadow-xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/20 select-none"
         title="Pilih horizon proyeksi ke depan"
       >
         <div className="flex items-center gap-2 min-w-0">

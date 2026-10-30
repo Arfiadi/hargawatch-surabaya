@@ -633,18 +633,18 @@ export default function ForecastingPage() {
                   </div>
 
                   {/* Legenda Simbol di Bawah Judul */}
-                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[11px] sm:text-xs font-medium">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-0.5">
+                    <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[10.5px] sm:text-xs font-medium">
                       <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
                       <span>Rata-rata Pasar Harian</span>
                     </div>
 
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-medium">
+                    <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[10.5px] sm:text-xs font-medium">
                       <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
                       <span>Proyeksi Model</span>
                     </div>
 
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50/60 border border-amber-200/60 text-amber-900/80 text-[11px] sm:text-xs font-medium">
+                    <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-50/60 border border-amber-200/60 text-amber-900/80 text-[10.5px] sm:text-xs font-medium">
                       <span className="w-2.5 h-1.5 rounded-xs bg-amber-300/50 border border-amber-400 shrink-0"></span>
                       <span>
                         {chartMetrics?.hasSpread ? "Rentang Toleransi" : "Varians Stabil"}
@@ -652,7 +652,7 @@ export default function ForecastingPage() {
                     </div>
 
                     {chartMetrics?.benchmarkLabel && (
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-800 text-[11px] sm:text-xs font-semibold">
+                      <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-800 text-[10.5px] sm:text-xs font-semibold">
                         <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
                         <span>{chartMetrics.benchmarkLabel}</span>
                       </div>
@@ -660,8 +660,8 @@ export default function ForecastingPage() {
                   </div>
                 </div>
 
-                {/* Controls Berdampingan: Dropdown Komoditas + Dropdown Riwayat Waktu */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 self-start lg:self-center shrink-0 w-full sm:w-auto">
+                {/* Controls Berdampingan: Dropdown Komoditas + Dropdown Riwayat Waktu (Grid 2-Kolom di Mobile) */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto shrink-0">
                   {/* Dropdown Komoditas */}
                   <div className="w-full sm:w-60 md:w-64">
                     <CommoditySearchSelect
@@ -678,19 +678,23 @@ export default function ForecastingPage() {
                     />
                   </div>
 
-                  {/* Dropdown Riwayat Bulan/Hari (Custom Design System Popover) */}
-                  <TimeframeSelect
-                    value={timeframe}
-                    onChange={setTimeframe}
-                    className="shrink-0"
-                  />
+                  {/* Dropdown Riwayat & Horizon: Grid 2-Kolom Berdampingan di Mobile agar Tidak Bertumpuk */}
+                  <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+                    <TimeframeSelect
+                      value={timeframe}
+                      onChange={setTimeframe}
+                      className="w-full sm:w-auto"
+                      panelClassName="w-56 left-0 sm:left-auto sm:right-0"
+                    />
 
-                  {/* Dropdown Horizon Proyeksi (7 Hari / 14 Hari) */}
-                  <HorizonSelect
-                    value={horizon}
-                    onChange={setHorizon}
-                    className="shrink-0"
-                  />
+                    {/* Dropdown Horizon Proyeksi (7 Hari / 14 Hari) */}
+                    <HorizonSelect
+                      value={horizon}
+                      onChange={setHorizon}
+                      className="w-full sm:w-auto"
+                      panelClassName="w-56 right-0 left-auto"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1077,17 +1081,17 @@ export default function ForecastingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
               {/* Card 1: Bagi Masyarakat & Konsumen */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                       <span className="material-symbols-outlined text-body-lg">shopping_basket</span>
                     </span>
-                    <span className="font-headline-sm text-body-md text-text-primary">
+                    <span className="font-headline-sm text-xs sm:text-body-md text-text-primary font-bold truncate">
                       Panduan bagi Masyarakat &amp; UMKM
                     </span>
                   </div>
                   <span
-                    className={`px-2 py-0.5 rounded-full font-label-caps text-label-caps font-semibold ${
+                    className={`px-2.5 py-0.5 rounded-full font-label-caps text-[10px] sm:text-label-caps font-semibold whitespace-nowrap shrink-0 ${
                       (targetHorizonRow?.deltaPct || 0) >= 5
                         ? "bg-status-warning-bg text-status-warning"
                         : "bg-status-normal-bg text-status-normal"
@@ -1123,17 +1127,17 @@ export default function ForecastingPage() {
 
               {/* Card 2: Bagi Pemerintah Kota Surabaya & TPID */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-lg bg-status-warning-bg text-status-warning flex items-center justify-center font-bold">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-8 h-8 rounded-lg bg-status-warning-bg text-status-warning flex items-center justify-center font-bold shrink-0">
                       <span className="material-symbols-outlined text-body-lg">account_balance</span>
                     </span>
-                    <span className="font-headline-sm text-body-md text-text-primary">
+                    <span className="font-headline-sm text-xs sm:text-body-md text-text-primary font-bold truncate">
                       Panduan bagi Pemkot Surabaya &amp; TPID
                     </span>
                   </div>
                   <span
-                    className={`px-2 py-0.5 rounded-full font-label-caps text-label-caps font-semibold ${
+                    className={`px-2.5 py-0.5 rounded-full font-label-caps text-[10px] sm:text-label-caps font-semibold whitespace-nowrap shrink-0 ${
                       isAboveBenchmark
                         ? "bg-status-critical-bg text-status-critical"
                         : "bg-status-normal-bg text-status-normal"
