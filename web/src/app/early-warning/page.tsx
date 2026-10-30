@@ -407,7 +407,7 @@ export default function EarlyWarningPage() {
                           : "cloud_off"}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-space-2xs">
+                    <div className="my-auto py-1 flex flex-col gap-space-2xs">
                       <div className="flex flex-wrap items-center gap-space-xs">
                         <span
                           className={`inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full text-on-primary font-label-caps text-label-caps font-bold tracking-wide ${
@@ -488,7 +488,7 @@ export default function EarlyWarningPage() {
                     <span className="material-symbols-outlined text-body-lg">show_chart</span>
                   </span>
                 </div>
-                <div className="flex flex-col gap-space-2xs">
+                <div className="my-auto py-1 flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
                     <span className="font-metric-display text-metric-display text-on-surface">
                       {ewsStats?.stabilityPercentage !== undefined ? `${ewsStats.stabilityPercentage.toFixed(1)}%` : "—"}
@@ -551,7 +551,7 @@ export default function EarlyWarningPage() {
                     </span>
                   </span>
                 </div>
-                <div className="flex flex-col gap-space-2xs">
+                <div className="my-auto py-1 flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
                     <span
                       className={`font-metric-display text-metric-display ${
@@ -621,7 +621,7 @@ export default function EarlyWarningPage() {
                     <span className="material-symbols-outlined text-body-lg">radar</span>
                   </span>
                 </div>
-                <div className="flex flex-col gap-space-2xs">
+                <div className="my-auto py-1 flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
                     <span
                       className={`font-metric-display text-metric-display ${

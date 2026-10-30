@@ -612,7 +612,7 @@ export default function ForecastingPage() {
                     </span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-muted mt-1 block truncate">
-                    {modelMeta.modelName} • WAPE {modelMeta.wape.toFixed(2)}%
+                    WAPE {modelMeta.wape.toFixed(2)}%
                   </span>
                 </div>
               </div>
@@ -632,29 +632,29 @@ export default function ForecastingPage() {
                     </p>
                   </div>
 
-                  {/* Legenda Simbol di Bawah Judul */}
-                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-0.5">
-                    <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[10.5px] sm:text-xs font-medium">
+                  {/* Legenda Simbol di Bawah Judul (Panjang Sama di Mobile: Grid 2-Kolom) */}
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2 pt-0.5">
+                    <div className="inline-flex items-center justify-center sm:justify-start gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[10.5px] sm:text-xs font-medium w-full sm:w-auto">
                       <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
-                      <span>Rata-rata Pasar Harian</span>
+                      <span className="truncate">Rata-rata Pasar</span>
                     </div>
 
-                    <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[10.5px] sm:text-xs font-medium">
+                    <div className="inline-flex items-center justify-center sm:justify-start gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[10.5px] sm:text-xs font-medium w-full sm:w-auto">
                       <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-                      <span>Proyeksi Model</span>
+                      <span className="truncate">Proyeksi Model</span>
                     </div>
 
-                    <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-50/60 border border-amber-200/60 text-amber-900/80 text-[10.5px] sm:text-xs font-medium">
+                    <div className="inline-flex items-center justify-center sm:justify-start gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-amber-50/60 border border-amber-200/60 text-amber-900/80 text-[10.5px] sm:text-xs font-medium w-full sm:w-auto">
                       <span className="w-2.5 h-1.5 rounded-xs bg-amber-300/50 border border-amber-400 shrink-0"></span>
-                      <span>
+                      <span className="truncate">
                         {chartMetrics?.hasSpread ? "Rentang Toleransi" : "Varians Stabil"}
                       </span>
                     </div>
 
                     {chartMetrics?.benchmarkLabel && (
-                      <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-800 text-[10.5px] sm:text-xs font-semibold">
+                      <div className="inline-flex items-center justify-center sm:justify-start gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-800 text-[10.5px] sm:text-xs font-semibold w-full sm:w-auto">
                         <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
-                        <span>{chartMetrics.benchmarkLabel}</span>
+                        <span className="truncate">{chartMetrics.benchmarkLabel}</span>
                       </div>
                     )}
                   </div>
@@ -1183,7 +1183,7 @@ export default function ForecastingPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
                 <div>
                   <h2 className="font-headline-sm text-headline-sm text-text-primary">
-                    Rincian Proyeksi Harian (H+1 s/d H+{actualHorizon})
+                    Rincian Proyeksi Harian
                   </h2>
                   <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
                     Taksiran harga rata-rata, rentang toleransi, dan catatan pemantauan harian.

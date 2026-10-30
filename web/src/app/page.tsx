@@ -1439,25 +1439,29 @@ export default function HomePage() {
                         /* Multi-Market / Split-Basket View */
                         <div className="space-y-2">
                           <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent border-2 border-teal-500/80 shadow-xs">
-                            <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <div>
-                                <span className="bg-teal-700 text-white text-[9.5px] sm:text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block shadow-2xs">
-                                  KERANJANG OPTIMAL MULTI-PASAR
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="bg-teal-700 text-white text-[9.5px] sm:text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block shadow-2xs shrink-0">
+                                  KERANJANG OPTIMAL
                                 </span>
-                                <span className="block text-[11px] text-slate-600 mt-1">
-                                  Beli tiap komoditas di pasar termurahnya masing-masing:
+                                <span className="text-teal-950 font-bold text-xs">
+                                  Multi-Pasar (Super Hemat)
                                 </span>
                               </div>
-                              <div className="text-right">
-                                <span className="font-extrabold text-base sm:text-lg text-teal-800 tracking-tight block">
-                                  Rp {basketSim.splitBasket.totalBelanja.toLocaleString("id-ID")}
+                              <span className="font-extrabold text-base sm:text-lg text-teal-800 tracking-tight shrink-0 whitespace-nowrap">
+                                Rp {basketSim.splitBasket.totalBelanja.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs gap-2 mb-1.5">
+                              <span className="text-slate-500 text-[10.5px] sm:text-[11px] truncate">
+                                Beli tiap komoditas di pasar termurahnya masing-masing:
+                              </span>
+                              {basketSim.splitBasket.additionalSaving > 0 && (
+                                <span className="text-[10.5px] sm:text-[11px] font-bold text-teal-800 bg-teal-100/90 px-2 py-0.5 rounded-md border border-teal-200 shrink-0 whitespace-nowrap">
+                                  +Hemat Rp {basketSim.splitBasket.additionalSaving.toLocaleString("id-ID")}
                                 </span>
-                                {basketSim.splitBasket.additionalSaving > 0 && (
-                                  <span className="text-[10px] font-bold text-teal-800 bg-teal-100 px-1.5 py-0.5 rounded-md">
-                                    +Hemat Rp {basketSim.splitBasket.additionalSaving.toLocaleString("id-ID")}
-                                  </span>
-                                )}
-                              </div>
+                              )}
                             </div>
 
                             <div className="mt-2.5 pt-2 border-t border-teal-200/60 space-y-1.5">
