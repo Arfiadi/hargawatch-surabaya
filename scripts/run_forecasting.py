@@ -168,77 +168,91 @@ def train_and_forecast_commodity(
     all_forecasts = []
     origin_dt = pd.to_datetime(origin_date)
 
-    # Pre-compute H=7 anchor forecast if champion ML model is available
-    preds_h7 = None
-    if not is_naive_champion and champ_model_h7 is not None:
-        inf_slice_h7 = slice_origin.copy()
-        target_h7_dt = origin_dt + pd.Timedelta(days=7)
-        kal_target_7 = df_kal[df_kal["tanggal"] == target_h7_dt]
-        if kal_target_7.empty:
-            inf_slice_h7["target_bulan"] = target_h7_dt.month
-            inf_slice_h7["target_is_weekend"] = int(target_h7_dt.weekday() >= 5)
-            inf_slice_h7["target_is_libur_nasional"] = 0
-            inf_slice_h7["target_is_ramadan"] = 0
-            inf_slice_h7["target_is_pra_ramadan"] = 0
-        else:
-            inf_slice_h7["target_bulan"] = kal_target_7["bulan"].iloc[0]
-            inf_slice_h7["target_is_weekend"] = kal_target_7["is_weekend"].iloc[0]
-            inf_slice_h7["target_is_libur_nasional"] = kal_target_7["is_libur_nasional"].iloc[0]
-            inf_slice_h7["target_is_ramadan"] = kal_target_7["is_ramadan"].iloc[0]
-            inf_slice_h7["target_is_pra_ramadan"] = kal_target_7["is_pra_ramadan"].iloc[0]
-
-        inf_slice_h7["target_hari_ke_idulfitri"] = calculate_days_to_idulfitri(pd.Series([target_h7_dt])).iloc[0]
-
-        # Defensive feature column alignment: ensure all expected features exist
-        expected_cols = getattr(champ_model_h7, "feature_cols", champ_features or base_feature_cols)
-        for col in expected_cols:
-            if col not in inf_slice_h7.columns:
-                inf_slice_h7[col] = 0
-
-        try:
-            preds_h7 = champ_model_h7.predict(inf_slice_h7)
-        except Exception as e:
-            print(f"  [WARN] Inference error with champion model for {commodity_name}: {e}. Falling back to Naive.")
-            preds_h7 = None
+    # Dynamic multi-step rolling state per market
+    state_df = slice_origin.copy()
 
     for h in range(1, horizon_days + 1):
         target_date = origin_dt + pd.Timedelta(days=int(h))
 
-        if is_naive_champion or preds_h7 is None:
-            # Naive Last Value Persistence baseline with 80% CI based on rolling std
+        # 1. Update calendar features dynamically for target_date
+        kal_target = df_kal[df_kal["tanggal"] == target_date]
+        if kal_target.empty:
+            state_df["target_bulan"] = target_date.month
+            state_df["target_is_weekend"] = int(target_date.weekday() >= 5)
+            state_df["target_is_libur_nasional"] = 0
+            state_df["target_is_ramadan"] = 0
+            state_df["target_is_pra_ramadan"] = 0
+        else:
+            state_df["target_bulan"] = kal_target["bulan"].iloc[0]
+            state_df["target_is_weekend"] = kal_target["is_weekend"].iloc[0]
+            state_df["target_is_libur_nasional"] = kal_target["is_libur_nasional"].iloc[0]
+            state_df["target_is_ramadan"] = kal_target["is_ramadan"].iloc[0]
+            state_df["target_is_pra_ramadan"] = kal_target["is_pra_ramadan"].iloc[0]
+
+        state_df["target_hari_ke_idulfitri"] = calculate_days_to_idulfitri(pd.Series([target_date])).iloc[0]
+
+        if is_naive_champion or champ_model_h7 is None:
+            # Naive Last Value Persistence baseline with square-root diffusion uncertainty cone
             p_curr = slice_origin["price_current"].values
             std_7d = slice_origin["rolling_std_7d"].fillna(slice_origin["price_current"] * 0.02).values
+            diffusion_scale = np.sqrt(h / 7.0)
             p50 = np.round(p_curr).astype(int)
-            p10 = np.maximum(0, np.round(p_curr - 1.28 * std_7d)).astype(int)
-            p90 = np.round(p_curr + 1.28 * std_7d).astype(int)
+            p10 = np.maximum(0, np.round(p_curr - 1.28 * std_7d * diffusion_scale)).astype(int)
+            p90 = np.round(p_curr + 1.28 * std_7d * diffusion_scale).astype(int)
             preds = {
                 "harga_prediksi": p50,
                 "batas_bawah": p10,
                 "batas_atas": p90
             }
         else:
-            # Multi-horizon trajectory projection via champion H=7 anchor & Brownian cone of uncertainty
-            p_curr = slice_origin["price_current"].values
-            p50_7 = preds_h7["harga_prediksi"]
-            p10_7 = preds_h7["batas_bawah"]
-            p90_7 = preds_h7["batas_atas"]
+            # Dynamic Machine Learning Inference (Step-by-Step without linear heuristic)
+            expected_cols = getattr(champ_model_h7, "feature_cols", champ_features or base_feature_cols)
+            for col in expected_cols:
+                if col not in state_df.columns:
+                    state_df[col] = 0.0
 
-            ratio = h / 7.0
-            sqrt_ratio = np.sqrt(ratio)
+            try:
+                out = champ_model_h7.predict(state_df)
+                raw_pred = np.asarray(out["harga_prediksi"], dtype=float)
+                raw_low = np.asarray(out.get("batas_bawah", raw_pred), dtype=float)
+                raw_high = np.asarray(out.get("batas_atas", raw_pred), dtype=float)
 
-            p50_h = np.round(p_curr + ratio * (p50_7 - p_curr)).astype(int)
-            p10_h = np.maximum(0, np.round(p50_h - sqrt_ratio * (p50_7 - p10_7))).astype(int)
-            p90_h = np.round(p50_h + sqrt_ratio * (p90_7 - p50_7)).astype(int)
+                # Calibrated diffusion interval: expands dynamically with horizon to prevent interval collapse
+                base_spread = np.maximum((raw_high - raw_low) / 2.0, raw_pred * 0.03)
+                diffusion_factor = np.sqrt(h / 7.0)
+                calibrated_spread = base_spread * diffusion_factor
 
-            # Monotonic non-crossing guardrail
-            p10_h = np.minimum(p10_h, p50_h)
-            p90_h = np.maximum(p90_h, p50_h)
+                p50 = np.round(raw_pred).astype(int)
+                p10 = np.maximum(0, np.round(raw_pred - calibrated_spread)).astype(int)
+                p90 = np.round(raw_pred + calibrated_spread).astype(int)
 
-            preds = {
-                "harga_prediksi": p50_h,
-                "batas_bawah": p10_h,
-                "batas_atas": p90_h
-            }
+                # Monotonic non-crossing guardrail: 0 <= p10 <= p50 <= p90
+                p10 = np.minimum(p10, p50)
+                p90 = np.maximum(p90, p50)
+
+                preds = {
+                    "harga_prediksi": p50,
+                    "batas_bawah": p10,
+                    "batas_atas": p90
+                }
+
+                # Dynamic state roll for step h+1
+                if "price_lag_2" in state_df.columns and "price_lag_3" in state_df.columns:
+                    state_df["price_lag_3"] = state_df["price_lag_2"]
+                if "price_lag_1" in state_df.columns and "price_lag_2" in state_df.columns:
+                    state_df["price_lag_2"] = state_df["price_lag_1"]
+                if "price_current" in state_df.columns and "price_lag_1" in state_df.columns:
+                    state_df["price_lag_1"] = state_df["price_current"]
+                if "price_current" in state_df.columns:
+                    state_df["price_current"] = raw_pred
+                if "rolling_mean_7d" in state_df.columns:
+                    state_df["rolling_mean_7d"] = 0.85 * state_df["rolling_mean_7d"] + 0.15 * raw_pred
+
+            except Exception as e:
+                print(f"  [WARN] Dynamic inference error at step h={h} for {commodity_name}: {e}. Fallback to persistence.")
+                p_curr = slice_origin["price_current"].values
+                p50 = np.round(p_curr).astype(int)
+                preds = {"harga_prediksi": p50, "batas_bawah": p50, "batas_atas": p50}
 
         step_df = pd.DataFrame({
             "tanggal": target_date.strftime("%Y-%m-%d"),
