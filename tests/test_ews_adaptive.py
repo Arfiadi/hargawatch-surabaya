@@ -6,9 +6,7 @@ Validates:
 3. Cluster-adaptive trend thresholds (Beras 4% vs Telur 8% vs Cabai 15%).
 """
 
-import numpy as np
 import pandas as pd
-import pytest
 
 from src.safety.early_warning import compute_early_warning_scores
 

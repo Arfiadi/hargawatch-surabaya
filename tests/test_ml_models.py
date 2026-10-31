@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from src.models.models import NaiveLastValueForecaster, NaiveSMAForecaster, LightGBMForecaster
 
@@ -25,16 +24,16 @@ def test_baseline_forecasters():
 
 def test_lightgbm_quantile_monotonicity():
     """Memastikan prediksi kuantil mematuhi relasi p10 <= p50 <= p90."""
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     n = 100
     X = pd.DataFrame({
-        "pasar_id": np.random.choice([1, 2, 3], size=n),
-        "price_lag_1": np.random.uniform(20000, 40000, size=n),
-        "price_lag_7": np.random.uniform(20000, 40000, size=n),
-        "rolling_mean_7d": np.random.uniform(20000, 40000, size=n),
+        "pasar_id": rng.choice([1, 2, 3], size=n),
+        "price_lag_1": rng.uniform(20000, 40000, size=n),
+        "price_lag_7": rng.uniform(20000, 40000, size=n),
+        "rolling_mean_7d": rng.uniform(20000, 40000, size=n),
     })
     # Target sintetik
-    y = X["price_lag_1"] * 1.02 + np.random.normal(0, 500, size=n)
+    y = X["price_lag_1"] * 1.02 + rng.normal(0, 500, size=n)
     
     model = LightGBMForecaster(
         feature_cols=["price_lag_1", "price_lag_7", "rolling_mean_7d"],

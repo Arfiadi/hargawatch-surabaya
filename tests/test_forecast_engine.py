@@ -13,9 +13,9 @@ import pandas as pd
 import pytest
 
 from src.models.models import RidgeForecaster
-from src.models.backtest import resolve_commodity, run_walk_forward_backtest
+from src.models.backtest import resolve_commodity
 from src.models.forecast_engine import run_experiment, ForecastEngine
-from src.safety.early_warning import generate_ews_summary_dataframe, evaluate_ews_performance
+from src.safety.early_warning import generate_ews_summary_dataframe
 
 
 def test_resolve_commodity():
@@ -46,15 +46,15 @@ def test_resolve_commodity():
 
 
 def test_ridge_forecaster():
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     n = 60
     X = pd.DataFrame({
-        "pasar_id": np.random.choice([1, 2, 3], size=n),
-        "price_current": np.random.uniform(25000, 35000, size=n),
-        "price_lag_1": np.random.uniform(25000, 35000, size=n),
-        "price_lag_7": np.random.uniform(25000, 35000, size=n)
+        "pasar_id": rng.choice([1, 2, 3], size=n),
+        "price_current": rng.uniform(25000, 35000, size=n),
+        "price_lag_1": rng.uniform(25000, 35000, size=n),
+        "price_lag_7": rng.uniform(25000, 35000, size=n)
     })
-    y = X["price_current"] * 1.01 + np.random.normal(0, 300, size=n)
+    y = X["price_current"] * 1.01 + rng.normal(0, 300, size=n)
 
     forecaster = RidgeForecaster(
         feature_cols=["pasar_id", "price_current", "price_lag_1", "price_lag_7"],
@@ -117,6 +117,8 @@ def test_generate_ews_summary_dataframe():
         assert col in df_empty_ews.columns
 
 
+@pytest.mark.requires_data
+@pytest.mark.slow
 def test_run_experiment_structure_and_ablation():
     """Runs a fast 1-window backtest experiment to test structure and feature toggles."""
     df_sum, df_pred = run_experiment(
@@ -140,12 +142,16 @@ def test_run_experiment_structure_and_ablation():
         assert col in df_pred.columns
 
 
+@pytest.mark.requires_data
+@pytest.mark.slow
 def test_invalid_model_type_raises_error():
     """Ensures an informative ValueError is raised when unsupported model_type is given."""
     with pytest.raises(ValueError, match="Unsupported model_type"):
         run_experiment("Cabai Rawit Merah", model_type="unsupported_quantum_model", verbose=False)
 
 
+@pytest.mark.requires_data
+@pytest.mark.slow
 def test_forecast_engine_ablation_study():
     """Verifies ForecastEngine OOP class and run_ablation_study logic."""
     engine = ForecastEngine(
@@ -162,30 +168,8 @@ def test_forecast_engine_ablation_study():
     assert "WAPE (%)" in df_ablation.columns
 
 
-def test_evaluate_ews_performance():
-    df_preds = pd.DataFrame({
-        "tanggal": ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"],
-        "pasar_id": [1, 1, 1, 1],
-        "komoditas_id": [50, 50, 50, 50],
-        "harga_aktual": [30000, 36000, 31000, 38000],
-        "price_current": [30000, 30000, 30000, 30000],
-        "harga_prediksi": [31000, 37000, 31500, 37500],
-        "price_lag_7": [30000, 30000, 30000, 30000],
-        "status_warning": ["NORMAL", "TINGGI", "NORMAL", "TINGGI"]
-    })
-    scorecard = evaluate_ews_performance(df_preds, spike_threshold_pct=10.0, alarm_level="TINGGI")
-    assert not scorecard.empty
-    assert "Metrik" in scorecard.columns
-    assert "Nilai" in scorecard.columns
-    assert "Target SOP" in scorecard.columns
-
-    recall_row = scorecard[scorecard["Metrik"].str.contains("Recall")].iloc[0]
-    assert recall_row["Nilai"] == "100.0%"
-
-    far_row = scorecard[scorecard["Metrik"].str.contains("False Alarm")].iloc[0]
-    assert far_row["Nilai"] == "0.0%"
-
-
+@pytest.mark.requires_data
+@pytest.mark.slow
 def test_sanity_model_alias():
     """Tests the new 'sanity' macro alias runs both Naive Last and Naive SMA."""
     df_sum, df_pred = run_experiment(
@@ -203,10 +187,31 @@ def test_sanity_model_alias():
     assert any("SMA" in m for m in models_evaluated)
 
 
+class _FakeWandbRun:
+    """Minimal stand-in for ``wandb.Run`` so the logging contract can be asserted."""
+
+    def __init__(self):
+        self.logs = []
+        self.summary = {}
+        self.finished = False
+
+    def log(self, payload):
+        self.logs.append(payload)
+
+    def finish(self):
+        self.finished = True
+
+
 def test_forecast_engine_log_notebook_experiment(monkeypatch):
-    """Tests ForecastEngine.log_notebook_experiment runs without error in disabled mode."""
-    monkeypatch.setenv("WANDB_MODE", "disabled")
-    monkeypatch.setenv("WANDB_API_KEY", "")
+    """Memastikan tabel dan metrik benar-benar dikirim ke W&B (bukan sekadar tidak crash)."""
+    wandb = pytest.importorskip("wandb")
+    if not hasattr(wandb, "Table"):
+        monkeypatch.setattr(wandb, "Table", lambda dataframe=None: dataframe, raising=False)
+    fake_run = _FakeWandbRun()
+    monkeypatch.setattr(
+        "src.models.forecast_engine._init_wandb_session",
+        lambda **kwargs: (fake_run, True),
+    )
 
     engine = ForecastEngine(
         commodity_name="Cabe Rawit Merah",
@@ -255,7 +260,29 @@ def test_forecast_engine_log_notebook_experiment(monkeypatch):
         run_name="Test-Notebook-Run",
         tags=["test"]
     )
-    # Even if offline, run should complete cleanly
-    assert run is not None or True
+
+    assert run is fake_run
+    assert fake_run.finished is True
+    assert fake_run.summary["champion_model"] == "LightGBM p50"
+    assert fake_run.summary["champion_wape"] == 13.5
+    assert fake_run.summary["ews_recall_pct"] == 95.0
+    assert fake_run.summary["ews_far_pct"] == 10.0
+    assert len(fake_run.logs) >= 5
+
+
+def test_forecast_engine_log_notebook_experiment_returns_none_when_disabled(monkeypatch):
+    """Mode tanpa W&B harus mengembalikan None secara eksplisit."""
+    monkeypatch.setattr(
+        "src.models.forecast_engine._init_wandb_session",
+        lambda **kwargs: (None, False),
+    )
+    engine = ForecastEngine(
+        commodity_name="Cabe Rawit Merah",
+        horizon=7,
+        test_start_date="2026-02-01",
+        window_step_days=30
+    )
+
+    assert engine.log_notebook_experiment(run_name="disabled") is None
 
 

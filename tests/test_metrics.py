@@ -44,9 +44,10 @@ def test_core_evaluation_metrics():
     rmse = compute_rmse(y_true, y_pred)
     assert np.isclose(rmse, 19.15, atol=0.01)
 
-    # sMAPE
+    # sMAPE = mean(|e| / ((|y_true| + |y_pred|)/2)) * 100
+    # -> (10/105 + 10/195 + 30/315) / 3 * 100 = 8.06%
     smape = compute_smape(y_true, y_pred)
-    assert smape > 0
+    assert np.isclose(smape, 8.06, atol=0.01)
 
 
 def test_prediction_interval_coverage_probability():
@@ -152,11 +153,14 @@ def test_metrics_empty_and_edge_inputs():
     assert compute_picp([], [], []) == 0.0
     assert compute_directional_accuracy([], []) == 0.0
 
-    # Optional origin defaulting
+    # Optional origin defaulting: lag-1 of y_true is used as origin.
+    # Obs 0: 100 -> 100 (FLAT) vs predicted 105 (UP)  -> miss
+    # Obs 1: 100 -> 120 (UP)   vs predicted 125 (UP)  -> hit
+    # Obs 2: 120 -> 110 (DOWN) vs predicted 108 (DOWN) -> hit
     y_true = np.array([100.0, 120.0, 110.0])
     y_pred = np.array([105.0, 125.0, 108.0])
     da = compute_directional_accuracy(y_true, y_pred)
-    assert 0.0 <= da <= 100.0
+    assert da == 66.67
 
     dir_err = analyze_directional_errors(y_true, y_pred)
     assert dir_err["total_samples"] == 3

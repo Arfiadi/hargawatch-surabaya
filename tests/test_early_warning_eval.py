@@ -1,17 +1,12 @@
 """Unit tests untuk evaluasi metrik kinerja EWS (Recall, FAR, Lead Time) dan Alert Generator."""
 
-import pytest
 import pandas as pd
-import numpy as np
 
 from src.safety.early_warning import (
     compute_early_warning_scores,
     evaluate_ews_performance,
 )
-from src.safety.alert_generator import (
-    generate_telegram_markdown_alert,
-    format_pilar_pemicu,
-)
+from src.safety.alert_generator import generate_telegram_markdown_alert
 
 
 def test_evaluate_ews_performance_metrics():
@@ -57,6 +52,32 @@ def test_evaluate_ews_performance_empty():
     scorecard = evaluate_ews_performance(df_empty)
     assert scorecard.empty
     assert list(scorecard.columns) == ["Metrik", "Nilai", "Target SOP", "Status"]
+
+
+def test_evaluate_ews_performance_without_price_current_and_list_alarm():
+    """Menguji fallback pct_change saat price_current tidak ada dan alarm_level berupa list."""
+    df_ews = pd.DataFrame({
+        "tanggal": ["2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04"],
+        "pasar_id": [1, 1, 1, 1],
+        "komoditas_id": [50, 50, 50, 50],
+        "harga_aktual": [30000.0, 36000.0, 37000.0, 38000.0],
+        "status_warning": ["NORMAL", "TINGGI", "WASPADA", "NORMAL"],
+    })
+
+    scorecard = evaluate_ews_performance(
+        df_ews,
+        spike_threshold_pct=10.0,
+        alarm_level=["TINGGI", "WASPADA"],
+        horizon_days=7,
+    )
+    metrics_dict = dict(zip(scorecard["Metrik"], scorecard["Nilai"]))
+
+    # Krisis hanya pada observasi ke-2 (+20%). Alarm TINGGI -> TP; WASPADA tanpa krisis -> FP.
+    assert metrics_dict["True Positives (Krisis Terdeteksi)"] == "1"
+    assert metrics_dict["False Negatives (Krisis Luput)"] == "0"
+    assert metrics_dict["False Positives (Alarm Palsu)"] == "1"
+    assert metrics_dict["Recall (Sensitivitas Krisis)"] == "100.0%"
+    assert metrics_dict["False Alarm Rate (FAR)"] == "50.0%"
 
 
 def test_early_warning_scores_with_rolling_30d_and_90d_high():

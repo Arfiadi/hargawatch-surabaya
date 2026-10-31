@@ -16,56 +16,67 @@ import pytest
 
 from src.models.models import AutoARIMAForecaster, AutoETSForecaster, HAS_STATSFORECAST
 
+pytestmark = pytest.mark.slow
+
 
 @pytest.fixture(scope="module")
 def multi_market_stress_panel():
-    """Generates an irregular multi-market panel with gaps and varying series lengths."""
-    np.random.seed(42)
+    """Generates an irregular multi-market panel with gaps and varying series lengths.
+
+    A weekly seasonal component is injected so forecasted steps actually differ across
+    horizons; without it a non-seasonal model returns a flat forecast and any
+    horizon-handling bug would be invisible.
+    """
+
+    def _weekly(idx: int, amplitude: float) -> float:
+        return amplitude * np.sin(2 * np.pi * idx / 7)
+
+    rng = np.random.default_rng(42)
     records = []
 
     # Market 1: Long series (90 days continuous)
     dates_m1 = pd.date_range("2024-01-01", periods=90, freq="D")
     base_m1 = 35000.0
-    for d in dates_m1:
-        base_m1 += np.random.normal(50, 400)
+    for i, d in enumerate(dates_m1):
+        base_m1 += rng.normal(50, 400)
         records.append({
             "pasar_id": 1,
             "tanggal": d,
-            "price_current": max(1000.0, base_m1)
+            "price_current": max(1000.0, base_m1 + _weekly(i, 3000.0))
         })
 
     # Market 2: Medium series with irregular gaps (60 random days out of 90)
-    choice_m2 = np.random.choice(dates_m1, size=60, replace=False)
+    choice_m2 = rng.choice(np.asarray(dates_m1), size=60, replace=False)
     choice_m2 = sorted(choice_m2)
     base_m2 = 28000.0
-    for d in choice_m2:
-        base_m2 += np.random.normal(-30, 600)
+    for i, d in enumerate(choice_m2):
+        base_m2 += rng.normal(-30, 600)
         records.append({
             "pasar_id": 2,
             "tanggal": d,
-            "price_current": max(1000.0, base_m2)
+            "price_current": max(1000.0, base_m2 + _weekly(i, 2500.0))
         })
 
     # Market 3: Short series (15 days)
     dates_m3 = pd.date_range("2024-03-01", periods=15, freq="D")
     base_m3 = 45000.0
-    for d in dates_m3:
-        base_m3 += np.random.normal(10, 300)
+    for i, d in enumerate(dates_m3):
+        base_m3 += rng.normal(10, 300)
         records.append({
             "pasar_id": 3,
             "tanggal": d,
-            "price_current": max(1000.0, base_m3)
+            "price_current": max(1000.0, base_m3 + _weekly(i, 2000.0))
         })
 
     # Market 4: Edge-case minimal series (8 days, just above season_length 7)
     dates_m4 = pd.date_range("2024-03-20", periods=8, freq="D")
     base_m4 = 20000.0
-    for d in dates_m4:
-        base_m4 += np.random.normal(0, 200)
+    for i, d in enumerate(dates_m4):
+        base_m4 += rng.normal(0, 200)
         records.append({
             "pasar_id": 4,
             "tanggal": d,
-            "price_current": max(1000.0, base_m4)
+            "price_current": max(1000.0, base_m4 + _weekly(i, 1500.0))
         })
 
     df = pd.DataFrame(records).sort_values(["pasar_id", "tanggal"]).reset_index(drop=True)
@@ -74,45 +85,52 @@ def multi_market_stress_panel():
 
 @pytest.mark.skipif(not HAS_STATSFORECAST, reason="StatsForecast not installed")
 @pytest.mark.parametrize("model_cls", [AutoARIMAForecaster, AutoETSForecaster])
-def test_multi_market_panel_fit_and_horizons(multi_market_stress_panel, model_cls):
+def test_multi_market_panel_fit_and_horizons(multi_market_stress_panel, model_cls, assert_perf):
     """Verifies fitting on irregular multi-market panel and predicting across horizons h=1, 7, 14."""
     df_train = multi_market_stress_panel.copy()
 
     model = model_cls(horizon=7, season_length=7, n_jobs=1)
     
-    # 1. Fit latency check
+    # 1. Fit latency measurement (enforced only with HARGAWATCH_PERF_ASSERT=1)
     t0 = time.perf_counter()
     model.fit(df_train)
     fit_duration = time.perf_counter() - t0
-    assert fit_duration < 10.0, f"{model_cls.__name__} fit took too long: {fit_duration:.2f}s"
+    assert_perf(fit_duration, 10.0, f"{model_cls.__name__} fit")
 
     # 2. Test horizons h=1, 7, 14
+    predictions_by_h = {}
     for h in [1, 7, 14]:
         origin_date = pd.Timestamp("2024-03-31")
         test_slice = pd.DataFrame({
             "pasar_id": [1, 2, 3, 4],
             "tanggal": [origin_date] * 4,
-            "target_date": [origin_date + pd.Timedelta(days=h)] * 4
+            "target_date": [origin_date + pd.Timedelta(h, unit="D")] * 4
         })
 
         t_pred = time.perf_counter()
         preds = model.predict(test_slice)
         pred_duration = time.perf_counter() - t_pred
-        assert pred_duration < 3.0, f"predict(h={h}) took too long: {pred_duration:.2f}s"
+        assert_perf(pred_duration, 3.0, f"predict(h={h})")
 
         for key in ["batas_bawah", "harga_prediksi", "batas_atas"]:
             assert key in preds, f"Missing required key '{key}' in prediction output"
             assert len(preds[key]) == 4, f"Output length mismatch for key '{key}'"
-            assert np.issubdtype(preds[key].dtype, np.integer), f"Key '{key}' is not integer dtype: {preds[key].dtype}"
+            assert np.issubdtype(preds[key].dtype, np.number), f"Key '{key}' is not numeric dtype: {preds[key].dtype}"
 
         lo = preds["batas_bawah"]
         p50 = preds["harga_prediksi"]
         hi = preds["batas_atas"]
+        predictions_by_h[h] = p50.copy()
 
         # Strict Monotonic Bound Invariant: 0 <= batas_bawah <= harga_prediksi <= batas_atas
         assert (lo >= 0).all(), f"Negative batas_bawah detected for h={h}: {lo}"
         assert (p50 >= lo).all(), f"Violation: batas_bawah > harga_prediksi for h={h}: lo={lo}, p50={p50}"
         assert (hi >= p50).all(), f"Violation: harga_prediksi > batas_atas for h={h}: p50={p50}, hi={hi}"
+
+    # The requested horizon must actually change the forecast (not just be ignored).
+    assert not np.array_equal(predictions_by_h[1], predictions_by_h[14]), (
+        f"{model_cls.__name__} produced identical p50 for h=1 and h=14; target_date/horizon is ignored"
+    )
 
 
 @pytest.mark.skipif(not HAS_STATSFORECAST, reason="StatsForecast not installed")
@@ -126,7 +144,7 @@ def test_edge_case_slices_and_unobserved_markets(multi_market_stress_panel, mode
     preds_empty = model.predict(df_empty)
     for k in ["batas_bawah", "harga_prediksi", "batas_atas"]:
         assert len(preds_empty[k]) == 0
-        assert np.issubdtype(preds_empty[k].dtype, np.integer)
+        assert np.issubdtype(preds_empty[k].dtype, np.number)
 
     # 2. Subset of observed markets (e.g. only markets 2 and 4)
     df_subset = pd.DataFrame({
@@ -221,15 +239,15 @@ def test_constant_series_singular_robustness(model_cls):
 
 
 @pytest.mark.skipif(not HAS_STATSFORECAST, reason="StatsForecast not installed")
-def test_cpu_high_load_throughput():
+def test_cpu_high_load_throughput(assert_perf):
     """Tests 10 markets with 100 observations each (1000 records) for execution throughput."""
-    np.random.seed(99)
+    rng = np.random.default_rng(99)
     records = []
     dates = pd.date_range("2024-01-01", periods=100, freq="D")
     for m in range(1, 11):
         price = 30000.0 + m * 1000
         for d in dates:
-            price += np.random.normal(0, 100)
+            price += rng.normal(0, 100)
             records.append({
                 "pasar_id": m,
                 "tanggal": d,
@@ -241,30 +259,30 @@ def test_cpu_high_load_throughput():
     t0 = time.perf_counter()
     ets = AutoETSForecaster(horizon=7, season_length=7, n_jobs=1).fit(df_large)
     ets_fit_time = time.perf_counter() - t0
-    assert ets_fit_time < 12.0, f"AutoETS fit on 10 markets took {ets_fit_time:.2f}s"
+    assert_perf(ets_fit_time, 12.0, "AutoETS fit on 10 markets")
 
     # 2. AutoARIMA throughput (with fast stepwise & approximation settings)
     t1 = time.perf_counter()
     arima = AutoARIMAForecaster(horizon=7, season_length=7, n_jobs=1).fit(df_large)
     arima_fit_time = time.perf_counter() - t1
-    assert arima_fit_time < 15.0, f"AutoARIMA fit on 10 markets took {arima_fit_time:.2f}s"
+    assert_perf(arima_fit_time, 15.0, "AutoARIMA fit on 10 markets")
 
     # Predict test slice with all 10 markets
     test_slice = pd.DataFrame({
         "pasar_id": list(range(1, 11)),
         "tanggal": [dates[-1]] * 10,
-        "target_date": [dates[-1] + pd.Timedelta(days=7)] * 10
+        "target_date": [dates[-1] + pd.Timedelta(7, unit="D")] * 10
     })
 
     t_p_ets = time.perf_counter()
     p_ets = ets.predict(test_slice)
-    assert time.perf_counter() - t_p_ets < 2.0
+    assert_perf(time.perf_counter() - t_p_ets, 2.0, "AutoETS predict on 10 markets")
     assert (p_ets["batas_bawah"] <= p_ets["harga_prediksi"]).all()
     assert (p_ets["harga_prediksi"] <= p_ets["batas_atas"]).all()
 
     t_p_arima = time.perf_counter()
     p_arima = arima.predict(test_slice)
-    assert time.perf_counter() - t_p_arima < 2.0
+    assert_perf(time.perf_counter() - t_p_arima, 2.0, "AutoARIMA predict on 10 markets")
     assert (p_arima["batas_bawah"] <= p_arima["harga_prediksi"]).all()
     assert (p_arima["harga_prediksi"] <= p_arima["batas_atas"]).all()
 
@@ -300,6 +318,7 @@ def test_interface_contract_conformance(model_cls):
 @pytest.mark.parametrize("model_cls", [AutoARIMAForecaster, AutoETSForecaster])
 def test_dirty_panel_with_nans_and_duplicates(model_cls):
     """Stress-tests resilience against dirty data: NaNs, duplicate dates, unsorted entries."""
+    rng = np.random.default_rng(123)
     dates = pd.date_range("2024-01-01", periods=15, freq="D")
     records = [
         # Normal rows
@@ -311,7 +330,7 @@ def test_dirty_panel_with_nans_and_duplicates(model_cls):
     ]
     # Add regular points so series can fit
     for d in dates[3:]:
-        records.append({"pasar_id": 1, "tanggal": d, "price_current": 30000.0 + np.random.normal(0, 100)})
+        records.append({"pasar_id": 1, "tanggal": d, "price_current": 30000.0 + rng.normal(0, 100)})
 
     df_dirty = pd.DataFrame(records).sample(frac=1.0, random_state=42) # Scrambled order
     model = model_cls(horizon=7, season_length=7, n_jobs=1)
@@ -320,7 +339,7 @@ def test_dirty_panel_with_nans_and_duplicates(model_cls):
     test_slice = pd.DataFrame({
         "pasar_id": [1],
         "tanggal": [dates[-1]],
-        "target_date": [dates[-1] + pd.Timedelta(days=7)]
+        "target_date": [dates[-1] + pd.Timedelta(7, unit="D")]
     })
     preds = model.predict(test_slice)
     assert len(preds["harga_prediksi"]) == 1
@@ -349,7 +368,7 @@ def test_ultra_short_series_fallback(model_cls):
     test_slice = pd.DataFrame({
         "pasar_id": ["normal_market", "single_obs_market", "two_obs_market"],
         "tanggal": [dates[-1]] * 3,
-        "target_date": [dates[-1] + pd.Timedelta(days=7)] * 3
+        "target_date": [dates[-1] + pd.Timedelta(7, unit="D")] * 3
     })
     preds = model.predict(test_slice)
     assert len(preds["harga_prediksi"]) == 3
@@ -360,29 +379,61 @@ def test_ultra_short_series_fallback(model_cls):
 @pytest.mark.skipif(not HAS_STATSFORECAST, reason="StatsForecast not installed")
 @pytest.mark.parametrize("model_cls", [AutoARIMAForecaster, AutoETSForecaster])
 def test_retrograde_dates_and_missing_columns(model_cls):
-    """Verifies robustness against retrograde dates (target_date <= tanggal) and missing column fallbacks."""
-    dates = pd.date_range("2024-01-01", periods=10, freq="D")
+    """Verifies robustness against retrograde dates (target_date <= tanggal) and missing column fallbacks.
+
+    The horizon is derived from ``target_date - tanggal``. A retrograde target must clamp
+    to h=1, while a slice without date columns must fall back to ``model.horizon`` (7).
+    Both are asserted against explicit h=1 / h=7 slices, so the test fails if the
+    clamping/fallback silently stops working.
+    """
+    dates = pd.date_range("2024-01-01", periods=30, freq="D")
+    # Trending series so step 1 and step 7 forecasts are distinguishable.
     df = pd.DataFrame({
-        "pasar_id": [1] * 10,
+        "pasar_id": [1] * 30,
         "tanggal": dates,
-        "price_current": [30000.0] * 10
+        "price_current": [30000.0 + 200.0 * i for i in range(30)],
     })
     model = model_cls(horizon=7, season_length=7, n_jobs=1).fit(df)
 
-    # 1. Retrograde target date (past date: target_date < tanggal) -> should clamp h to 1
+    origin = dates[-1]
+    keys = ("batas_bawah", "harga_prediksi", "batas_atas")
+
+    def _slice(offset_days: int) -> pd.DataFrame:
+        return pd.DataFrame({
+            "pasar_id": [1],
+            "tanggal": [origin],
+            "target_date": [origin + pd.Timedelta(offset_days, unit="D")],
+        })
+
+    preds_h1 = model.predict(_slice(1))
+    preds_h7 = model.predict(_slice(7))
+
+    # Sanity: the horizon actually changes the forecast, otherwise the checks below
+    # would be vacuously true.
+    assert not np.array_equal(preds_h1["harga_prediksi"], preds_h7["harga_prediksi"]), (
+        f"{model_cls.__name__} produced identical h=1 and h=7 predictions; "
+        "the horizon is being ignored"
+    )
+
+    # 1. Retrograde target date (target_date < tanggal) -> clamps h to 1.
     slice_retro = pd.DataFrame({
         "pasar_id": [1],
-        "tanggal": [dates[-1]],
-        "target_date": [dates[0]]  # Past date
+        "tanggal": [origin],
+        "target_date": [dates[0]],
     })
     preds_retro = model.predict(slice_retro)
     assert len(preds_retro["harga_prediksi"]) == 1
-    assert 0 <= preds_retro["batas_bawah"][0] <= preds_retro["harga_prediksi"][0] <= preds_retro["batas_atas"][0]
+    for key in keys:
+        assert np.array_equal(preds_retro[key], preds_h1[key]), (
+            f"retrograde target_date should clamp to h=1 for '{key}': "
+            f"got {preds_retro[key]}, expected {preds_h1[key]}"
+        )
 
-    # 2. Missing target_date and tanggal (pure X without dates) -> falls back to model.horizon
-    slice_nodate = pd.DataFrame({
-        "pasar_id": [1]
-    })
-    preds_nodate = model.predict(slice_nodate)
+    # 2. Missing target_date and tanggal -> falls back to model.horizon (7).
+    preds_nodate = model.predict(pd.DataFrame({"pasar_id": [1]}))
     assert len(preds_nodate["harga_prediksi"]) == 1
-    assert 0 <= preds_nodate["batas_bawah"][0] <= preds_nodate["harga_prediksi"][0] <= preds_nodate["batas_atas"][0]
+    for key in keys:
+        assert np.array_equal(preds_nodate[key], preds_h7[key]), (
+            f"missing date columns should fall back to horizon=7 for '{key}': "
+            f"got {preds_nodate[key]}, expected {preds_h7[key]}"
+        )

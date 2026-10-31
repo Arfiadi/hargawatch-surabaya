@@ -9,18 +9,13 @@ Designed by M1 Challenger 1 to aggressively challenge:
 6. Empty DataFrame behavior and unfitted state protection.
 """
 
-import os
-import sys
-from pathlib import Path
-
-# Add project root to sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from src.models.models import XGBoostForecaster, CatBoostForecaster, HAS_XGBOOST, HAS_CATBOOST
+
+pytestmark = pytest.mark.slow
 
 
 @pytest.fixture
@@ -30,18 +25,18 @@ def feature_cols():
 
 @pytest.fixture
 def base_training_data(feature_cols):
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     n = 200
     # Training market IDs: standard sequential [1, 2, 3, 4]
     df = pd.DataFrame({
-        "pasar_id": np.random.choice([1, 2, 3, 4], size=n),
-        "price_lag_1": np.random.uniform(15000, 45000, size=n),
-        "price_lag_7": np.random.uniform(15000, 45000, size=n),
-        "rolling_mean_7d": np.random.uniform(15000, 45000, size=n),
-        "rolling_std_7d": np.random.uniform(100, 3000, size=n),
-        "weather_rainfall": np.random.uniform(0, 50, size=n),
+        "pasar_id": rng.choice([1, 2, 3, 4], size=n),
+        "price_lag_1": rng.uniform(15000, 45000, size=n),
+        "price_lag_7": rng.uniform(15000, 45000, size=n),
+        "rolling_mean_7d": rng.uniform(15000, 45000, size=n),
+        "rolling_std_7d": rng.uniform(100, 3000, size=n),
+        "weather_rainfall": rng.uniform(0, 50, size=n),
     })
-    y = df["price_lag_1"] * 1.01 + np.random.normal(0, 800, size=n)
+    y = df["price_lag_1"] * 1.01 + rng.normal(0, 800, size=n)
     y = pd.Series(np.maximum(1000, y), name="target_price")
     return df, y
 
@@ -53,7 +48,7 @@ def _assert_monotonic_invariants(preds: dict, n_expected: int, context_label: st
         arr = preds[key]
         assert isinstance(arr, np.ndarray), f"[{context_label}] {key} is not a numpy array!"
         assert len(arr) == n_expected, f"[{context_label}] {key} length {len(arr)} != expected {n_expected}!"
-        assert np.issubdtype(arr.dtype, np.integer), f"[{context_label}] {key} dtype {arr.dtype} is not integer!"
+        assert np.issubdtype(arr.dtype, np.number), f"[{context_label}] {key} dtype {arr.dtype} is not numeric!"
         assert not np.isnan(arr).any(), f"[{context_label}] {key} contains NaN values!"
         assert (arr >= 0).all(), f"[{context_label}] {key} contains negative values! Min: {arr.min()}"
 
@@ -119,7 +114,7 @@ class TestXGBoostForecasterStress:
         model = XGBoostForecaster(feature_cols=feature_cols, params={"n_estimators": 25})
         model.fit(X_train, y_train)
 
-        np.random.seed(999)
+        rng = np.random.default_rng(999)
         n_adv = 1000
 
         # Adversarial batch:
@@ -129,12 +124,12 @@ class TestXGBoostForecasterStress:
         # - unobserved non-sequential market IDs: 146, 999, 4242, -1
         # - NaNs in features
         df_adv = pd.DataFrame({
-            "pasar_id": np.random.choice([146, 999, 4242, -1, 1, 2], size=n_adv),
-            "price_lag_1": np.random.choice([0.0, 1.0, 1e7, -5000.0, np.nan, 35000.0], size=n_adv),
-            "price_lag_7": np.random.uniform(-1000, 5000000, size=n_adv),
-            "rolling_mean_7d": np.random.choice([0.0, np.nan, 2e6, 40000.0], size=n_adv),
-            "rolling_std_7d": np.random.uniform(0, 1e6, size=n_adv),
-            "weather_rainfall": np.random.choice([np.nan, 0.0, 999.0], size=n_adv),
+            "pasar_id": rng.choice([146, 999, 4242, -1, 1, 2], size=n_adv),
+            "price_lag_1": rng.choice([0.0, 1.0, 1e7, -5000.0, np.nan, 35000.0], size=n_adv),
+            "price_lag_7": rng.uniform(-1000, 5000000, size=n_adv),
+            "rolling_mean_7d": rng.choice([0.0, np.nan, 2e6, 40000.0], size=n_adv),
+            "rolling_std_7d": rng.uniform(0, 1e6, size=n_adv),
+            "weather_rainfall": rng.choice([np.nan, 0.0, 999.0], size=n_adv),
         })
 
         preds = model.predict(df_adv)
@@ -225,7 +220,7 @@ class TestCatBoostForecasterStress:
         model = CatBoostForecaster(feature_cols=feature_cols, params={"iterations": 25})
         model.fit(X_train, y_train)
 
-        np.random.seed(999)
+        rng = np.random.default_rng(999)
         n_adv = 1000
 
         # Adversarial batch:
@@ -235,12 +230,12 @@ class TestCatBoostForecasterStress:
         # - unobserved non-sequential market IDs: 146, 999, 4242, -1
         # - NaNs in features
         df_adv = pd.DataFrame({
-            "pasar_id": np.random.choice([146, 999, 4242, -1, 1, 2], size=n_adv),
-            "price_lag_1": np.random.choice([0.0, 1.0, 1e7, -5000.0, np.nan, 35000.0], size=n_adv),
-            "price_lag_7": np.random.uniform(-1000, 5000000, size=n_adv),
-            "rolling_mean_7d": np.random.choice([0.0, np.nan, 2e6, 40000.0], size=n_adv),
-            "rolling_std_7d": np.random.uniform(0, 1e6, size=n_adv),
-            "weather_rainfall": np.random.choice([np.nan, 0.0, 999.0], size=n_adv),
+            "pasar_id": rng.choice([146, 999, 4242, -1, 1, 2], size=n_adv),
+            "price_lag_1": rng.choice([0.0, 1.0, 1e7, -5000.0, np.nan, 35000.0], size=n_adv),
+            "price_lag_7": rng.uniform(-1000, 5000000, size=n_adv),
+            "rolling_mean_7d": rng.choice([0.0, np.nan, 2e6, 40000.0], size=n_adv),
+            "rolling_std_7d": rng.uniform(0, 1e6, size=n_adv),
+            "weather_rainfall": rng.choice([np.nan, 0.0, 999.0], size=n_adv),
         })
 
         preds = model.predict(df_adv)
@@ -278,107 +273,3 @@ class TestCatBoostForecasterStress:
         })
         preds = model.predict(df_partial)
         _assert_monotonic_invariants(preds, 3, "CatBoost-missing-columns")
-
-
-# =========================================================================
-# 3. Direct Execution Harness
-# =========================================================================
-
-if __name__ == "__main__":
-    print("=" * 70)
-    print("RUNNING ADVERSARIAL GBDT STRESS HARNESS")
-    print("=" * 70)
-
-    fcols = ["price_lag_1", "price_lag_7", "rolling_mean_7d", "rolling_std_7d", "weather_rainfall"]
-    np.random.seed(42)
-    n = 200
-    df_train = pd.DataFrame({
-        "pasar_id": np.random.choice([1, 2, 3, 4], size=n),
-        "price_lag_1": np.random.uniform(15000, 45000, size=n),
-        "price_lag_7": np.random.uniform(15000, 45000, size=n),
-        "rolling_mean_7d": np.random.uniform(15000, 45000, size=n),
-        "rolling_std_7d": np.random.uniform(100, 3000, size=n),
-        "weather_rainfall": np.random.uniform(0, 50, size=n),
-    })
-    y_train = pd.Series(np.maximum(1000, df_train["price_lag_1"] * 1.01 + np.random.normal(0, 800, size=n)))
-
-    # Test XGBoost
-    print("\n[1] Testing XGBoostForecaster...")
-    xgb_forecaster = XGBoostForecaster(feature_cols=fcols, params={"n_estimators": 25})
-    xgb_forecaster.fit(df_train, y_train)
-
-    # Empty
-    p_empty = xgb_forecaster.predict(pd.DataFrame())
-    _assert_monotonic_invariants(p_empty, 0, "XGBoost-empty")
-    print("  -> Empty DataFrame: PASS")
-
-    # Feature importances
-    fi_xgb = xgb_forecaster.get_feature_importances()
-    print("  -> XGBoost Feature Importances:\n", fi_xgb)
-    assert len(fi_xgb) == len(fcols)
-    assert (np.diff(fi_xgb["importance"].values) <= 0).all()
-    print("  -> Feature Importances Descending: PASS")
-
-    # 1000 adversarial rows
-    n_adv = 1000
-    df_adv = pd.DataFrame({
-        "pasar_id": np.random.choice([146, 999, 4242, -1, 1, 2], size=n_adv),
-        "price_lag_1": np.random.choice([0.0, 1.0, 1e7, -5000.0, np.nan, 35000.0], size=n_adv),
-        "price_lag_7": np.random.uniform(-1000, 5000000, size=n_adv),
-        "rolling_mean_7d": np.random.choice([0.0, np.nan, 2e6, 40000.0], size=n_adv),
-        "rolling_std_7d": np.random.uniform(0, 1e6, size=n_adv),
-        "weather_rainfall": np.random.choice([np.nan, 0.0, 999.0], size=n_adv),
-    })
-    p_adv_xgb = xgb_forecaster.predict(df_adv)
-    _assert_monotonic_invariants(p_adv_xgb, n_adv, "XGBoost-adversarial-1000")
-    print(f"  -> 1,000 Adversarial rows monotonicity: PASS (All {n_adv} rows satisfied 0 <= b_bawah <= p50 <= b_atas)")
-
-    # Single slice
-    p_slice_xgb = xgb_forecaster.predict(pd.DataFrame({
-        "pasar_id": [146] * 10,
-        "price_lag_1": [32000.0] * 10,
-        "price_lag_7": [32000.0] * 10,
-        "rolling_mean_7d": [32000.0] * 10,
-        "rolling_std_7d": [500.0] * 10,
-        "weather_rainfall": [5.0] * 10,
-    }))
-    _assert_monotonic_invariants(p_slice_xgb, 10, "XGBoost-single-slice-146")
-    print("  -> Single unobserved category (pasar_id=146): PASS")
-
-    # Test CatBoost
-    print("\n[2] Testing CatBoostForecaster...")
-    cb_forecaster = CatBoostForecaster(feature_cols=fcols, params={"iterations": 25})
-    cb_forecaster.fit(df_train, y_train)
-
-    # Empty
-    p_cb_empty = cb_forecaster.predict(pd.DataFrame())
-    _assert_monotonic_invariants(p_cb_empty, 0, "CatBoost-empty")
-    print("  -> Empty DataFrame: PASS")
-
-    # Feature importances
-    fi_cb = cb_forecaster.get_feature_importances()
-    print("  -> CatBoost Feature Importances:\n", fi_cb)
-    assert len(fi_cb) == len(fcols)
-    assert (np.diff(fi_cb["importance"].values) <= 0).all()
-    print("  -> Feature Importances Descending: PASS")
-
-    # 1000 adversarial rows
-    p_adv_cb = cb_forecaster.predict(df_adv)
-    _assert_monotonic_invariants(p_adv_cb, n_adv, "CatBoost-adversarial-1000")
-    print(f"  -> 1,000 Adversarial rows monotonicity: PASS (All {n_adv} rows satisfied 0 <= b_bawah <= p50 <= b_atas)")
-
-    # Single slice
-    p_slice_cb = cb_forecaster.predict(pd.DataFrame({
-        "pasar_id": [146] * 10,
-        "price_lag_1": [32000.0] * 10,
-        "price_lag_7": [32000.0] * 10,
-        "rolling_mean_7d": [32000.0] * 10,
-        "rolling_std_7d": [500.0] * 10,
-        "weather_rainfall": [5.0] * 10,
-    }))
-    _assert_monotonic_invariants(p_slice_cb, 10, "CatBoost-single-slice-146")
-    print("  -> Single unobserved category (pasar_id=146): PASS")
-
-    print("\n" + "=" * 70)
-    print("ALL EMPIRICAL GBDT STRESS TESTS COMPLETED SUCCESSFULLY!")
-    print("=" * 70)

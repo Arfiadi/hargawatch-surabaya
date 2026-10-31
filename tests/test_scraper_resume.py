@@ -5,9 +5,6 @@ run instead of overwriting them with only the newly scraped data.
 """
 
 import csv
-import os
-import tempfile
-import pytest
 
 
 def _write_csv(path, fieldnames, rows):
@@ -181,13 +178,92 @@ class TestScrapeProdusenResume:
 # Regression test: --no-resume still works (scrape_data only)
 # =====================================================================
 
-class TestNoResumeFlag:
-    """Verifies that --no-resume correctly discards old data."""
+class TestScrapeMainResumeOrchestration:
+    """Exercises the real ``main()`` orchestration, where the resume bug lived."""
 
-    def test_no_resume_returns_empty(self):
-        """When --no-resume is used, the code path sets (set(), []),
-        which means semua_baris starts empty — old data is intentionally discarded."""
-        done, baris_lama = (set(), [])
-        semua_baris = list(baris_lama)
-        assert semua_baris == []
-        assert done == set()
+    FIELDNAMES = TestScrapeDataResume.FIELDNAMES
+
+    @staticmethod
+    def _old_row(harga: str = "31000") -> dict:
+        return {
+            "tanggal": "2024-01-01",
+            "komoditas_id": "50",
+            "komoditas": "Cabe Rawit Merah",
+            "grup": "CABE",
+            "satuan": "Kg",
+            "harga_kemarin": "30000",
+            "harga": harga,
+        }
+
+    def _install_mocks(self, monkeypatch, calls: list[str]):
+        from src.pipeline import scrape_data
+
+        monkeypatch.setattr(scrape_data, "cari_pasar", lambda *a, **k: (1, "Pasar Uji"))
+
+        def fake_get_html_table(tgl, *args, **kwargs):
+            calls.append(tgl)
+            return "<html></html>"
+
+        monkeypatch.setattr(scrape_data, "get_html_table", fake_get_html_table)
+        monkeypatch.setattr(
+            scrape_data,
+            "parse_tabel",
+            lambda html: [{
+                "komoditas_id": 50,
+                "komoditas": "Cabe Rawit Merah",
+                "grup": "CABE",
+                "satuan": "Kg",
+                "harga_kemarin": 32000,
+                "harga": 33000,
+            }],
+        )
+        monkeypatch.setattr(scrape_data, "is_pangan", lambda *a: True)
+        monkeypatch.setattr(scrape_data.time, "sleep", lambda *_: None)
+        return scrape_data
+
+    @staticmethod
+    def _read_csv(path) -> list[dict]:
+        with open(path, newline="", encoding="utf-8-sig") as f:
+            return list(csv.DictReader(f))
+
+    def test_main_resume_preserves_old_rows_and_skips_done_dates(self, tmp_path, monkeypatch):
+        csv_path = tmp_path / "pasar.csv"
+        _write_csv(csv_path, self.FIELDNAMES, [self._old_row()])
+
+        calls: list[str] = []
+        scrape_data = self._install_mocks(monkeypatch, calls)
+
+        scrape_data.main([
+            "--mulai", "2024-01-02",
+            "--akhir", "2024-01-03",
+            "--output", str(csv_path),
+            "--parallel", "1",
+        ])
+
+        rows = self._read_csv(csv_path)
+        assert {r["tanggal"] for r in rows} == {"2024-01-01", "2024-01-02", "2024-01-03"}
+        assert rows[0]["harga"] == "31000"  # old row preserved
+        assert all(r["harga"] == "33000" for r in rows[1:])
+        assert set(calls) == {"2024-01-02", "2024-01-03"}
+        assert "2024-01-01" not in calls  # already-done date must not be re-scraped
+        assert (tmp_path / "pasar.json").exists()
+
+    def test_main_no_resume_discards_existing_rows(self, tmp_path, monkeypatch):
+        csv_path = tmp_path / "pasar.csv"
+        _write_csv(csv_path, self.FIELDNAMES, [self._old_row(harga="99999")])
+
+        calls: list[str] = []
+        scrape_data = self._install_mocks(monkeypatch, calls)
+
+        scrape_data.main([
+            "--mulai", "2024-01-03",
+            "--akhir", "2024-01-03",
+            "--output", str(csv_path),
+            "--parallel", "1",
+            "--no-resume",
+        ])
+
+        rows = self._read_csv(csv_path)
+        assert {r["tanggal"] for r in rows} == {"2024-01-03"}
+        assert all(r["harga"] != "99999" for r in rows)
+        assert calls == ["2024-01-03"]

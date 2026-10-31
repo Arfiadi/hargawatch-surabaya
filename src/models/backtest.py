@@ -431,7 +431,7 @@ def run_walk_forward_backtest(
 
     metric_cols = [
         "Model", "WAPE (%)", "MAE (Rp)", "RMSE (Rp)",
-        "sMAPE (%)", "Directional Accuracy (%)", "PICP (%)"
+        "sMAPE (%)", "Directional Accuracy (%)", "Active Directional Accuracy (%)", "PICP (%)"
     ]
     df_summary = pd.DataFrame(summary_rows)
     existing_metric_cols = [c for c in metric_cols if c in df_summary.columns]

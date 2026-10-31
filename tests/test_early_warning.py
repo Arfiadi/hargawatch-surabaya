@@ -1,6 +1,5 @@
 """Unit tests untuk skoring komposit Early Warning System."""
 
-import pytest
 from src.safety.early_warning import compute_early_warning_scores
 
 
