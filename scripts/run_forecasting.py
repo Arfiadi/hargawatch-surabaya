@@ -128,6 +128,8 @@ def train_and_forecast_commodity(
 
     origin_date = df_lags["tanggal"].max()
     slice_origin = df_lags[df_lags["tanggal"] == origin_date].copy()
+    # Filter out markets where commodity has been absent >7 days (price_current is NaN)
+    slice_origin = slice_origin[slice_origin["price_current"].notna()].copy()
 
     if slice_origin.empty:
         return pd.DataFrame()
@@ -195,10 +197,13 @@ def train_and_forecast_commodity(
             # Naive Last Value Persistence baseline with square-root diffusion uncertainty cone
             p_curr = slice_origin["price_current"].values
             std_7d = slice_origin["rolling_std_7d"].fillna(slice_origin["price_current"] * 0.02).values
+            # Adaptive variance floor to prevent zero-width confidence band for sticky commodities
+            variance_floor = np.maximum(p_curr * 0.015, 100.0)
+            std_effective = np.maximum(std_7d, variance_floor)
             diffusion_scale = np.sqrt(h / 7.0)
             p50 = np.round(p_curr).astype(int)
-            p10 = np.maximum(0, np.round(p_curr - 1.28 * std_7d * diffusion_scale)).astype(int)
-            p90 = np.round(p_curr + 1.28 * std_7d * diffusion_scale).astype(int)
+            p10 = np.maximum(0, np.round(p_curr - 1.28 * std_effective * diffusion_scale)).astype(int)
+            p90 = np.round(p_curr + 1.28 * std_effective * diffusion_scale).astype(int)
             preds = {
                 "harga_prediksi": p50,
                 "batas_bawah": p10,

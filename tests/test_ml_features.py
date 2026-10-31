@@ -55,3 +55,26 @@ def test_weather_features_empty_and_null_handling():
     assert len(res_cuaca) == 10
     assert "rain_sum_7d" in res_cuaca.columns
     assert "rain_lag_7d" in res_cuaca.columns
+
+
+def test_prepare_base_series_calendar_reindex_and_trim():
+    """Memastikan prepare_base_series memangkas leading NaN dan mereindex kalender harian secara kontinu."""
+    dates_with_gaps = [
+        pd.Timestamp("2026-01-01"),
+        pd.Timestamp("2026-01-02"),
+        pd.Timestamp("2026-01-05")
+    ]
+    df_raw = pd.DataFrame({
+        "tanggal": dates_with_gaps,
+        "komoditas_id": [50] * 3,
+        "pasar_id": [1] * 3,
+        "harga_asli": [np.nan, 25000.0, 26000.0],
+        "harga_imputasi": [np.nan, 25000.0, 26000.0]
+    })
+    
+    df_prepared = prepare_base_series(df_raw, komoditas_id=50, pasar_id=1)
+    
+    assert df_prepared["tanggal"].min() == pd.Timestamp("2026-01-02")
+    assert len(df_prepared) == 4
+    assert df_prepared.loc[df_prepared["tanggal"] == "2026-01-03", "harga_imputasi"].iloc[0] == 25000.0
+    assert df_prepared.loc[df_prepared["tanggal"] == "2026-01-04", "harga_imputasi"].iloc[0] == 25000.0

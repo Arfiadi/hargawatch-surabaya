@@ -45,6 +45,26 @@ except (ImportError, Exception):
     _SF_Naive = None
     HAS_STATSFORECAST = False
 
+def monotone_rearrangement(
+    p10: np.ndarray,
+    p50: np.ndarray,
+    p90: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Applies deterministic Monotone Rearrangement (Chernozhukov et al., 2010).
+    
+    Guarantees non-crossing quantiles: 0 <= p10 <= p50 <= p90 for 100% of samples.
+    """
+    if len(p10) == 0:
+        return np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=int)
+    matrix = np.column_stack([p10, p50, p90])
+    sorted_matrix = np.sort(matrix, axis=1)
+    return (
+        np.maximum(0, np.round(sorted_matrix[:, 0])).astype(int),
+        np.maximum(0, np.round(sorted_matrix[:, 1])).astype(int),
+        np.maximum(0, np.round(sorted_matrix[:, 2])).astype(int)
+    )
+
+
 
 class NaiveLastValueForecaster:
     """Predicts future price as the most recent observed price at origin t."""
@@ -246,16 +266,16 @@ class LightGBMForecaster:
             if cat_col in X_feat.columns:
                 X_feat[cat_col] = X_feat[cat_col].astype("category")
 
-        preds = {}
-        preds["batas_bawah"] = np.round(np.nan_to_num(self.models.get(0.10, self.models.get(sorted(self.models.keys())[0])).predict(X_feat), nan=0.0)).astype(int)
-        preds["harga_prediksi"] = np.round(np.nan_to_num(self.models[0.50].predict(X_feat), nan=0.0)).astype(int)
-        preds["batas_atas"] = np.round(np.nan_to_num(self.models.get(0.90, self.models.get(sorted(self.models.keys())[-1])).predict(X_feat), nan=0.0)).astype(int)
+        raw_10 = np.nan_to_num(self.models.get(0.10, self.models.get(sorted(self.models.keys())[0])).predict(X_feat), nan=0.0)
+        raw_50 = np.nan_to_num(self.models[0.50].predict(X_feat), nan=0.0)
+        raw_90 = np.nan_to_num(self.models.get(0.90, self.models.get(sorted(self.models.keys())[-1])).predict(X_feat), nan=0.0)
         
-        # Ensure logical ordering: batas_bawah <= harga_prediksi <= batas_atas
-        preds["batas_bawah"] = np.minimum(preds["batas_bawah"], preds["harga_prediksi"])
-        preds["batas_atas"] = np.maximum(preds["batas_atas"], preds["harga_prediksi"])
-        
-        return preds
+        p10, p50, p90 = monotone_rearrangement(raw_10, raw_50, raw_90)
+        return {
+            "batas_bawah": p10,
+            "harga_prediksi": p50,
+            "batas_atas": p90
+        }
 
     def get_feature_importances(self) -> pd.DataFrame:
         """Returns feature importance ranking for the median model."""
@@ -372,17 +392,12 @@ class XGBoostForecaster:
         raw_50 = np.nan_to_num(self.models[0.50].predict(X_feat), nan=0.0)
         raw_90 = np.nan_to_num(self.models.get(0.90, self.models.get(sorted(self.models.keys())[-1])).predict(X_feat), nan=0.0)
 
-        preds = {
-            "batas_bawah": np.round(np.maximum(0, raw_10)).astype(int),
-            "harga_prediksi": np.round(np.maximum(0, raw_50)).astype(int),
-            "batas_atas": np.round(np.maximum(0, raw_90)).astype(int)
+        p10, p50, p90 = monotone_rearrangement(raw_10, raw_50, raw_90)
+        return {
+            "batas_bawah": p10,
+            "harga_prediksi": p50,
+            "batas_atas": p90
         }
-        
-        # Enforce non-crossing monotonic boundary ordering: batas_bawah <= harga_prediksi <= batas_atas
-        preds["batas_bawah"] = np.minimum(preds["batas_bawah"], preds["harga_prediksi"])
-        preds["batas_atas"] = np.maximum(preds["batas_atas"], preds["harga_prediksi"])
-        
-        return preds
 
     def get_feature_importances(self) -> pd.DataFrame:
         """Returns feature importance ranking for the median model."""
@@ -501,17 +516,12 @@ class CatBoostForecaster:
             y_10 = y_50
             y_90 = y_50
 
-        preds = {
-            "batas_bawah": np.round(np.maximum(0, np.nan_to_num(y_10, nan=0.0))).astype(int),
-            "harga_prediksi": np.round(np.maximum(0, np.nan_to_num(y_50, nan=0.0))).astype(int),
-            "batas_atas": np.round(np.maximum(0, np.nan_to_num(y_90, nan=0.0))).astype(int)
+        p10, p50, p90 = monotone_rearrangement(y_10, y_50, y_90)
+        return {
+            "batas_bawah": p10,
+            "harga_prediksi": p50,
+            "batas_atas": p90
         }
-        
-        # Enforce non-crossing monotonic boundary ordering: batas_bawah <= harga_prediksi <= batas_atas
-        preds["batas_bawah"] = np.minimum(preds["batas_bawah"], preds["harga_prediksi"])
-        preds["batas_atas"] = np.maximum(preds["batas_atas"], preds["harga_prediksi"])
-        
-        return preds
 
     def get_feature_importances(self) -> pd.DataFrame:
         """Returns feature importance ranking."""

@@ -176,3 +176,22 @@ def test_metrics_empty_and_edge_inputs():
     fig_panel = plot_residual_diagnostics(df_panel)
     assert isinstance(fig_panel, plt.Figure)
     plt.close(fig_panel)
+
+
+def test_active_directional_accuracy_penalizes_flat_on_shock():
+    """Memastikan compute_active_directional_accuracy menghukum model datar saat terjadi guncangan harga riil."""
+    from src.analytics.metrics import compute_active_directional_accuracy
+    
+    y_origin = np.array([50000.0, 50000.0])
+    # Guncangan riil: hari 1 naik +10.000, hari 2 turun -10.000
+    y_true   = np.array([60000.0, 40000.0])
+    
+    # Model Naive datar (memprediksi harga tetap 50.000)
+    y_pred_naive = np.array([50000.0, 50000.0])
+    da_active_naive = compute_active_directional_accuracy(y_true, y_pred_naive, y_origin)
+    assert da_active_naive == 0.0, "Model Naive datar tidak boleh dapat skor di atas 0% saat shock hari riil!"
+
+    # Model yang memprediksi arah dengan benar
+    y_pred_good = np.array([58000.0, 42000.0])
+    da_active_good = compute_active_directional_accuracy(y_true, y_pred_good, y_origin)
+    assert da_active_good == 100.0

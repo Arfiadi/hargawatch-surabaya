@@ -129,11 +129,18 @@ def compute_picp(
 def compute_directional_accuracy(
     y_true: Union[np.ndarray, pd.Series, List[float]],
     y_pred: Union[np.ndarray, pd.Series, List[float]],
-    y_origin: Optional[Union[np.ndarray, pd.Series, List[float]]] = None
+    y_origin: Optional[Union[np.ndarray, pd.Series, List[float]]] = None,
+    threshold_pct: float = 0.005,
+    min_threshold_rp: float = 0.0
 ) -> float:
-    """Computes Directional Accuracy (DA) relative to origin price.
+    """Computes overall 3-state Directional Accuracy relative to origin price.
     
-    Formula: DA = mean(sign(y_true - y_origin) == sign(y_pred - y_origin)) * 100
+    States:
+    +1: price increase > threshold
+    -1: price decrease < -threshold
+     0: stationary / stable within [-threshold, +threshold]
+     
+    Threshold tau = max(threshold_pct * abs(y_origin), min_threshold_rp).
     If y_origin is not provided, uses lag-1 of y_true.
     """
     yt = np.asarray(y_true, dtype=float)
@@ -151,8 +158,66 @@ def compute_directional_accuracy(
     else:
         yo = np.asarray(y_origin, dtype=float)
 
-    actual_dir = np.sign(yt - yo)
-    pred_dir = np.sign(yp - yo)
+    tau = np.maximum(threshold_pct * np.abs(yo), min_threshold_rp)
+    
+    actual_diff = yt - yo
+    actual_dir = np.zeros_like(actual_diff)
+    actual_dir[actual_diff > tau] = 1.0
+    actual_dir[actual_diff < -tau] = -1.0
+    
+    pred_diff = yp - yo
+    pred_dir = np.zeros_like(pred_diff)
+    pred_dir[pred_diff > tau] = 1.0
+    pred_dir[pred_diff < -tau] = -1.0
+    
+    return round(float(np.mean(actual_dir == pred_dir) * 100), 2)
+
+
+def compute_active_directional_accuracy(
+    y_true: Union[np.ndarray, pd.Series, List[float]],
+    y_pred: Union[np.ndarray, pd.Series, List[float]],
+    y_origin: Optional[Union[np.ndarray, pd.Series, List[float]]] = None,
+    threshold_pct: float = 0.005,
+    min_threshold_rp: float = 0.0
+) -> float:
+    """Computes Directional Accuracy conditioned strictly on active shock days.
+    
+    Evaluates only time points where the actual price movement exceeds threshold:
+    |y_true - y_origin| > max(threshold_pct * abs(y_origin), min_threshold_rp).
+    
+    If the model predicts flat/stationary (dir = 0) during an actual price shock,
+    it is penalized as an incorrect prediction.
+    If no active shock days exist in the sample, returns 100.0.
+    """
+    yt = np.asarray(y_true, dtype=float)
+    yp = np.asarray(y_pred, dtype=float)
+    if len(yt) == 0:
+        return 0.0
+        
+    if y_origin is None:
+        if len(yt) > 1:
+            yo = np.empty_like(yt)
+            yo[0] = yt[0]
+            yo[1:] = yt[:-1]
+        else:
+            yo = yt.copy()
+    else:
+        yo = np.asarray(y_origin, dtype=float)
+
+    tau = np.maximum(threshold_pct * np.abs(yo), min_threshold_rp)
+    
+    actual_diff = yt - yo
+    active_mask = np.abs(actual_diff) > tau
+    if not np.any(active_mask):
+        return 100.0
+        
+    actual_dir = np.sign(actual_diff[active_mask])
+    
+    pred_diff = yp[active_mask] - yo[active_mask]
+    pred_dir = np.zeros_like(pred_diff)
+    pred_dir[pred_diff > tau[active_mask]] = 1.0
+    pred_dir[pred_diff < -tau[active_mask]] = -1.0
+    
     return round(float(np.mean(actual_dir == pred_dir) * 100), 2)
 
 
@@ -177,6 +242,7 @@ def compute_metrics(
     if y_origin is not None:
         yo = np.asarray(y_origin, dtype=float)
         metrics["Directional Accuracy (%)"] = compute_directional_accuracy(yt, yp, yo)
+        metrics["Active Directional Accuracy (%)"] = compute_active_directional_accuracy(yt, yp, yo)
 
     if lower is not None and upper is not None:
         metrics["PICP (%)"] = compute_picp(yt, lower, upper)

@@ -639,28 +639,13 @@
     "komoditas_id": 28,
     "commodity": "Garam Beryodium Halus",
     "horizon": 7,
-    "model_name": "XGBoost p50",
-    "wape_pct": 0.05,
-    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\xgboost_28_h7.pkl",
+    "model_name": "Naive Last Value",
+    "wape_pct": 0.16,
+    "model_path": null,
     "features": [
-      "pasar_id",
-      "price_current",
-      "price_lag_1",
-      "price_lag_2",
-      "price_lag_3",
-      "price_lag_7",
-      "price_lag_14",
-      "rolling_mean_7d",
-      "rolling_std_7d",
-      "rolling_mean_14d",
-      "rolling_std_14d",
-      "pct_change_1d",
-      "pct_change_7d",
-      "keputran_price_lag_1",
-      "keputran_price_lag_2",
-      "keputran_price_lag_3"
+      "price_current"
     ],
-    "updated_at": "2026-10-23T23:19:41.786535"
+    "updated_at": "2026-10-31T22:31:18.982349"
   },
   "20_h7": {
     "komoditas_id": 20,
@@ -828,28 +813,13 @@
     "komoditas_id": 43,
     "commodity": "KETELA POHON",
     "horizon": 7,
-    "model_name": "LightGBM p50",
-    "wape_pct": 0.29,
-    "model_path": "D:\\ARFI\\Kuliah\\Project\\project-semester5\\hargawatch-surabaya\\models\\forecasting\\lightgbm_43_h7.pkl",
+    "model_name": "Naive Last Value",
+    "wape_pct": 0.45,
+    "model_path": null,
     "features": [
-      "pasar_id",
-      "price_current",
-      "price_lag_1",
-      "price_lag_2",
-      "price_lag_3",
-      "price_lag_7",
-      "price_lag_14",
-      "rolling_mean_7d",
-      "rolling_std_7d",
-      "rolling_mean_14d",
-      "rolling_std_14d",
-      "pct_change_1d",
-      "pct_change_7d",
-      "keputran_price_lag_1",
-      "keputran_price_lag_2",
-      "keputran_price_lag_3"
+      "price_current"
     ],
-    "updated_at": "2026-10-23T23:36:31.217969"
+    "updated_at": "2026-10-31T22:31:18.982349"
   },
   "49_h7": {
     "komoditas_id": 49,

@@ -28,6 +28,37 @@ Berdasarkan evaluasi kritis terhadap dinamika pasar riil di Surabaya:
 3. **Penyajian Informasi Objektif (Tanpa Birokratisasi Berlebihan):**
    * Platform menyajikan data apa adanya sebagai alat observabilitas, analisis data, dan rujukan publik, tanpa klaim fiktif seperti pengaturan anggaran APBD atau pengendalian armada logistik fisik.
 
+### 1.3 Spesifikasi Detail Produk
+Tabel berikut adalah spesifikasi produk sesuai brief dari dosen.
+
+| Komponen | HargaWatch — Surabaya Food Price Intelligence & Early Warning |
+| --- | --- |
+| Nama Produk | HargaWatch |
+| Judul Proyek | HargaWatch — Platform Intelijen Harga Pangan dan Early Warning Kota Surabaya |
+| Wilayah | Kota Surabaya, dengan analisis harga pada berbagai pasar yang tersedia dalam sumber data |
+| User Utama | Masyarakat/konsumen, Pemkot Surabaya, Dinas terkait, pengelola pasar, pedagang/UMKM, peneliti, dan stakeholder pangan |
+| Tujuan Utama | Menyediakan harga pangan terkini, perbandingan harga antar pasar, tren harga, prediksi, dan peringatan dini perubahan harga agar masyarakat dapat mengambil keputusan belanja dan pemerintah memperoleh insight untuk pemantauan harga |
+| Komoditas | Beras, gula, minyak goreng, telur, daging ayam, daging sapi, cabai, bawang merah, bawang putih, sayuran, dan komoditas strategis lain sesuai ketersediaan data |
+| Sumber Data Utama | Data harga pangan pasar di Surabaya dari API/open data resmi yang tersedia, ditambah historical data untuk membangun analitik dan forecasting |
+| Update Data | Otomatis melalui API dengan timestamp last updated. Sistem menyimpan data historis sehingga setiap pembaruan memperkaya time series |
+| Data Pendukung | Cuaca, curah hujan, hari libur, Ramadan/Idulfitri/Natal-Tahun Baru, kalender, inflasi pangan, produksi/pasokan apabila tersedia, serta variabel lain yang secara metodologis relevan |
+| Data Pipeline | API → validation → cleaning → standardisasi komoditas/pasar → database → analytics → dashboard/app. Sistem memberikan indikator jika API gagal atau data belum diperbarui |
+| Best Price Finder | User memilih komoditas → sistem menampilkan harga dan pasar yang tersedia serta urutan harga berdasarkan data terbaru |
+| Smart Shopping Basket | User membuat keranjang, misalnya beras + telur + cabai + bawang → sistem menghitung estimasi total biaya keranjang pada masing-masing pasar |
+| Price Trend | Grafik perubahan harga harian/mingguan/bulanan per komoditas dan pasar |
+| Price Change Analytics | Persentase kenaikan/penurunan harga, moving average, volatilitas, perubahan WoW/MoM, dan pola musiman |
+| Price Volatility | Mengidentifikasi komoditas yang harganya relatif stabil dan yang memiliki fluktuasi tinggi |
+| Spatial/Market Analytics | Peta pasar Kota Surabaya dengan harga komoditas, perubahan harga, dan indikator kondisi harga masing-masing pasar |
+| Forecasting | Prediksi harga jangka pendek, misalnya 7–14 hari, menggunakan time-series/ML yang sesuai dan dibandingkan dengan baseline |
+| Variabel Eksternal | Menguji apakah cuaca, hari besar, musim, inflasi, atau variabel pasokan membantu meningkatkan kemampuan prediksi; tidak otomatis diasumsikan sebagai penyebab |
+| Anomaly Detection | Mendeteksi perubahan harga yang tidak biasa dibanding pola historis suatu komoditas/pasar |
+| Early Warning | Status sederhana seperti Normal – Waspada – Tinggi berdasarkan kombinasi kenaikan harga, volatilitas, anomaly, dan forecast; aturan harus transparan |
+| Price Surge Alert | Peringatan seperti: "Harga cabai merah meningkat signifikan dalam 7 hari terakhir pada beberapa pasar dan diperkirakan masih berada pada level tinggi." |
+| Commodity Risk Map | Matriks komoditas × pasar untuk menunjukkan komoditas/pasar yang sedang mengalami kenaikan atau volatilitas tinggi |
+| Seasonal Insight | Menganalisis pola harga menjelang Ramadan, Idulfitri, Natal/Tahun Baru atau periode tertentu berdasarkan historical data |
+| Public Dashboard | Tampilan sederhana untuk masyarakat: Harga Hari Ini → Cari Komoditas → Bandingkan Pasar → Tren → Prediksi → Alert |
+| Government/Analyst View | Tampilan lebih dalam untuk Dinas terkait, pengelola pasar, dan peneliti |
+
 ---
 
 ## 2. Arsitektur Pengguna & Fleksibilitas Antarmuka

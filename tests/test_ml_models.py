@@ -52,3 +52,22 @@ def test_lightgbm_quantile_monotonicity():
     assert len(p10) == n
     assert (p10 <= p50).all(), "Batas bawah (p10) melebihi median (p50)!"
     assert (p50 <= p90).all(), "Median (p50) melebihi batas atas (p90)!"
+
+
+def test_monotone_rearrangement_inverts_crossing_quantiles():
+    """Memastikan monotone_rearrangement menjamin p10 <= p50 <= p90 bahkan jika estimasi awal terbalik."""
+    from src.models.models import monotone_rearrangement
+    
+    # Skenario ekstrim: kuantil crossing terbalik total
+    raw_10 = np.array([45000.0, 30000.0, 10000.0])  # p10 lebih tinggi dari p50
+    raw_50 = np.array([40000.0, 32000.0, 12000.0])
+    raw_90 = np.array([38000.0, 35000.0, 15000.0])  # p90 lebih rendah dari p10
+    
+    p10, p50, p90 = monotone_rearrangement(raw_10, raw_50, raw_90)
+    
+    assert (p10 <= p50).all(), "p10 harus selalu <= p50!"
+    assert (p50 <= p90).all(), "p50 harus selalu <= p90!"
+    # Baris 0: [45000, 40000, 38000] -> terurut menjadi [38000, 40000, 45000]
+    assert p10[0] == 38000
+    assert p50[0] == 40000
+    assert p90[0] == 45000

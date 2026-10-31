@@ -70,15 +70,73 @@ def prepare_base_series(
     komoditas_id: Optional[int] = None,
     pasar_id: Optional[int] = None
 ) -> pd.DataFrame:
-    """Filters and sorts base series for feature construction."""
+    """Filters, aligns to full daily calendar grid, and trims leading unmonitored NaNs.
+    
+    Ensures that historical lag calculations (e.g. shift(1)) strictly represent
+    24-hour temporal intervals by reindexing onto a complete pd.date_range per series.
+    Trims leading unmonitored periods (e.g. Minyakita before July 2022) to avoid
+    accumulating unfillable leading NaNs while preserving the 7-day bound for data gaps.
+    """
     df = df_harga.copy()
     if komoditas_id is not None:
         df = df[df["komoditas_id"] == komoditas_id]
     if pasar_id is not None:
         df = df[df["pasar_id"] == pasar_id]
         
-    df = df.sort_values(["komoditas_id", "pasar_id", "tanggal"]).reset_index(drop=True)
-    return df
+    if df.empty:
+        return df
+
+    if not pd.api.types.is_datetime64_any_dtype(df["tanggal"]):
+        df["tanggal"] = pd.to_datetime(df["tanggal"])
+
+    meta_cols = [c for c in ["komoditas", "grup", "satuan"] if c in df.columns]
+
+    processed_groups = []
+    for (cid, pid), group in df.groupby(["komoditas_id", "pasar_id"], as_index=False):
+        group = group.sort_values("tanggal").copy()
+        
+        # 1. Pangkas leading NaN sebelum observasi pertama yang valid
+        val_col = "harga_asli" if "harga_asli" in group.columns else (
+            "harga_imputasi" if "harga_imputasi" in group.columns else group.columns[2]
+        )
+        valid_mask = group[val_col].notna()
+        if not valid_mask.any():
+            processed_groups.append(group)
+            continue
+            
+        first_valid_date = group.loc[valid_mask, "tanggal"].min()
+        group = group[group["tanggal"] >= first_valid_date]
+        
+        # 2. Reindex ke calendar date range harian penuh
+        start_date = group["tanggal"].min()
+        end_date = group["tanggal"].max()
+        if pd.isna(start_date) or pd.isna(end_date):
+            processed_groups.append(group)
+            continue
+            
+        full_dates = pd.date_range(start_date, end_date, freq="D", name="tanggal")
+        group = group.drop_duplicates(subset=["tanggal"]).set_index("tanggal").reindex(full_dates)
+        group["komoditas_id"] = cid
+        group["pasar_id"] = pid
+        for mc in meta_cols:
+            group[mc] = group[mc].ffill().bfill()
+            
+        # Causal forward fill for isolated missing calendar days up to 7-day bound
+        if "harga_imputasi" in group.columns:
+            group["harga_imputasi"] = group["harga_imputasi"].ffill(limit=7)
+        if "is_imputed" in group.columns:
+            group["is_imputed"] = group["is_imputed"].astype("boolean").fillna(True).astype(bool)
+            
+        group = group.reset_index()
+        processed_groups.append(group)
+
+    if processed_groups:
+        df_out = pd.concat(processed_groups, ignore_index=True)
+    else:
+        df_out = df
+        
+    df_out = df_out.sort_values(["komoditas_id", "pasar_id", "tanggal"]).reset_index(drop=True)
+    return df_out
 
 
 def build_lag_features(df: pd.DataFrame) -> pd.DataFrame:
