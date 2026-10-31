@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getLiveEarlyWarning, EarlyWarningItem, EarlyWarningStats, formatCommodityName } from "@/lib/dataService";
+import { OFFICIAL_REGULATORY_BENCHMARKS } from "@/lib/regulatoryData";
 
 const MARKET_CONFIGS = [
   { id: 2, name: "Wonokromo", shortName: "Wonokromo" },
@@ -14,16 +15,19 @@ const MARKET_CONFIGS = [
   { id: 146, name: "Soponyono", shortName: "Soponyono" },
 ];
 
-const COMMODITY_METADATA: Record<number, { initials: string; hapRef: string }> = {
-  50: { initials: "CR", hapRef: "HAP Bapanas: Rp 57.000 / kg" },
-  39: { initials: "BM", hapRef: "HAP Bapanas: Rp 36.500 / kg" },
-  2: { initials: "BP", hapRef: "HET Kemendag: Rp 14.900 / kg" },
-  16: { initials: "TA", hapRef: "HAP Bapanas: Rp 28.500 / kg" },
-  10: { initials: "MG", hapRef: "HET Kemendag: Rp 15.700 / liter" },
-  7: { initials: "GP", hapRef: "HAP Bapanas: Rp 17.500 / kg" },
-  13: { initials: "DA", hapRef: "HAP Bapanas: Rp 36.750 / kg" },
-  25: { initials: "DS", hapRef: "HAP Bapanas: Rp 120.000 / kg" },
-  38: { initials: "BP", hapRef: "HAP Bapanas: Rp 35.000 / kg" },
+const COMMODITY_METADATA: Record<number, { initials: string }> = {
+  50: { initials: "CR" },
+  39: { initials: "BM" },
+  2: { initials: "BP" },
+  4: { initials: "BM" },
+  16: { initials: "TA" },
+  10: { initials: "MC" },
+  96: { initials: "MK" },
+  7: { initials: "GP" },
+  13: { initials: "DA" },
+  12: { initials: "DS" },
+  25: { initials: "JP" },
+  38: { initials: "CB" },
 };
 
 const CATEGORIES = [
@@ -124,7 +128,7 @@ export default function EarlyWarningPage() {
 
   // Table UX States: Category Filter & Pagination (10 per page)
   const [selectedCategory, setSelectedCategory] = useState<CommodityCategory>("Semua");
-  const [tableFilter, setTableFilter] = useState<"ALL" | "ACTION" | "NORMAL">("ALL");
+  const [tableFilter] = useState<"ALL" | "ACTION" | "NORMAL">("ALL");
   const [tableSearch, setTableSearch] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
@@ -167,6 +171,7 @@ export default function EarlyWarningPage() {
 
   useEffect(() => {
     loadData(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pivot ewsData by commodity across 6 markets
@@ -190,15 +195,19 @@ export default function EarlyWarningPage() {
       if (!grouped[item.komoditas_id]) {
         const meta = COMMODITY_METADATA[item.komoditas_id] || {
           initials: item.nama_komoditas.slice(0, 2).toUpperCase(),
-          hapRef: "Acuan Pantauan Pasar Surabaya",
         };
+        const regBenchmark = OFFICIAL_REGULATORY_BENCHMARKS[item.komoditas_id];
+        const officialHapRef = regBenchmark
+          ? `${regBenchmark.label}: ${regBenchmark.displayPrice}`
+          : "Acuan Pantauan Pasar Surabaya";
+
         grouped[item.komoditas_id] = {
           komoditas_id: item.komoditas_id,
           nama_komoditas: formatCommodityName(item.nama_komoditas),
           category: getCommodityCategory(item.nama_komoditas),
           initials: meta.initials,
           icon: getCommodityIcon(item.nama_komoditas),
-          hapRef: meta.hapRef,
+          hapRef: officialHapRef,
           markets: {},
           maxScore: 0,
           worstStatus: "NORMAL",
@@ -359,7 +368,9 @@ export default function EarlyWarningPage() {
                     ? "from-status-critical-bg via-surface-card to-surface-card"
                     : ewsStats?.overallStatus === "WASPADA"
                     ? "from-status-warning-bg via-surface-card to-surface-card"
-                    : "from-status-normal-bg/40 via-surface-card to-surface-card"
+                    : ewsStats
+                    ? "from-status-normal-bg/40 via-surface-card to-surface-card"
+                    : "from-surface-subtle via-surface-card to-surface-card"
                 } shadow-sm p-space-md lg:p-space-lg border border-border-subtle/70`}
               >
                 <div
@@ -368,7 +379,9 @@ export default function EarlyWarningPage() {
                       ? "bg-status-critical/10"
                       : ewsStats?.overallStatus === "WASPADA"
                       ? "bg-status-warning/10"
-                      : "bg-status-normal/10"
+                      : ewsStats
+                      ? "bg-status-normal/10"
+                      : "bg-surface-subtle"
                   }`}
                 ></div>
                 <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
@@ -379,7 +392,9 @@ export default function EarlyWarningPage() {
                           ? "bg-status-critical/20 text-status-critical"
                           : ewsStats?.overallStatus === "WASPADA"
                           ? "bg-status-warning/20 text-status-warning"
-                          : "bg-status-normal-bg text-status-normal"
+                          : ewsStats
+                          ? "bg-status-normal-bg text-status-normal"
+                          : "bg-surface-subtle text-text-muted"
                       }`}
                     >
                       <span className="material-symbols-outlined text-headline-lg">
@@ -387,10 +402,12 @@ export default function EarlyWarningPage() {
                           ? "crisis_alert"
                           : ewsStats?.overallStatus === "WASPADA"
                           ? "warning"
-                          : "verified_user"}
+                          : ewsStats
+                          ? "verified_user"
+                          : "cloud_off"}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-space-2xs">
+                    <div className="my-auto py-1 flex flex-col gap-space-2xs">
                       <div className="flex flex-wrap items-center gap-space-xs">
                         <span
                           className={`inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full text-on-primary font-label-caps text-label-caps font-bold tracking-wide ${
@@ -398,7 +415,9 @@ export default function EarlyWarningPage() {
                               ? "bg-status-critical"
                               : ewsStats?.overallStatus === "WASPADA"
                               ? "bg-status-warning"
-                              : "bg-status-normal"
+                              : ewsStats
+                              ? "bg-status-normal"
+                              : "bg-slate-600"
                           }`}
                         >
                           <span className="material-symbols-outlined text-body-sm">
@@ -406,16 +425,18 @@ export default function EarlyWarningPage() {
                               ? "emergency"
                               : ewsStats?.overallStatus === "WASPADA"
                               ? "warning"
-                              : "check_circle"}
+                              : ewsStats
+                              ? "check_circle"
+                              : "sync_problem"}
                           </span>
-                          STATUS PERINGATAN DINI: {ewsStats?.overallStatus || "NORMAL"}
+                          STATUS PERINGATAN DINI: {ewsStats ? ewsStats.overallStatus : "DATA BELUM TERSEDIA"}
                         </span>
                       </div>
                       <h2 className="font-headline-md text-headline-md text-on-surface tracking-tight">
                         Status Peringatan &amp; Indeks Risiko Pasar
                       </h2>
                       <p className="font-body-md text-body-md text-text-secondary max-w-3xl text-justify">
-                        {ewsStats?.subtitle || "Pantau kenaikan harga, titik anomali, dan faktor yang memengaruhi pasokan secara real-time."}
+                        {ewsStats?.subtitle || "Data peringatan dini belum tersedia atau sedang dalam proses sinkronisasi server pantauan."}
                       </p>
                     </div>
                   </div>
@@ -425,6 +446,38 @@ export default function EarlyWarningPage() {
 
             {/* 3 Key Executive Analytical KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
+              {isRefreshing && !ewsStats ? (
+                <>
+                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 animate-pulse space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="w-32 h-4 bg-surface-subtle rounded" />
+                      <div className="w-8 h-8 rounded-lg bg-surface-subtle" />
+                    </div>
+                    <div className="w-24 h-8 bg-surface-subtle rounded" />
+                    <div className="w-40 h-3 bg-surface-subtle rounded" />
+                    <div className="w-full h-1.5 bg-surface-subtle rounded-full" />
+                  </div>
+                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 animate-pulse space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="w-36 h-4 bg-surface-subtle rounded" />
+                      <div className="w-8 h-8 rounded-lg bg-surface-subtle" />
+                    </div>
+                    <div className="w-20 h-8 bg-surface-subtle rounded" />
+                    <div className="w-36 h-3 bg-surface-subtle rounded" />
+                    <div className="w-48 h-3 bg-surface-subtle rounded" />
+                  </div>
+                  <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 animate-pulse space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="w-32 h-4 bg-surface-subtle rounded" />
+                      <div className="w-8 h-8 rounded-lg bg-surface-subtle" />
+                    </div>
+                    <div className="w-24 h-8 bg-surface-subtle rounded" />
+                    <div className="w-44 h-3 bg-surface-subtle rounded" />
+                    <div className="w-40 h-3 bg-surface-subtle rounded" />
+                  </div>
+                </>
+              ) : (
+                <>
               {/* KPI 1: Indeks Stabilitas */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
@@ -435,19 +488,46 @@ export default function EarlyWarningPage() {
                     <span className="material-symbols-outlined text-body-lg">show_chart</span>
                   </span>
                 </div>
-                <div className="flex flex-col gap-space-2xs">
+                <div className="my-auto py-1 flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
-                    <span className="font-metric-display text-metric-display text-on-surface">100.0%</span>
-                    <span className="font-label-caps text-label-caps text-status-normal font-semibold">
-                      Target &gt; 90%
+                    <span className="font-metric-display text-metric-display text-on-surface">
+                      {ewsStats?.stabilityPercentage !== undefined ? `${ewsStats.stabilityPercentage.toFixed(1)}%` : "—"}
+                    </span>
+                    <span
+                      className={`font-label-caps text-label-caps font-semibold ${
+                        !ewsStats
+                          ? "text-text-muted"
+                          : ewsStats.stabilityPercentage >= 90
+                          ? "text-status-normal"
+                          : ewsStats.stabilityPercentage >= 75
+                          ? "text-status-warning"
+                          : "text-status-critical"
+                      }`}
+                    >
+                      {ewsStats ? "Target > 90%" : "Status Standby"}
                     </span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-muted">
-                    Toleransi Batas Aman Pemkot Surabaya
+                    {ewsStats
+                      ? ewsStats.stabilityPercentage >= 90
+                        ? "Toleransi Batas Aman Pemkot Surabaya"
+                        : "Di bawah batas toleransi aman Pemkot"
+                      : "Menunggu pembaruan data terkini"}
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-surface-subtle rounded-full overflow-hidden">
-                  <div className="h-full bg-status-normal rounded-full" style={{ width: "100%" }}></div>
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      !ewsStats
+                        ? "bg-slate-300"
+                        : ewsStats.stabilityPercentage >= 90
+                        ? "bg-status-normal"
+                        : ewsStats.stabilityPercentage >= 75
+                        ? "bg-status-warning"
+                        : "bg-status-critical"
+                    }`}
+                    style={{ width: `${ewsStats ? Math.min(100, Math.max(0, ewsStats.stabilityPercentage)) : 0}%` }}
+                  ></div>
                 </div>
               </div>
 
@@ -459,7 +539,9 @@ export default function EarlyWarningPage() {
                   </span>
                   <span
                     className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      (ewsStats?.highCount || 0) > 0
+                      !ewsStats
+                        ? "bg-surface-subtle text-text-muted"
+                        : ewsStats.highCount > 0
                         ? "bg-status-critical-bg text-status-critical"
                         : "bg-status-normal-bg text-status-normal"
                     }`}
@@ -469,14 +551,18 @@ export default function EarlyWarningPage() {
                     </span>
                   </span>
                 </div>
-                <div className="flex flex-col gap-space-2xs">
+                <div className="my-auto py-1 flex flex-col gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
                     <span
                       className={`font-metric-display text-metric-display ${
-                        (ewsStats?.highCount || 0) > 0 ? "text-status-critical" : "text-status-normal"
+                        !ewsStats
+                          ? "text-text-muted"
+                          : ewsStats.highCount > 0
+                          ? "text-status-critical"
+                          : "text-status-normal"
                       }`}
                     >
-                      {ewsStats ? ewsStats.highCount : 0}
+                      {ewsStats ? ewsStats.highCount : "—"}
                     </span>
                     <span className="font-title-md text-title-md text-text-secondary">Komoditas</span>
                   </div>
@@ -490,44 +576,77 @@ export default function EarlyWarningPage() {
                           {c}
                         </span>
                       ))
-                    ) : (
+                    ) : ewsStats ? (
                       <span className="px-space-xs py-0.5 rounded-full bg-status-normal-bg text-status-normal font-label-caps text-label-caps">
                         Semua Terkendali
+                      </span>
+                    ) : (
+                      <span className="px-space-xs py-0.5 rounded-full bg-surface-subtle text-text-muted font-label-caps text-label-caps">
+                        Menunggu Data
                       </span>
                     )}
                   </div>
                 </div>
-                <span className="font-body-sm text-body-sm text-text-muted">
-                  {ewsStats && ewsStats.highCount > 0 ? "Perlu mitigasi segera" : "Tidak ada komoditas di zona bahaya"}
-                </span>
+                <div className="flex items-center justify-between font-body-sm text-body-sm text-text-muted">
+                  <span>
+                    {ewsStats
+                      ? ewsStats.highCount > 0
+                        ? "Perlu mitigasi segera"
+                        : "Tidak ada komoditas di zona bahaya"
+                      : "Menunggu sinkronisasi data"}
+                  </span>
+                  {ewsStats && ewsStats.warningCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-status-warning-bg text-status-warning font-label-caps text-label-caps font-semibold">
+                      +{ewsStats.warningCount} Waspada
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* KPI 3: Titik Anomali Pasar */}
-              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between gap-space-sm hover:shadow-md transition-shadow">
+              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                     Titik Anomali Pasar
                   </span>
-                  <span className="w-8 h-8 rounded-lg bg-surface-subtle flex items-center justify-center text-status-normal">
+                  <span
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      !ewsStats
+                        ? "bg-surface-subtle text-text-muted"
+                        : ewsStats.anomaliesCount > 0
+                        ? "bg-status-warning-bg text-status-warning"
+                        : "bg-surface-subtle text-status-normal"
+                    }`}
+                  >
                     <span className="material-symbols-outlined text-body-lg">radar</span>
                   </span>
                 </div>
-                <div className="flex flex-col gap-space-2xs">
+                <div className="flex-1 flex flex-col justify-center py-2 gap-space-2xs">
                   <div className="flex items-baseline gap-space-xs">
-                    <span className="font-metric-display text-metric-display text-status-normal">
-                      {ewsStats ? ewsStats.anomaliesCount : 0} Titik
+                    <span
+                      className={`font-metric-display text-metric-display ${
+                        !ewsStats
+                          ? "text-text-muted"
+                          : ewsStats.anomaliesCount > 0
+                          ? "text-status-warning"
+                          : "text-status-normal"
+                      }`}
+                    >
+                      {ewsStats ? `${ewsStats.anomaliesCount} Titik` : "—"}
                     </span>
                     <span className="font-label-caps text-label-caps text-text-muted">Outlier Deviasi</span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-secondary">
-                    Seluruh pasar selaras dalam toleransi
+                    {ewsStats
+                      ? ewsStats.anomaliesCount > 0
+                        ? `${ewsStats.anomaliesCount} titik pantau terdeteksi deviasi antar-pasar`
+                        : "Seluruh pasar selaras dalam toleransi"
+                      : "Menunggu pemindaian anomali"}
                   </span>
                 </div>
-                <div className="flex items-center gap-space-xs text-status-normal font-label-caps text-label-caps font-semibold">
-                  <span className="material-symbols-outlined text-body-sm">check_circle</span>
-                  <span>Akurasi prediksi: WAPE 5,36%</span>
-                </div>
               </div>
+                </>
+              )}
             </div>
 
             {/* Main Section: Dynamic Commodity Risk Matrix (6 Markets x Commodities) */}
@@ -727,7 +846,7 @@ export default function EarlyWarningPage() {
                               </td>
 
                               {/* 6 Market Data Cells with Color-Coded Pricing */}
-                              {MARKET_CONFIGS.map((m) => {
+                              {MARKET_CONFIGS.map((m, mIndex) => {
                                 const marketItem = row.markets[m.id];
                                 if (!marketItem) {
                                   return (
@@ -744,6 +863,14 @@ export default function EarlyWarningPage() {
 
                                 const score = marketItem.total_skor || 0;
                                 const isCellHovered = activeTooltip === `${row.komoditas_id}-${m.id}`;
+
+                                const isRightEdge = mIndex >= MARKET_CONFIGS.length - 2;
+                                const isLeftEdge = mIndex === 0;
+                                const horizontalPosClass = isRightEdge
+                                  ? "right-1 sm:right-2 left-auto translate-x-0"
+                                  : isLeftEdge
+                                  ? "left-1 sm:left-2 translate-x-0"
+                                  : "left-1/2 -translate-x-1/2";
 
                                 // Determine price tier visual styles
                                 let cellBgClass = "";
@@ -789,7 +916,7 @@ export default function EarlyWarningPage() {
                                     {/* Tooltip: Market Detail Breakdown (White Card theme, no clipping) */}
                                     {isCellHovered && (
                                       <div
-                                        className={`absolute z-50 ${tooltipPosClass} left-1/2 -translate-x-1/2 w-56 p-3 bg-white text-text-primary rounded-xl shadow-xl border border-border-subtle text-left pointer-events-none text-xs`}
+                                        className={`absolute z-50 ${tooltipPosClass} ${horizontalPosClass} w-56 p-3 bg-white text-text-primary rounded-xl shadow-xl border border-border-subtle text-left pointer-events-none text-xs`}
                                       >
                                         <div className="font-bold text-text-primary mb-1.5 border-b border-border-subtle/80 pb-1.5 flex justify-between items-center">
                                           <span className="font-semibold text-text-primary">{m.name}</span>
@@ -817,7 +944,14 @@ export default function EarlyWarningPage() {
                                             </span>
                                           </div>
                                         )}
-                                        {score > 0 && (
+                                        {marketItem.hasEwsData === false ? (
+                                          <div className="mt-2 pt-1.5 border-t border-border-subtle/80 flex justify-between items-center">
+                                            <span className="text-text-muted text-[11px]">Status EWS:</span>
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-surface-subtle text-text-muted">
+                                              Belum Tersedia
+                                            </span>
+                                          </div>
+                                        ) : score > 0 ? (
                                           <div className="mt-2 pt-1.5 border-t border-border-subtle/80 flex justify-between items-center font-bold">
                                             <span className="text-text-muted text-[11px]">Skor Risiko EWS:</span>
                                             <span
@@ -830,6 +964,13 @@ export default function EarlyWarningPage() {
                                               }`}
                                             >
                                               {score}/100
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <div className="mt-2 pt-1.5 border-t border-border-subtle/80 flex justify-between items-center">
+                                            <span className="text-text-muted text-[11px]">Status EWS:</span>
+                                            <span className="text-[11px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                                              NORMAL
                                             </span>
                                           </div>
                                         )}
@@ -965,32 +1106,28 @@ export default function EarlyWarningPage() {
                           {hasSpread ? (
                             <div className="grid grid-cols-2 gap-2">
                               {/* Termurah */}
-                              <div className="bg-emerald-50/90 border border-emerald-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
-                                <div className="min-w-0">
-                                  <span className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-0.5 font-label-caps">
-                                    <span className="material-symbols-outlined text-[13px] text-emerald-700">arrow_downward</span> Termurah
-                                  </span>
-                                  <span className="text-[11px] text-emerald-950 font-medium truncate block">
-                                    {minMarkets.map((m) => m.shortName).join(", ")}
-                                  </span>
-                                </div>
-                                <span className="text-xs sm:text-sm font-extrabold text-emerald-700 shrink-0 ml-1">
+                              <div className="bg-emerald-50/90 border border-emerald-200/90 p-2 sm:px-2.5 sm:py-2 rounded-lg flex flex-col justify-between">
+                                <span className="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-emerald-700">arrow_downward</span> Termurah
+                                </span>
+                                <span className="text-xs sm:text-sm font-extrabold text-emerald-700 tabular-nums my-0.5">
                                   Rp {minPrice.toLocaleString("id-ID")}
+                                </span>
+                                <span className="text-[11px] text-emerald-950 font-medium truncate block" title={minMarkets.map((m) => m.shortName).join(", ")}>
+                                  {minMarkets.map((m) => m.shortName).join(", ")}
                                 </span>
                               </div>
 
                               {/* Tertinggi */}
-                              <div className="bg-rose-50/90 border border-rose-200/90 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
-                                <div className="min-w-0">
-                                  <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-0.5 font-label-caps">
-                                    <span className="material-symbols-outlined text-[13px] text-rose-700">arrow_upward</span> Tertinggi
-                                  </span>
-                                  <span className="text-[11px] text-rose-950 font-medium truncate block">
-                                    {maxMarkets.map((m) => m.shortName).join(", ")}
-                                  </span>
-                                </div>
-                                <span className="text-xs sm:text-sm font-extrabold text-rose-700 shrink-0 ml-1">
+                              <div className="bg-rose-50/90 border border-rose-200/90 p-2 sm:px-2.5 sm:py-2 rounded-lg flex flex-col justify-between">
+                                <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-0.5 font-label-caps">
+                                  <span className="material-symbols-outlined text-[13px] text-rose-700">arrow_upward</span> Tertinggi
+                                </span>
+                                <span className="text-xs sm:text-sm font-extrabold text-rose-700 tabular-nums my-0.5">
                                   Rp {maxPrice.toLocaleString("id-ID")}
+                                </span>
+                                <span className="text-[11px] text-rose-950 font-medium truncate block" title={maxMarkets.map((m) => m.shortName).join(", ")}>
+                                  {maxMarkets.map((m) => m.shortName).join(", ")}
                                 </span>
                               </div>
                             </div>

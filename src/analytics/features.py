@@ -5,7 +5,11 @@ All features for forecasting target at t+h are strictly constructed
 from information available at or before forecast origin t (plus known calendar features at t+h).
 """
 
+import hashlib
+import json
+import os
 import warnings
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Tuple
 import numpy as np
@@ -16,6 +20,136 @@ DATA_PROCESSED = BASE_DIR / "data" / "processed"
 DATA_EXTERNAL = BASE_DIR / "data" / "external"
 
 
+def calculate_file_sha256(filepath: Path) -> str:
+    """Calculates SHA-256 digest of a local file."""
+    h = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        while chunk := f.read(65536):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def write_dataset_manifest(
+    manifest_path: Optional[Path] = None,
+    df_harga: Optional[pd.DataFrame] = None,
+    df_kal: Optional[pd.DataFrame] = None
+) -> Path:
+    """Writes provenance metadata for local CSV datasets to .manifest.json."""
+    m_path = manifest_path or (DATA_PROCESSED / ".manifest.json")
+    m_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    files_info = {}
+    csv_configs = [
+        ("fact_harga_pasar.csv", df_harga),
+        ("dim_kalender.csv", df_kal)
+    ]
+    for filename, df in csv_configs:
+        fpath = DATA_PROCESSED / filename
+        if fpath.exists():
+            entry = {
+                "sha256": calculate_file_sha256(fpath),
+                "file_size_bytes": fpath.stat().st_size,
+            }
+            if df is not None and not df.empty and "tanggal" in df.columns:
+                entry["max_tanggal"] = str(df["tanggal"].max())[:10]
+                entry["row_count"] = int(len(df))
+            else:
+                try:
+                    df_sample = pd.read_csv(fpath, usecols=["tanggal"], parse_dates=["tanggal"])
+                    entry["max_tanggal"] = str(df_sample["tanggal"].max())[:10]
+                    entry["row_count"] = int(len(df_sample))
+                except Exception:
+                    pass
+            files_info[filename] = entry
+            
+    manifest = {
+        "last_synced_at": datetime.now(timezone.utc).isoformat(),
+        "files": files_info
+    }
+    with open(m_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+    return m_path
+
+
+def check_dataset_manifest(manifest_path: Optional[Path] = None) -> Optional[dict]:
+    """Validates local dataset provenance manifest and warns on staleness (>24h)."""
+    m_path = manifest_path or (DATA_PROCESSED / ".manifest.json")
+    if not m_path.exists():
+        warnings.warn(
+            f"[WARN] Cache CSV lokal dibaca dari {DATA_PROCESSED}, tetapi .manifest.json tidak ditemukan: "
+            "provenance (asal-usul data) tidak diketahui.",
+            UserWarning
+        )
+        return None
+
+    try:
+        with open(m_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+        synced_str = manifest.get("last_synced_at")
+        if synced_str:
+            synced_dt = datetime.fromisoformat(synced_str)
+            now_dt = datetime.now(timezone.utc)
+            if synced_dt.tzinfo is None:
+                synced_dt = synced_dt.replace(tzinfo=timezone.utc)
+            age_hours = (now_dt - synced_dt).total_seconds() / 3600.0
+            if age_hours > 24.0:
+                warnings.warn(
+                    f"[WARN] Cache CSV lokal usang ({age_hours:.1f} jam sejak sinkronisasi terakhir: {synced_str}). "
+                    "Disarankan sinkronisasi ulang dengan Supabase (--from-db).",
+                    UserWarning
+                )
+        return manifest
+    except Exception as err:
+        warnings.warn(f"[WARN] Gagal memvalidasi .manifest.json: {err}", UserWarning)
+        return None
+
+
+def generate_mock_raw_datasets() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Deterministic synthetic dataset fallback for testing/CI when local files and DB are absent."""
+    dates = pd.date_range("2025-01-01", "2026-03-31", freq="D")
+    records = []
+    for c_id, base_p in [(2, 12000.0), (50, 45000.0), (39, 30000.0)]:
+        for p_id in [1, 2, 3, 4, 5]:
+            p_factor = 0.95 if p_id == 5 else 1.0 + (p_id - 1) * 0.02
+            noise = np.sin(np.linspace(0, 10, len(dates))) * 500
+            for i, d in enumerate(dates):
+                price = float(base_p * p_factor + noise[i])
+                records.append({
+                    "tanggal": d,
+                    "pasar_id": p_id,
+                    "komoditas_id": c_id,
+                    "harga_asli": price,
+                    "harga_imputasi": price,
+                    "is_imputed": False
+                })
+    df_harga = pd.DataFrame(records)
+    
+    df_kal = pd.DataFrame({
+        "tanggal": dates,
+        "tahun": dates.year,
+        "bulan": dates.month,
+        "hari_nama": dates.day_name(),
+        "is_weekend": (dates.dayofweek >= 5).astype(int),
+        "is_libur_nasional": 0,
+        "nama_libur": None,
+        "is_ramadan": 0,
+        "is_pra_ramadan": 0
+    })
+    
+    df_cuaca = pd.DataFrame({
+        "tanggal": dates,
+        "curah_hujan_mm": 5.0,
+        "jam_hujan": 1.0,
+        "hari_hujan": 1,
+        "suhu_mean_c": 28.5,
+        "suhu_max_c": 32.0,
+        "suhu_min_c": 25.0,
+        "kelembapan_mean_pct": 75.0,
+        "angin_max_kmh": 15.0
+    })
+    return df_harga, df_kal, df_cuaca
+
+
 def load_raw_datasets(force_db: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Loads cleaned fact_harga_pasar, dim_kalender, and fact_cuaca.
     
@@ -24,6 +158,7 @@ def load_raw_datasets(force_db: bool = False) -> Tuple[pd.DataFrame, pd.DataFram
     """
     
     def _load_local_csvs():
+        check_dataset_manifest()
         df_h = pd.read_csv(DATA_PROCESSED / "fact_harga_pasar.csv", parse_dates=["tanggal"])
         df_k = pd.read_csv(DATA_PROCESSED / "dim_kalender.csv", parse_dates=["tanggal"])
         path_cuaca = DATA_EXTERNAL / "cuaca" / "cuaca_surabaya.csv"
@@ -57,12 +192,25 @@ def load_raw_datasets(force_db: bool = False) -> Tuple[pd.DataFrame, pd.DataFram
             DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
             df_harga.to_csv(DATA_PROCESSED / "fact_harga_pasar.csv", index=False)
             df_kal.to_csv(DATA_PROCESSED / "dim_kalender.csv", index=False)
+            write_dataset_manifest(df_harga=df_harga, df_kal=df_kal)
         except Exception:
             pass
         return df_harga, df_kal, df_cuaca
-    except Exception as e:
-        print(f"[ERROR] Gagal menarik data dari Supabase: {e}. Fallback ke CSV lokal...")
-        return _load_local_csvs()
+    except (Exception, SystemExit) as e:
+        if (DATA_PROCESSED / "fact_harga_pasar.csv").exists():
+            print(f"[WARN] Gagal menarik data dari Supabase: {e}. Fallback ke CSV lokal...")
+            return _load_local_csvs()
+        
+        allow_mock = os.getenv("HARGAWATCH_ALLOW_MOCK", "0").lower() in ("1", "true", "yes")
+        if allow_mock:
+            print("[WARN] Supabase dan CSV lokal tidak tersedia. Menggunakan generator mock karena HARGAWATCH_ALLOW_MOCK=1...")
+            return generate_mock_raw_datasets()
+
+        raise RuntimeError(
+            f"Gagal memuat dataset: Supabase gagal ({e}) dan cache CSV lokal tidak ditemukan di "
+            f"{DATA_PROCESSED / 'fact_harga_pasar.csv'}. Pipeline fail-closed untuk mencegah komputasi "
+            "pada data tiruan/mock. Set HARGAWATCH_ALLOW_MOCK=1 hanya untuk pengujian offline/CI."
+        )
 
 
 def prepare_base_series(

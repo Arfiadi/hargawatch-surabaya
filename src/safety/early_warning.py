@@ -18,7 +18,7 @@ import pandas as pd
 
 # Cluster definitions for adaptive EWS threshold calibration
 VOLATILE_KOMODITAS_IDS = {50, 38, 37, 39, 46, 48}       # Cabai, Bawang Merah, Tomat, Buncis
-MODERATE_KOMODITAS_IDS = {16, 13, 17, 14, 3, 49, 45, 47, 44, 58, 59, 60, 61, 62} # Unggas, Telur, Umbi, Ikan
+MODERATE_KOMODITAS_IDS = {16, 13, 17, 14, 49, 45, 47, 44, 58, 59, 60, 61, 62} # Unggas, Telur, Umbi, Ikan
 # All other commodities default to Staples / Administered Prices / FMCG
 
 

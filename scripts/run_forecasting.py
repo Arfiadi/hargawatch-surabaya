@@ -81,17 +81,33 @@ def load_champion_from_registry(
     if model_path_str:
         p = Path(model_path_str)
         if p.exists():
-            resolved_path = p
+            resolved_path = p.resolve()
         elif (MODEL_DIR / p.name).exists():
-            resolved_path = MODEL_DIR / p.name
+            resolved_path = (MODEL_DIR / p.name).resolve()
 
     if resolved_path and resolved_path.exists():
         try:
+            # Security: Path containment check - model MUST reside strictly within MODEL_DIR
+            model_dir_resolved = MODEL_DIR.resolve()
+            if not resolved_path.is_relative_to(model_dir_resolved):
+                raise PermissionError(f"Security violation: model path {resolved_path} outside {model_dir_resolved}")
+
+            # Security: Mandatory SHA-256 integrity validation for non-naive models
+            expected_sha256 = entry.get("sha256")
+            if not expected_sha256:
+                raise ValueError(f"Integrity check failed: champion entry {key} ({model_name}) lacks sha256 in registry.json")
+
+            import hashlib
+            with open(resolved_path, "rb") as f:
+                actual_sha256 = hashlib.sha256(f.read()).hexdigest()
+            if actual_sha256 != expected_sha256:
+                raise ValueError(f"Integrity check mismatch for {resolved_path.name}: expected {expected_sha256}, got {actual_sha256}")
+
             with open(resolved_path, "rb") as f:
                 model_obj = pickle.load(f)
             return model_name, model_obj, features
         except Exception as e:
-            print(f"  [WARN] Failed to load local model {resolved_path}: {e}")
+            print(f"  [SECURITY/INTEGRITY ERROR] Failed to load local model {resolved_path}: {e}")
 
     # Fallback to W&B Model Registry if available
     try:
@@ -103,11 +119,16 @@ def load_champion_from_registry(
         download_dir = artifact.download()
         pkl_files = list(Path(download_dir).glob("*.pkl"))
         if pkl_files:
-            with open(pkl_files[0], "rb") as f:
+            target_pkl = pkl_files[0].resolve()
+            # Security: Path containment check for downloaded artifact
+            download_dir_resolved = Path(download_dir).resolve()
+            if not target_pkl.is_relative_to(download_dir_resolved):
+                raise PermissionError(f"Security violation: artifact path {target_pkl} outside {download_dir_resolved}")
+            with open(target_pkl, "rb") as f:
                 model_obj = pickle.load(f)
             return model_name, model_obj, features
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [WARN] W&B fallback artifact load skipped: {e}")
 
     return model_name, None, features
 
@@ -130,6 +151,9 @@ def train_and_forecast_commodity(
     slice_origin = df_lags[df_lags["tanggal"] == origin_date].copy()
     # Filter out markets where commodity has been absent >7 days (price_current is NaN)
     slice_origin = slice_origin[slice_origin["price_current"].notna()].copy()
+
+    # Safety Guardrail: Only forecast for active markets where the commodity is actually traded (price_current > 0 and notna)
+    slice_origin = slice_origin[slice_origin["price_current"].notna() & (slice_origin["price_current"] > 0)].copy()
 
     if slice_origin.empty:
         return pd.DataFrame()
@@ -201,9 +225,10 @@ def train_and_forecast_commodity(
             variance_floor = np.maximum(p_curr * 0.015, 100.0)
             std_effective = np.maximum(std_7d, variance_floor)
             diffusion_scale = np.sqrt(h / 7.0)
-            p50 = np.round(p_curr).astype(int)
-            p10 = np.maximum(0, np.round(p_curr - 1.28 * std_effective * diffusion_scale)).astype(int)
-            p90 = np.round(p_curr + 1.28 * std_effective * diffusion_scale).astype(int)
+            p50 = np.maximum(0, np.nan_to_num(np.round(p_curr), nan=0)).astype(int)
+            p10 = np.maximum(0, np.nan_to_num(np.round(p_curr - 1.28 * std_effective * diffusion_scale), nan=0)).astype(int)
+            p10 = np.minimum(p10, p50)
+            p90 = np.maximum(p50, np.nan_to_num(np.round(p_curr + 1.28 * std_effective * diffusion_scale), nan=p50)).astype(int)
             preds = {
                 "harga_prediksi": p50,
                 "batas_bawah": p10,
@@ -272,7 +297,63 @@ def train_and_forecast_commodity(
     if not all_forecasts:
         return pd.DataFrame()
 
-    return pd.concat(all_forecasts, ignore_index=True)
+    df_fc_all = pd.concat(all_forecasts, ignore_index=True)
+    df_fc_all = df_fc_all[df_fc_all["harga_prediksi"] > 0].copy()
+    return df_fc_all
+
+
+def validate_and_sanitize_outputs(
+    df_forecast: pd.DataFrame,
+    df_ews: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Atomic data-quality gate verifying forecasts and EWS integrity before persistence/upsert.
+    
+    Validations enforced:
+    1. Primary Key Deduplication: (tanggal, pasar_id, komoditas_id)
+    2. Monotonic Non-Crossing: 0 <= batas_bawah <= harga_prediksi <= batas_atas
+    3. Completeness & NaN Rejection: No nulls in key analytical metrics
+    4. Sane bounds: positive prices and valid EWS score limits [0, 100]
+    5. Valid EWS Status Enum: NORMAL, WASPADA, TINGGI
+    """
+    if df_forecast.empty:
+        raise ValueError("[QUALITY GATE ERROR] df_forecast is empty. Aborting publish.")
+    if df_ews.empty:
+        raise ValueError("[QUALITY GATE ERROR] df_ews is empty. Aborting publish.")
+
+    # 1. Deduplicate records on primary key (tanggal, pasar_id, komoditas_id)
+    df_fc = df_forecast.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last").copy()
+    df_ew = df_ews.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last").copy()
+
+    # 2. Reject Nulls / NaNs in critical columns
+    fc_critical = ["tanggal", "pasar_id", "komoditas_id", "harga_prediksi", "batas_bawah", "batas_atas"]
+    if df_fc[fc_critical].isnull().values.any():
+        null_counts = df_fc[fc_critical].isnull().sum().to_dict()
+        raise ValueError(f"[QUALITY GATE ERROR] df_forecast contains nulls: {null_counts}")
+
+    ews_critical = ["tanggal", "pasar_id", "komoditas_id", "total_skor", "status_warning"]
+    if df_ew[ews_critical].isnull().values.any():
+        null_counts = df_ew[ews_critical].isnull().sum().to_dict()
+        raise ValueError(f"[QUALITY GATE ERROR] df_ews contains nulls: {null_counts}")
+
+    # 3. Enforce monotonic non-crossing ordering: batas_bawah <= harga_prediksi <= batas_atas
+    df_fc["batas_bawah"] = np.minimum(df_fc["batas_bawah"], df_fc["harga_prediksi"])
+    df_fc["batas_atas"] = np.maximum(df_fc["batas_atas"], df_fc["harga_prediksi"])
+
+    # 4. Enforce strictly positive prices
+    if (df_fc["harga_prediksi"] <= 0).any():
+        raise ValueError("[QUALITY GATE ERROR] df_forecast contains non-positive harga_prediksi.")
+
+    # 5. Enforce valid EWS scores and statuses
+    if ((df_ew["total_skor"] < 0) | (df_ew["total_skor"] > 100)).any():
+        raise ValueError("[QUALITY GATE ERROR] df_ews total_skor out of [0, 100] range.")
+    
+    valid_statuses = {"NORMAL", "WASPADA", "TINGGI"}
+    invalid_statuses = set(df_ew["status_warning"].unique()) - valid_statuses
+    if invalid_statuses:
+        raise ValueError(f"[QUALITY GATE ERROR] df_ews contains invalid status_warning: {invalid_statuses}")
+
+    print(f"[QUALITY GATE] PASSED: Verified {len(df_fc)} forecast rows & {len(df_ew)} EWS rows (zero nulls, non-crossing quantiles, deduplicated).")
+    return df_fc, df_ew
 
 
 def upsert_to_supabase(df_forecast: pd.DataFrame, df_ews: pd.DataFrame):
@@ -280,6 +361,10 @@ def upsert_to_supabase(df_forecast: pd.DataFrame, df_ews: pd.DataFrame):
     try:
         from src.utils.ingest_supabase import koneksi
         from psycopg2.extras import execute_values
+
+        # Defensive deduplication before batching into PostgreSQL
+        df_forecast = df_forecast.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last")
+        df_ews = df_ews.drop_duplicates(subset=["tanggal", "pasar_id", "komoditas_id"], keep="last")
 
         conn = koneksi()
         cur = conn.cursor()
@@ -376,7 +461,7 @@ def main():
             commodity_name=cname,
             horizon_days=args.horizon,
             include_weather=args.use_weather,
-            force_db=args.from_db
+            force_db=False  # Pulled fresh once in main(), use local cache to prevent N redundant queries
         )
         if not fc_df.empty:
             all_forecast_dfs.append(fc_df)
@@ -393,7 +478,9 @@ def main():
     df_lags_all = build_lag_features(df_base_all)
     slice_latest = df_lags_all[
         (df_lags_all["tanggal"] == latest_date) &
-        (df_lags_all["komoditas_id"].isin(target_ids))
+        (df_lags_all["komoditas_id"].isin(target_ids)) &
+        (df_lags_all["price_current"].notna()) &
+        (df_lags_all["price_current"] > 0)
     ].copy()
 
     # Match with day-7 forecast
@@ -406,6 +493,10 @@ def main():
     # Drop tanggal from forecast slice so merge aligns each market/commodity to current origin t
     fc_day7_clean = fc_day7.drop(columns=["tanggal"], errors="ignore")
     df_final_ews = compute_early_warning_scores(slice_latest, fc_day7_clean)
+
+    # Pre-Publish Quality Gate & Deduplication (Gate F-05 / S1)
+    print("\n[INFO] Validating forecasting and EWS integrity against Quality Gate...")
+    df_final_forecasts, df_final_ews = validate_and_sanitize_outputs(df_final_forecasts, df_final_ews)
 
     # Save to local CSV
     out_fc_path = DATA_PROCESSED / "fact_forecast.csv"

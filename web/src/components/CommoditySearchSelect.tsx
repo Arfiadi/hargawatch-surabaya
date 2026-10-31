@@ -30,7 +30,7 @@ export default function CommoditySearchSelect({
   options,
   valueId,
   onChange,
-  searchPlaceholder = "Cari dari 38 komoditas Surabaya...",
+  searchPlaceholder = "Cari dari 37 komoditas Surabaya...",
   emptyNoun = "komoditas",
   className = "",
   panelClassName = "w-full sm:w-84",

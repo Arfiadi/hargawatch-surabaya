@@ -269,16 +269,6 @@
     "champion_model": "XGBoost p50",
     "karakteristik_pasar": "**ML Unggul.** Siklus pakan Blitar & Keputran"
   },
-  "3": {
-    "komoditas_id": 3,
-    "nama": "Bawang Putih",
-    "klaster": "Hortikultura & Sayuran",
-    "kategori_performa": "2. Moderat & Musiman",
-    "tier": 2,
-    "wape_benchmark_pct": 3.62,
-    "champion_model": "Naive Last Value",
-    "karakteristik_pasar": "Musiman pasokan impor"
-  },
   "45": {
     "komoditas_id": 45,
     "nama": "Kentang",

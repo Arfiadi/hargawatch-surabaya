@@ -231,8 +231,8 @@ hargawatch-surabaya/
 │   ├── panduan_operasional.md      # SOP operasional harian & Task Scheduler
 │   └── daftar_komoditas.md         # Master 37 komoditas pantauan
 │
-├── PROJECT_RULES.md                # Aturan koding ketat untuk AI Agent
-├── ROADMAP.md                      # Status proyek & backlog mendesak
+├── AGENTS.md                       # Kontrak operasional & aturan kerja AI Agent
+├── README.md                       # Dokumentasi utama proyek & ringkasan arsitektur
 ├── requirements.txt                # Semua dependensi (backward compatibility)
 ├── requirements-pipeline.txt       # Dependensi khusus data pipeline
 └── requirements-ml.txt             # Dependensi khusus machine learning
