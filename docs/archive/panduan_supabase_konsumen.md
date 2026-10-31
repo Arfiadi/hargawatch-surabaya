@@ -1,3 +1,7 @@
+> ⚠️ **ARSIP HISTORIS**: Dokumen ini disimpan untuk tujuan riwayat rekam jejak pengembangan. Untuk acuan teknis dan operasional produksi terkini, silakan merujuk pada [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md), [`docs/PRD_HargaWatch_v2.md`](../PRD_HargaWatch_v2.md), dan [`docs/panduan_operasional.md`](../panduan_operasional.md).
+
+---
+
 # Panduan Supabase HargaWatch — untuk Konsumen Data
 
 Dokumen ini untuk anggota tim yang ingin **membaca data HargaWatch dari database Supabase**

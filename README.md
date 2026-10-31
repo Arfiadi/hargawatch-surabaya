@@ -37,8 +37,8 @@ flowchart LR
     end
     subgraph ML & Analytics [Machine Learning]
         M1[Feature Engineering]
-        M2["Champion Models (GBDT)"]
-        M3["EWS Logic (20-20-20-40)"]
+        M2["Champion Models (Two-Tier: GBDT & Baseline)"]
+        M3["Adaptive EWS Logic (4-Pilar 100 Poin)"]
     end
     subgraph MLOps
         W["Weights & Biases<br>Model Registry"]

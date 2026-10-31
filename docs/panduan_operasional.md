@@ -87,18 +87,17 @@ WANDB_PROJECT=hargawatch-surabaya
 ### Langkah 3: Ekspor Model Champion & Sinkronisasi Registri
 Agar proses forecasting harian berjalan instan tanpa perlu melatih ulang dari nol setiap pagi, seluruh artefak model biner (`.pkl`) dan konfigurasinya telah terdaftar di `models/forecasting/registry.json`.
 
-Jika ingin melatih ulang atau memperbarui model champion untuk seluruh **38 komoditas**:
+Jika ingin melatih ulang atau memperbarui model champion untuk seluruh **37 komoditas**:
 ```powershell
-# Mode Cepat (Paralel Multi-Core 16 Worker):
-.\.venv\Scripts\python scripts/run_parallel_commodity_experiments.py --workers 4
-
-# Atau ekspor champion prioritas strategis:
-.\.venv\Scripts\python scripts/export_champion_models.py
+# Eksekusi Retraining Terpadu & Kalibrasi Kuantil (Two-Tier Framework):
+.\.venv\Scripts\python scripts/run_unified_retraining.py
 ```
 Perintah ini akan secara otomatis:
-1. Melatih arsitektur champion terpilih (*LightGBM*, *CatBoost*, *XGBoost*, atau *Naive Last Value / SMA*) pada data historis lengkap.
-2. Menyimpan artefak model biner ke folder `models/forecasting/`.
-3. Memperbarui registri model champion `models/forecasting/registry.json` dan metadata `config/commodities.json`.
+1. Mengevaluasi seluruh 37 komoditas pada 6 pasar secara walk-forward.
+2. Melatih arsitektur champion terpilih (*CatBoost*, *XGBoost*, atau *Naive Last Value / SMA*) pada data historis lengkap.
+3. Mengkalibrasi kuantil dan menerapkan *monotone rearrangement* untuk mencegah *crossing quantile*.
+4. Menyimpan artefak model biner ke folder `models/forecasting/`.
+5. Memperbarui registri model champion `models/forecasting/registry.json`.
 
 ---
 
@@ -212,6 +211,6 @@ Skrip ini akan menelan seluruh riwayat harga mutakhir, melatih model dengan bobo
 | **Menjalankan Simulasi Lokal (Tanpa Sentuh Cloud)** | `.\.venv\Scripts\python scripts/run_forecasting.py --local-only --horizon 7` |
 | **Mengevaluasi & Mengirim Alert Telegram** | `.\.venv\Scripts\python scripts/generate_daily_alerts.py` |
 | **Mengejar Tanggal Data yang Tertinggal** | `.\.venv\Scripts\python scripts/update_catchup.py` |
-| **Melatih Ulang 38 Model Champion (Paralel)** | `.\.venv\Scripts\python scripts/run_parallel_commodity_experiments.py --workers 4` |
+| **Melatih Ulang 37 Model Champion (Terpadu)** | `.\.venv\Scripts\python scripts/run_unified_retraining.py` |
 | **Memasang Otomasi Windows Task Scheduler** | `powershell -ExecutionPolicy Bypass -File scripts/setup_task_scheduler.ps1` |
-| **Menjalankan Seluruh Unit Test Suite (79 Tests)** | `.\.venv\Scripts\pytest tests/` |
+| **Menjalankan Seluruh Unit Test Suite (94 Tests)** | `.\.venv\Scripts\pytest tests/` |

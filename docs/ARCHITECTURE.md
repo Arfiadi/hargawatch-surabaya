@@ -56,14 +56,13 @@ flowchart TB
     %% 3. AI & MLOPS ENGINE
     subgraph L3 ["3. LAYER PERAMALAN AI & MLOPS ENGINE (GOLD LAYER)"]
         direction TB
-        subgraph TIERED ["Arsitektur Peramalan Berjenjang (Tiered Forecasting)"]
-            M1["TIER 1: Deep GBDT Kuantil<br/>(LightGBM / CatBoost p10, p50, p90)<br/>Cabai Rawit, Bawang, Telur"]:::ai
-            M2["TIER 2: Regulated & Seasonal<br/>(Naive Last Value / Step Baseline)<br/>Beras, Minyak Goreng, Gula, Daging"]:::ai
-            M3["TIER 3: Ultra-Sticky & FMCG<br/>(Deterministic Constant Benchmark)<br/>Indomie, Garam, Susu SKM"]:::ai
+        subgraph TIERED ["Arsitektur Peramalan Berjenjang (Two-Tier Forecasting Framework)"]
+            M1["TIER 1: Baseline-Driven Robust (30 Komoditas)<br/>(Naive Last Value & SMA-7d)<br/>Beras, Minyak, Gula, Daging, Perikanan, FMCG"]:::ai
+            M2["TIER 2: ML-Enhanced Specialized GBDT (7 Komoditas)<br/>(CatBoost & XGBoost Kuantil p10, p50, p90)<br/>Cabai Rawit, Cabai Besar, Cabai Keriting, Bawang Merah, Tomat, Buncis, Telur"]:::ai
         end
 
-        subgraph VALIDATION ["Validasi & Model Registry"]
-            V1["Walk-Forward Backtesting<br/>(45 Rolling Windows, Causal Cutoff)"]:::ai
+        subgraph VALIDATION ["Validasi, Kalibrasi & Model Registry"]
+            V1["Walk-Forward Backtesting & Monotone Rearrangement<br/>(Rolling Origin Causal Cutoff)"]:::ai
             V2["Model Registry & Export<br/>(models/forecasting/*.pkl & registry.json)"]:::ai
             V3["Weights & Biases (W&B)<br/>(Eksperimen & Tracking MLOps)"]:::ai
         end
@@ -71,7 +70,6 @@ flowchart TB
 
     FE --> M1
     FE --> M2
-    FE --> M3
     M1 <--> V1
     M2 <--> V1
     V1 --> V2
@@ -92,7 +90,6 @@ flowchart TB
 
     M1 --> EWS
     M2 --> EWS
-    M3 --> EWS
     EWS --> STATUS
     STATUS --> TG
     STATUS --> DB_GOLD
@@ -173,64 +170,66 @@ hargawatch-surabaya/
 │   │   ├── scrape_produsen.py      # Scraper harga produsen
 │   │   ├── download_cuaca.py       # Pengambil data cuaca dari Open-Meteo
 │   │   ├── download_inflasi_bps.py # Pengambil data inflasi dari BPS
-│   │   ├── preprocessing_final.py  # Pembersih & normalizer data
-│   │   ├── fetcher.py              # [Placeholder] API client dengan retry/timeout
-│   │   └── cleaner.py              # [Placeholder] Penanganan missing values (ffill)
+│   │   ├── preprocessing_final.py  # Pembersih, imputasi ffill limit=7, normalisasi
+│   │   └── fetcher.py              # HTTP client dengan retry, jitter, & timeout
 │   │
 │   ├── analytics/                  # Logika Analitik & Feature Engineering
-│   │   ├── features.py             # Feature engineering untuk time-series forecasting
-│   │   ├── metrics.py              # Error Analysis Toolkit (WAPE, PICP, Residual Diagnostics)
-│   │   └── seasonal.py             # [Placeholder] Analisis pola Ramadan/Nataru
+│   │   ├── features.py             # Feature engineering time-series & kalender Ramadan
+│   │   └── metrics.py              # Error Analysis Toolkit (WAPE, PICP, Directional Accuracy)
 │   │
 │   ├── models/                     # Logika Pemodelan Machine Learning
-│   │   ├── models.py               # Kumpulan Kandidat Model (GBDT, Ridge, dll)
+│   │   ├── models.py               # Definisi model GBDT (CatBoost, XGBoost, LightGBM) & Baseline
 │   │   ├── backtest.py             # Walk-forward rolling-origin backtesting engine
-│   │   ├── forecast_engine.py      # Orkestrator eksperimen komparasi & ablasi di Notebook
-│   │   └── anomaly_detector.py     # [Placeholder] Deteksi lonjakan harga tidak wajar
+│   │   ├── forecast_engine.py      # Engine forecasting multi-horizon & monotone rearrangement
+│   │   └── anomaly_detector.py     # Deteksi anomali lonjakan & disparitas harga pasar
 │   │
 │   ├── safety/                     # Sistem Peringatan Dini (Early Warning System)
-│   │   ├── early_warning.py        # Composite scoring: Normal / Waspada / Tinggi
-│   │   └── alert_generator.py      # [Placeholder] Pembuat teks otomatis Price Surge Alert
+│   │   ├── early_warning.py        # Composite scoring 4-pilar: Normal / Waspada / Siaga Tinggi
+│   │   └── alert_generator.py      # Generator teks narasi peringatan krisis pasar Markdown
 │   │
 │   └── utils/                      # Fungsi Pembantu Umum
 │       ├── ingest_supabase.py      # Koneksi & DDL Supabase PostgreSQL
 │       ├── setup_ml_tables.py      # Setup tabel Gold Layer (fact_forecast, fact_early_warning)
-│       ├── tambah_kalender.py      # Generator dim_kalender (libur, Ramadan)
-│       ├── utils_alerting.py       # Kirim notifikasi Telegram
-│       └── logger.py               # [Placeholder] Logging sistem untuk monitoring
+│       ├── tambah_kalender.py      # Generator dim_kalender (libur nasional, Ramadan)
+│       └── utils_alerting.py       # Wrapper pengiriman notifikasi Bot Telegram
 │
 ├── scripts/                        # ⚙️ Entry Points / Eksekutor (Runner Scripts)
+│   ├── run_daily_pipeline.py       # Master runner harian (scraping -> forecast -> alerting)
+│   ├── run_unified_retraining.py   # Retraining terpadu 37 komoditas & ekspor model champion
 │   ├── update_harian.py            # Cron job harian: scrape + upsert ke Supabase
-│   ├── update_catchup.py           # Isi tanggal bolong di database secara otomatis
-│   ├── run_forecasting.py          # Pipeline forecasting & early warning
-│   ├── run_wandb_experiment.py     # Tracker eksperimen ML ke Weights & Biases
-│   ├── run_pipeline.sh             # Runner bash untuk Linux VPS / Cron
-│   └── generate_daily_alerts.py    # [Placeholder] Evaluasi risiko & update peringatan dini
+│   ├── update_catchup.py           # Auto-recovery tanggal bolong di database
+│   ├── run_forecasting.py          # Pipeline peramalan harian & EWS scoring
+│   ├── generate_daily_alerts.py    # Evaluasi risiko & dispatch notifikasi Telegram
+│   └── run_wandb_experiment.py     # Tracker eksperimen ML ke Weights & Biases
 │
 ├── config/                         # 🛠️ Konfigurasi Sistem
-│   ├── config.yaml                 # [Placeholder] Konfigurasi database & threshold
-│   └── commodities.json            # [Placeholder] Pemetaan nama komoditas/pasar
+│   ├── config.yaml                 # Konfigurasi database, pipeline, & threshold EWS
+│   └── commodities.json            # Master mapping 37 komoditas & champion model
 │
 ├── tests/                          # 🧪 Pengujian Otomatis (Pytest)
 │   ├── conftest.py                 # Fixtures & data sintetis untuk pengujian
-│   ├── test_alerting.py            # Uji notifikasi Telegram
-│   ├── test_data_quality.py        # Uji kualitas data (ffill, outlier)
-│   ├── test_early_warning.py       # Uji logika status Normal/Waspada/Tinggi
+│   ├── test_alerting.py            # Uji notifikasi Telegram & alert generator
+│   ├── test_data_quality.py        # Uji kualitas data (ffill, outlier, kalender)
+│   ├── test_early_warning.py       # Uji logika skor 4-pilar Normal/Waspada/Tinggi
 │   ├── test_ml_features.py         # Uji feature engineering (zero lookahead bias)
-│   ├── test_ml_models.py           # Uji model forecasting (baseline & LightGBM)
+│   ├── test_ml_models.py           # Uji model forecasting (baseline, CatBoost, XGBoost)
 │   └── test_pipeline_integration.py # Uji koneksi Supabase & skema tabel
 │
 ├── web/                            # 🌐 Frontend Dashboard (Next.js 15 + Tailwind CSS v4)
 │   └── src/
-│       ├── app/                    # Halaman: /, /early-warning, /forecasting, /peta
-│       ├── components/             # UI: SmartShoppingBasket, PriceTrendChart, dll
-│       ├── data/                   # Mock data untuk pengembangan
-│       └── lib/                    # Supabase client (supabase.ts)
+│       ├── app/                    # Halaman: /, /peta, /forecasting, /early-warning
+│       ├── components/             # UI: SmartShoppingBasket, Header, Footer, dll
+│       ├── data/                   # Mock data cadangan pengembangan
+│       └── lib/                    # Supabase client & data service
 │
 ├── docs/                           # 📖 Dokumentasi Proyek
 │   ├── ARCHITECTURE.md             # (File ini) Peta arsitektur & struktur direktori
 │   ├── PRD_HargaWatch_v2.md        # Product Requirements Document (Production v2.0)
-│   └── Evaluasi_Struktur_Proyek.md # Catatan evaluasi sebelum restrukturisasi
+│   ├── forecasting_methodology.md  # Metodologi Two-Tier Forecasting & Monotone Rearrangement
+│   ├── EWS_methodology.md          # Metodologi Adaptive Early Warning System (4-Pilar)
+│   ├── klasifikasi_hasil_forecasting.md # Hasil benchmark performa 37 komoditas
+│   ├── panduan_operasional.md      # SOP operasional harian & Task Scheduler
+│   └── daftar_komoditas.md         # Master 37 komoditas pantauan
 │
 ├── PROJECT_RULES.md                # Aturan koding ketat untuk AI Agent
 ├── ROADMAP.md                      # Status proyek & backlog mendesak

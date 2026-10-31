@@ -1,7 +1,7 @@
 # Autoresearch Program: HargaWatch Surabaya
 
 > **Paradigma:** Otonomi Eksperimen Machine Learning (Andrej Karpathy)  
-> **Fokus:** Forecasting 6 Komoditas Kategori 3 (Kritis & Volatil)  
+> **Fokus:** Forecasting 7 Komoditas Kategori 3 (Kritis & Volatil)  
 > **Target:** Menurunkan WAPE, menjaga PICP $\ge 80\%$, merebut dominasi dari Naive Baseline ke ML.
 
 ---
@@ -59,10 +59,11 @@ Sebelum memulai eksperimen, ini adalah rekor *baseline* yang harus Anda kalahkan
 | :---: | :--- | :--- | :---: | :---: | :--- |
 | **50** | **Cabe Rawit Merah** | XGBoost p50 | **14.97%** | 78.6% | Turunkan WAPE $< 13.5\%$, PICP $\ge 80\%$ |
 | **39** | **Bawang Merah** | CatBoost p50 | **8.02%** | 78.6% | Turunkan WAPE $< 7.0\%$, PICP $\ge 80\%$ |
-| **46** | **Tomat Merah** | Naive Last Value | **11.97%** | - | Rebut gelar dari Naive (Target ML: WAPE $< 11.0\%$) |
-| **37** | **Cabe Merah Keriting** | Naive Last Value | **12.50%** | - | Rebut gelar dari Naive (Target ML: WAPE $< 11.8\%$) |
+| **46** | **Tomat Merah** | XGBoost p50 | **11.45%** | 77.2% | Turunkan WAPE $< 11.0\%$, PICP $\ge 80\%$ |
+| **37** | **Cabe Merah Keriting** | CatBoost p50 | **11.95%** | 78.2% | Turunkan WAPE $< 11.5\%$, PICP $\ge 80\%$ |
 | **48** | **Buncis** | XGBoost p50 | **9.57%** | 71.7% | Naikkan PICP dari 71.7% ke $\ge 80.0\%$ |
-| **38** | **Cabe Merah Besar** | XGBoost p50 | **13.63%** | 76.1% | Turunkan WAPE $< 12.0\%$, PICP $\ge 80\%$ |
+| **38** | **Cabe Merah Besar** | CatBoost p50 | **13.39%** | 79.1% | Turunkan WAPE $< 12.0\%$, PICP $\ge 80\%$ |
+| **16** | **Telur Ayam Ras** | XGBoost p50 | **3.19%** | 78.4% | Turunkan WAPE $< 3.0\%$, PICP $\ge 80\%$ |
 
 ---
 

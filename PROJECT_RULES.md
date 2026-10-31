@@ -7,11 +7,16 @@ Sistem ini memusatkan seluruh lalu lintas data di **Supabase (Central Hub)**:
 - **Layer 4 (Application Frontend):** Web Next.js **HANYA** melakukan *query (read-only)* data historis dan prediksi langsung dari Supabase. Dilarang membangun/memanggil REST API Python khusus untuk Web.
 
 ## 2. Tech Stack & Aturan Backend (Python/ML)
-- **Model:** Wajib menggunakan pendekatan *Global Tabular ML* via `lightgbm` (bukan ARIMA/Lokal). Prediksi harus mencakup *Quantile Regression* (Bawah, Median, Atas).
+- **Arsitektur Model:** Wajib menggunakan **Two-Tier Forecasting Framework**:
+  - **Tier 1 (Baseline-Driven Robust):** 30 komoditas teratur, terkendali HET/HAP, dan FMCG menggunakan *Naive Last Value* atau *SMA-7d* untuk menghindari *overfitting* pada deret data yang lengket (*sticky*).
+  - **Tier 2 (ML-Enhanced Specialized GBDT):** 7 komoditas volatil dan bergejolak (Cabai Rawit Merah, Cabai Merah Besar, Cabai Merah Keriting, Bawang Merah, Tomat Merah, Buncis, Telur Ayam Ras) menggunakan algoritma GBDT kuantil terkalibrasi (**CatBoost** dan **XGBoost** pada kuantil p10, p50, p90) dengan **Monotone Rearrangement** untuk menjamin non-crossing interval ketidakpastian.
+  - **Retraining Terpadu:** Gunakan `scripts/run_unified_retraining.py` untuk kalibrasi dan pendaftaran model champion ke `models/forecasting/registry.json`.
+- **Integritas Data & Anti-Leakage:**
+  - Kalenderisasi harian wajib kontinu (`asfreq('D')`) dengan causal forward-fill bertoleransi maksimal 7 hari (`limit=7`).
+  - **Dilarang keras** melakukan interpolasi linier atau *backward-fill* pada data time series (*zero lookahead bias*).
 - **Style:** 
   - Gunakan **Type Hints** pada setiap fungsi Python baru.
   - Jangan gunakan `print()` untuk production, gunakan modul logging.
-  - Dilarang melakukan interpolasi linier pada *time series* (gunakan *Forward-fill*).
 - **Database Client:** Gunakan `supabase-py`. Rahasiakan *Service Role Key* via `.env`.
 
 ## 3. Tech Stack & Aturan Frontend (Next.js)

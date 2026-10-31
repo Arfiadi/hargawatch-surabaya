@@ -1,3 +1,7 @@
+> ⚠️ **ARSIP HISTORIS**: Dokumen ini disimpan untuk tujuan riwayat rekam jejak pengembangan. Untuk acuan teknis dan operasional produksi terkini, silakan merujuk pada [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md), [`docs/PRD_HargaWatch_v2.md`](../PRD_HargaWatch_v2.md), dan [`docs/panduan_operasional.md`](../panduan_operasional.md).
+
+---
+
 Pasar Wonokromo confirmed in Kecamatan Wonokromo, Surabaya Selatan gate. Continuing with the rest.Confirmed: Keputran = Kecamatan Tegalsari. Now Pasar Pucang Anom and Pasar Soponyono.Confirmed Pucang Anom = Kelurahan Pucang Sewu, Kecamatan Gubeng. Now checking Pasar Soponyono.## Jawaban Langsung
 
 Pilihan 6 pasar ini **jauh lebih kuat** daripada skema "1 pasar random per kecamatan" — 4 dari 6 pasar ini ternyata sudah menjadi **kios TPID (Tim Pengendali Inflasi Daerah)** resmi milik Pemkot Surabaya, artinya sudah rutin dipantau harganya oleh pemerintah untuk keperluan stabilisasi harga. Ini kabar bagus soal ketersediaan data. Tapi ada satu pasar (Keputran) yang secara fungsi **berbeda kelas** dari yang lain — perlu perlakuan analitis khusus.

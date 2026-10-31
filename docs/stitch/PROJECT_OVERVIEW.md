@@ -1,6 +1,8 @@
 # Project Overview: HargaWatch Surabaya (Google Stitch Blueprint)
 > **Platform Intelijen Harga Pangan dan Early Warning Kota Surabaya**  
-> *Spesifikasi Desain & Master Prompt Context untuk Google Stitch Dashboard Generator*
+> *Spesifikasi Desain & Master Prompt Context untuk Google Stitch Dashboard Generator*  
+>  
+> ℹ️ **CATATAN STATUS BLUEPRINT**: Dokumen ini merupakan cetak biru perancangan visual dan arsitektur informasi (*UI/UX Blueprint*). Pada sistem produksi aktual, pipa data beroperasi dalam mode *batch harian T-1* setiap pagi via Windows Task Scheduler (menyesuaikan rilis data resmi SISKAPERBAPO Jatim).
 
 ---
 

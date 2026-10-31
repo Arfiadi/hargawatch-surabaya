@@ -248,10 +248,10 @@ Kriteria kelulusan teknis yang dapat diverifikasi secara otomatis:
 
 | Kode AC | Kriteria Kelulusan Biner | Metode Verifikasi | Status |
 | :---: | :--- | :--- | :---: |
-| **AC-01** | Seluruh unit test integritas data, feature engineering, model forecasting, dan EWS lulus tanpa kegagalan. | Eksekusi terminal: `pytest` berakhir dengan **exit code 0** (69/69 passed). | ✅ **LULUS** |
+| **AC-01** | Seluruh unit test integritas data, feature engineering, model forecasting, dan EWS lulus tanpa kegagalan. | Eksekusi terminal: `pytest` berakhir dengan **exit code 0** (94 passed, 1 skipped). | ✅ **LULUS** |
 | **AC-02** | Frontend Next.js berhasil di-compile dan di-bundle untuk mode produksi tanpa error sintaksis/tipe. | Eksekusi terminal: `npm --prefix web run build` berakhir dengan **exit code 0** (8/8 static pages generated). | ✅ **LULUS** |
 | **AC-03** | Labelisasi transparan `[Pasar Induk]` vs `[Pasar Lingkungan]` terpasang dan filter pasar berfungsi di UI `/`. | Pengujian komponen antarmuka web dan assertion filter pasar. | 🟡 *Dalam Penerapan* |
-| **AC-04** | Pipeline peramalan harian mengekspor proyeksi H+1 s.d H+14 untuk seluruh 37 komoditas SISKAPERBAPO ke Supabase. | Verifikasi record pada tabel `fact_forecast` untuk seluruh ID komoditas. | 🟡 **ON PROGRESS**<br/>*(Infrastruktur aktif untuk 6 komoditas prioritas; dalam tahap ekspansi ke 37 komoditas)* |
+| **AC-04** | Pipeline peramalan harian mengekspor proyeksi H+1 s.d H+14 untuk seluruh 37 komoditas SISKAPERBAPO ke Supabase. | Verifikasi record pada tabel `fact_forecast` untuk seluruh 37 ID komoditas (2.912 baris ramalan + 215 baris EWS). | ✅ **LULUS** |
 | **AC-05** | Generator peringatan teks menyusun pesan Markdown dengan data valid dan lulus uji pengiriman Telegram. | Eksekusi `tests/test_alerting.py` lulus dengan verifikasi payload pesan. | ✅ **LULUS** |
 
 ---
