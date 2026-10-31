@@ -1703,7 +1703,7 @@ export default function HomePage() {
                 const dataMax = activePrices.length > 0 ? Math.max(...activePrices) : 38000;
                 const rawRange = Math.max(2000, dataMax - dataMin);
                 const pad = Math.round(rawRange * 0.08);
-                const yMin = Math.max(0, Math.floor((dataMin - pad) / 500) * 500);
+                const yMin = 0;
                 const yMax = Math.ceil((dataMax + pad) / 500) * 500;
                 const yRange = Math.max(1000, yMax - yMin);
 
@@ -1716,10 +1716,11 @@ export default function HomePage() {
                   { y: chartTop, val: yMax },
                   { y: chartTop + chartHeight * 0.33, val: Math.round(yMin + yRange * 0.67) },
                   { y: chartTop + chartHeight * 0.67, val: Math.round(yMin + yRange * 0.33) },
-                  { y: chartBottom, val: yMin },
+                  { y: chartBottom, val: 0 },
                 ];
 
                 const formatY = (val: number) => {
+                  if (val === 0) return "Rp 0";
                   if (val >= 1000) {
                     const k = val / 1000;
                     return `Rp ${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}k`;

@@ -1256,7 +1256,17 @@ export async function getLiveMarketComparisonTrends(
     });
 
     const series: MarketTrendSeries[] = TREND_MARKET_CONFIGS.map(cfg => {
-      let lastKnownPrice = 0;
+      // Inisialisasi lastKnownPrice dengan harga valid pertama agar titik awal tidak loncat dari 0
+      let firstValidPrice = 0;
+      for (const dt of allDates) {
+        const val = priceMap[`${cfg.pasar_id}_${dt}`];
+        if (val && val > 0) {
+          firstValidPrice = val;
+          break;
+        }
+      }
+
+      let lastKnownPrice = firstValidPrice;
 
       const points: TrendSeriesPoint[] = allDates.map((dt, idx) => {
         const key = `${cfg.pasar_id}_${dt}`;
