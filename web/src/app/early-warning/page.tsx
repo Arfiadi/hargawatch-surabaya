@@ -822,7 +822,10 @@ export default function EarlyWarningPage() {
                               {/* 6 Market Data Cells with Color-Coded Pricing */}
                               {MARKET_CONFIGS.map((m, mIndex) => {
                                 const marketItem = row.markets[m.id];
-                                if (!marketItem) {
+                                const rawPrice = Number(marketItem?.harga_terakhir);
+                                const hasValidPrice = marketItem && !isNaN(rawPrice) && rawPrice > 0;
+
+                                if (!marketItem || !hasValidPrice) {
                                   return (
                                     <td key={m.id} className="py-2.5 sm:py-space-md px-1 sm:px-space-sm text-center text-text-muted text-xs min-w-[95px] sm:min-w-[110px]">
                                       -
@@ -830,7 +833,7 @@ export default function EarlyWarningPage() {
                                   );
                                 }
 
-                                const price = marketItem.harga_terakhir || 0;
+                                const price = rawPrice;
                                 const isMin = hasSpread && price === minPrice;
                                 const isMax = hasSpread && price === maxPrice;
                                 const isModerate = hasSpread && !isMin && !isMax;

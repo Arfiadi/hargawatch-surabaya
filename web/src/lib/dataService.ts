@@ -568,7 +568,10 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
     const hargaMap = new Map<string, number>();
     if (hargaRes.data) {
       for (const h of hargaRes.data) {
-        hargaMap.set(`${h.komoditas_id}_${h.pasar_id}`, Number(h.harga_imputasi));
+        const val = Number(h.harga_imputasi);
+        if (!isNaN(val) && val > 0) {
+          hargaMap.set(`${h.komoditas_id}_${h.pasar_id}`, val);
+        }
       }
     }
 
