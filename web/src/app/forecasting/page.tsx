@@ -616,15 +616,6 @@ export default function ForecastingPage() {
                       Metrik champion H+7 tidak tersedia
                     </span>
                   )}
-                  <span className="text-[11px] text-text-muted">
-                    Champion benchmark: {modelMeta?.modelName || "Tidak tersedia"}
-                  </span>
-                  {targetHorizonRow ? (
-                    <span className="text-[11px] text-text-muted">
-                      Proyeksi H+{actualHorizon}: {targetHorizonRow.provenanceKnown ? targetHorizonRow.modelNames.join(", ") || "Metode tidak tercatat" : "Asal model tidak tercatat"}
-                      {targetHorizonRow.isFallback ? " · fallback/baseline" : ""}
-                    </span>
-                  ) : null}
                 </div>
               </div>
             </div>
