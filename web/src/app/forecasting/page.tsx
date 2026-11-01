@@ -599,7 +599,7 @@ export default function ForecastingPage() {
               {/* Evaluasi backtest H+7 dan provenance forecast yang sedang ditampilkan */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                  Evaluasi Champion (H+7)
+                  Hasil Uji Historis (7 Hari ke Depan)
                 </span>
                 <div className="flex-1 flex flex-col justify-center py-1 gap-1.5">
                   {modelMeta ? (
@@ -608,13 +608,18 @@ export default function ForecastingPage() {
                         {modelMeta.wape.toFixed(2)}%
                       </span>
                       <span className="font-label-caps text-label-caps text-text-secondary">
-                        WAPE backtest H+7
+                        selisih prediksi
                       </span>
                     </div>
                   ) : (
                     <span className="font-label-caps text-label-caps text-text-secondary">
-                      Metrik champion H+7 tidak tersedia
+                      Hasil uji model belum tersedia
                     </span>
+                  )}
+                  {modelMeta && (
+                    <p className="font-label-caps text-label-caps text-text-muted leading-relaxed">
+                      Secara total, dari setiap Rp100 harga aktual pada data uji, selisih prediksi sekitar Rp{modelMeta.wape.toLocaleString("id-ID", { maximumFractionDigits: 2 })}.
+                    </p>
                   )}
                 </div>
               </div>
