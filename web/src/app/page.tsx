@@ -695,8 +695,8 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
-                  {/* Category Filter Pills */}
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 min-[880px]:grid-cols-4" aria-label="Filter kategori komoditas">
+                  {/* Category Filter Pills (Horizontal Scrollable) */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pr-4" aria-label="Filter kategori komoditas">
                     {BEST_PRICE_CATEGORIES.map(({ name, count }) => {
                       const isSelected = selectedCategory === name;
                       return (
@@ -705,16 +705,18 @@ export default function HomePage() {
                           type="button"
                           aria-pressed={isSelected}
                           onClick={() => setSelectedCategory(name)}
-                          className={`inline-flex min-h-12 w-full items-center justify-center gap-1.5 rounded-full border px-2 py-2 font-body-sm text-body-sm whitespace-nowrap transition-colors sm:px-3 ${
+                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer inline-flex items-center gap-1.5 ${
                             isSelected
-                              ? "bg-primary text-on-primary border-primary shadow-sm"
-                              : "bg-white text-text-primary border-border-subtle hover:bg-surface-subtle"
+                              ? "bg-primary text-white shadow-xs"
+                              : "bg-surface-card text-text-secondary hover:text-text-primary hover:bg-surface-subtle border border-border-subtle/80"
                           }`}
                         >
                           <span>{name}</span>
                           <span
-                            className={`inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1 text-[11px] font-semibold ${
-                              isSelected ? "bg-white/20 text-on-primary" : "bg-surface-subtle text-text-muted"
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-tight ${
+                              isSelected
+                                ? "bg-white/20 text-white"
+                                : "bg-surface-subtle text-text-muted"
                             }`}
                           >
                             {count}
