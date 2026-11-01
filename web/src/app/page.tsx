@@ -810,7 +810,7 @@ export default function HomePage() {
                       <p className="font-body-md text-text-secondary">Tidak ada komoditas yang cocok dengan pencarian.</p>
                     </div>
                   ) : (
-                    filteredCommodities.map((item) => (
+                    filteredCommodities.slice(0, 6).map((item) => (
                       <div
                         key={item.id}
                         className="bg-surface-card rounded-xl p-3 sm:p-space-md shadow-xs hover:shadow-md transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden group border border-border-subtle/50 will-change-transform"
