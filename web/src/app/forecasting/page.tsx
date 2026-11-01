@@ -618,7 +618,7 @@ export default function ForecastingPage() {
                   )}
                   {modelMeta && (
                     <p className="font-body-sm text-body-sm text-text-muted leading-relaxed">
-                      Secara total, dari setiap Rp100 harga aktual pada data uji, selisih prediksi sekitar Rp{modelMeta.wape.toLocaleString("id-ID", { maximumFractionDigits: 2 })}.
+                      Dari setiap Rp100.000 harga riil di pasar, rata-rata selisih prediksi sekitar Rp{Math.round(modelMeta.wape * 1000).toLocaleString("id-ID")}.
                     </p>
                   )}
                 </div>
