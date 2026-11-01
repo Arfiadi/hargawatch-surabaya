@@ -201,7 +201,7 @@ def load_raw_datasets(force_db: bool = False) -> Tuple[pd.DataFrame, pd.DataFram
             print(f"[WARN] Gagal menarik data dari Supabase: {e}. Fallback ke CSV lokal...")
             return _load_local_csvs()
         
-        allow_mock = os.getenv("HARGAWATCH_ALLOW_MOCK", "0").lower() in ("1", "true", "yes")
+        allow_mock = os.getenv("HARGAWATCH_ALLOW_MOCK", "").strip() == "1"
         if allow_mock:
             print("[WARN] Supabase dan CSV lokal tidak tersedia. Menggunakan generator mock karena HARGAWATCH_ALLOW_MOCK=1...")
             return generate_mock_raw_datasets()

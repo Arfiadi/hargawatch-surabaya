@@ -62,13 +62,17 @@ def test_manifest_generation_and_validation(tmp_path):
         feat.DATA_PROCESSED = orig_dp
 
 
-def test_fail_closed_without_mock_flag(monkeypatch, tmp_path):
-    """When DB fails and CSV is absent, load_raw_datasets must raise RuntimeError (fail-closed)."""
+@pytest.mark.parametrize("mock_flag", ["0", "false", "true", "yes", None])
+def test_fail_closed_without_mock_flag(monkeypatch, tmp_path, mock_flag):
+    """Only HARGAWATCH_ALLOW_MOCK=1 permits mock data; all other values fail closed."""
     import src.analytics.features as feat
     orig_dp = feat.DATA_PROCESSED
     try:
         feat.DATA_PROCESSED = tmp_path  # Empty directory: no fact_harga_pasar.csv
-        monkeypatch.setenv("HARGAWATCH_ALLOW_MOCK", "0")
+        if mock_flag is None:
+            monkeypatch.delenv("HARGAWATCH_ALLOW_MOCK", raising=False)
+        else:
+            monkeypatch.setenv("HARGAWATCH_ALLOW_MOCK", mock_flag)
 
         # Mock DB connection failure
         def mock_koneksi():
