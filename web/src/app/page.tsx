@@ -695,7 +695,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   {/* Category Filter Pills */}
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" aria-label="Filter kategori komoditas">
+                  <div className="flex flex-wrap items-center gap-2" aria-label="Filter kategori komoditas">
                     {BEST_PRICE_CATEGORIES.map(({ name, count }) => {
                       const isSelected = selectedCategory === name;
                       return (
