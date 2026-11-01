@@ -80,7 +80,7 @@ def test_fail_closed_without_mock_flag(monkeypatch, tmp_path, mock_flag):
         monkeypatch.setattr("src.utils.ingest_supabase.koneksi", mock_koneksi)
 
         with pytest.raises(RuntimeError) as exc_info:
-            feat.load_raw_datasets(force_db=True)
+            load_raw_datasets(force_db=True)
 
         assert "Pipeline fail-closed" in str(exc_info.value)
     finally:
@@ -99,7 +99,7 @@ def test_mock_allowed_with_flag(monkeypatch, tmp_path):
             raise ConnectionError("Supabase connection failed")
         monkeypatch.setattr("src.utils.ingest_supabase.koneksi", mock_koneksi)
 
-        df_h, df_k, df_c = feat.load_raw_datasets(force_db=True)
+        df_h, df_k, df_c = load_raw_datasets(force_db=True)
         assert not df_h.empty
         assert not df_k.empty
         assert not df_c.empty

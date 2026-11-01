@@ -94,8 +94,10 @@ def sample_ews_inputs():
 
 
 @pytest.fixture(autouse=True)
-def mock_raw_datasets_if_missing(monkeypatch):
+def mock_raw_datasets_if_missing(request, monkeypatch):
     """Automatically fallbacks to synthetic datasets in CI or when local files/DB credentials are absent."""
+    if request.node.fspath and Path(str(request.node.fspath)).name == "test_data_integrity.py":
+        return
     from src.analytics.features import DATA_PROCESSED, generate_mock_raw_datasets
     if not (DATA_PROCESSED / "fact_harga_pasar.csv").exists():
         monkeypatch.setattr("src.analytics.features.load_raw_datasets", lambda force_db=False: generate_mock_raw_datasets())
