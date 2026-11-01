@@ -286,3 +286,20 @@ def test_forecast_engine_log_notebook_experiment_returns_none_when_disabled(monk
     assert engine.log_notebook_experiment(run_name="disabled") is None
 
 
+
+
+def test_naive_7d_sma_loader_and_provenance():
+    """Verifies ID 20 champion loads specifically as Naive 7d SMA with provenance."""
+    from scripts.run_forecasting import load_champion_from_registry, train_and_forecast_commodity
+
+    champ_name, model_obj, features = load_champion_from_registry(20, horizon=7)
+    assert champ_name == "Naive 7d SMA"
+    assert model_obj is None
+
+    df_fc = train_and_forecast_commodity(20, "Susu Kental Manis Merk Bendera", horizon_days=3)
+    assert not df_fc.empty
+    assert "model_name" in df_fc.columns
+    assert "is_fallback" in df_fc.columns
+    assert "horizon" in df_fc.columns
+    assert (df_fc["model_name"] == "Naive 7d SMA").all()
+    assert not df_fc["is_fallback"].any()

@@ -74,7 +74,7 @@ def load_champion_from_registry(
     features = entry.get("features", [])
 
     if "naive" in model_name.lower():
-        return "naive", None, features
+        return model_name, None, features
 
     model_obj = None
     resolved_path = None
@@ -185,8 +185,8 @@ def train_and_forecast_commodity(
     # Check champion strategy from Registry for H7
     champ_name, champ_model_h7, champ_features = load_champion_from_registry(komoditas_id, horizon=7)
 
-    # If stable commodity with Naive champion strategy (Beras, Bawang Putih, Daging Ayam)
-    # or if commodity is strategic staple known to be Naive-dominated
+    # Detect baseline strategy: SMA vs Last Value vs GBDT
+    is_sma = bool(champ_name and "sma" in champ_name.lower())
     is_naive_champion = (champ_name and "naive" in champ_name.lower()) or (
         komoditas_id in [2, 13, 49] and not is_cabai
     )
@@ -196,6 +196,16 @@ def train_and_forecast_commodity(
 
     # Dynamic multi-step rolling state per market
     state_df = slice_origin.copy()
+
+    # Pre-build history buffer for full state reconstruction (prevents frozen lag drift)
+    history_buffers = {}
+    for pid in slice_origin["pasar_id"].unique():
+        sub_history = df_base[df_base["pasar_id"] == pid].sort_values("tanggal")
+        prices_tail = sub_history["harga_imputasi"].tail(15).tolist()
+        if len(prices_tail) < 15:
+            pad_val = prices_tail[0] if prices_tail else float(slice_origin.loc[slice_origin["pasar_id"] == pid, "price_current"].iloc[0])
+            prices_tail = [pad_val] * (15 - len(prices_tail)) + prices_tail
+        history_buffers[int(pid)] = prices_tail
 
     for h in range(1, horizon_days + 1):
         target_date = origin_dt + pd.Timedelta(days=int(h))
@@ -217,11 +227,17 @@ def train_and_forecast_commodity(
 
         state_df["target_hari_ke_idulfitri"] = calculate_days_to_idulfitri(pd.Series([target_date])).iloc[0]
 
+        is_fallback_step = False
+        model_name_step = champ_name or ("Naive 7d SMA" if is_sma else "Naive Last Value")
+
         if is_naive_champion or champ_model_h7 is None:
-            # Naive Last Value Persistence baseline with square-root diffusion uncertainty cone
-            p_curr = slice_origin["price_current"].values
+            # Baseline with square-root diffusion uncertainty cone
+            if is_sma:
+                p_curr = slice_origin["rolling_mean_7d"].fillna(slice_origin["price_current"]).values
+            else:
+                p_curr = slice_origin["price_current"].values
+
             std_7d = slice_origin["rolling_std_7d"].fillna(slice_origin["price_current"] * 0.02).values
-            # Adaptive variance floor to prevent zero-width confidence band for sticky commodities
             variance_floor = np.maximum(p_curr * 0.015, 100.0)
             std_effective = np.maximum(std_7d, variance_floor)
             diffusion_scale = np.sqrt(h / 7.0)
@@ -234,8 +250,11 @@ def train_and_forecast_commodity(
                 "batas_bawah": p10,
                 "batas_atas": p90
             }
+            if champ_model_h7 is None and not is_naive_champion:
+                is_fallback_step = True
+                model_name_step = "Fallback Persistence"
         else:
-            # Dynamic Machine Learning Inference (Step-by-Step without linear heuristic)
+            # Dynamic Machine Learning Inference (Step-by-Step with mathematically complete state updates)
             expected_cols = getattr(champ_model_h7, "feature_cols", champ_features or base_feature_cols)
             for col in expected_cols:
                 if col not in state_df.columns:
@@ -266,20 +285,56 @@ def train_and_forecast_commodity(
                     "batas_atas": p90
                 }
 
-                # Dynamic state roll for step h+1
-                if "price_lag_2" in state_df.columns and "price_lag_3" in state_df.columns:
-                    state_df["price_lag_3"] = state_df["price_lag_2"]
-                if "price_lag_1" in state_df.columns and "price_lag_2" in state_df.columns:
-                    state_df["price_lag_2"] = state_df["price_lag_1"]
-                if "price_current" in state_df.columns and "price_lag_1" in state_df.columns:
-                    state_df["price_lag_1"] = state_df["price_current"]
-                if "price_current" in state_df.columns:
-                    state_df["price_current"] = raw_pred
-                if "rolling_mean_7d" in state_df.columns:
-                    state_df["rolling_mean_7d"] = 0.85 * state_df["rolling_mean_7d"] + 0.15 * raw_pred
+                # Complete state rolling: update history buffer and recompute ALL features for step h+1
+                for idx, pid in enumerate(state_df["pasar_id"].astype(int).values):
+                    history_buffers[pid].append(float(raw_pred[idx]))
+
+                keputran_buf = history_buffers.get(1, None)
+
+                for idx, pid in enumerate(state_df["pasar_id"].astype(int).values):
+                    buf = history_buffers[pid]
+                    # buf[-1] is predicted price at step h; buf[-2] is lag 1, buf[-3] is lag 2, etc.
+                    mask_p = (state_df["pasar_id"] == pid)
+                    state_df.loc[mask_p, "price_current"] = buf[-1]
+                    if "price_lag_1" in state_df.columns:
+                        state_df.loc[mask_p, "price_lag_1"] = buf[-2]
+                    if "price_lag_2" in state_df.columns:
+                        state_df.loc[mask_p, "price_lag_2"] = buf[-3]
+                    if "price_lag_3" in state_df.columns:
+                        state_df.loc[mask_p, "price_lag_3"] = buf[-4]
+                    if "price_lag_7" in state_df.columns:
+                        state_df.loc[mask_p, "price_lag_7"] = buf[-8]
+                    if "price_lag_14" in state_df.columns:
+                        state_df.loc[mask_p, "price_lag_14"] = buf[-15]
+                    if "rolling_mean_7d" in state_df.columns:
+                        state_df.loc[mask_p, "rolling_mean_7d"] = float(np.mean(buf[-7:]))
+                    if "rolling_std_7d" in state_df.columns:
+                        std7 = float(np.std(buf[-7:], ddof=1)) if len(buf) >= 7 else 0.0
+                        state_df.loc[mask_p, "rolling_std_7d"] = std7
+                    if "rolling_mean_14d" in state_df.columns:
+                        state_df.loc[mask_p, "rolling_mean_14d"] = float(np.mean(buf[-14:]))
+                    if "rolling_std_14d" in state_df.columns:
+                        std14 = float(np.std(buf[-14:], ddof=1)) if len(buf) >= 14 else 0.0
+                        state_df.loc[mask_p, "rolling_std_14d"] = std14
+                    if "pct_change_1d" in state_df.columns:
+                        denom1 = buf[-2] if buf[-2] > 0 else 1.0
+                        state_df.loc[mask_p, "pct_change_1d"] = (buf[-1] - buf[-2]) / denom1
+                    if "pct_change_7d" in state_df.columns:
+                        denom7 = buf[-8] if buf[-8] > 0 else 1.0
+                        state_df.loc[mask_p, "pct_change_7d"] = (buf[-1] - buf[-8]) / denom7
+
+                    k_src = keputran_buf if keputran_buf is not None else buf
+                    if "keputran_price_lag_1" in state_df.columns:
+                        state_df.loc[mask_p, "keputran_price_lag_1"] = k_src[-2]
+                    if "keputran_price_lag_2" in state_df.columns:
+                        state_df.loc[mask_p, "keputran_price_lag_2"] = k_src[-3]
+                    if "keputran_price_lag_3" in state_df.columns:
+                        state_df.loc[mask_p, "keputran_price_lag_3"] = k_src[-4]
 
             except Exception as e:
                 print(f"  [WARN] Dynamic inference error at step h={h} for {commodity_name}: {e}. Fallback to persistence.")
+                is_fallback_step = True
+                model_name_step = "Fallback Persistence"
                 p_curr = slice_origin["price_current"].values
                 p50 = np.round(p_curr).astype(int)
                 preds = {"harga_prediksi": p50, "batas_bawah": p50, "batas_atas": p50}
@@ -288,9 +343,12 @@ def train_and_forecast_commodity(
             "tanggal": target_date.strftime("%Y-%m-%d"),
             "pasar_id": slice_origin["pasar_id"].astype(int).values,
             "komoditas_id": komoditas_id,
+            "horizon": int(h),
             "harga_prediksi": preds["harga_prediksi"],
             "batas_bawah": preds["batas_bawah"],
-            "batas_atas": preds["batas_atas"]
+            "batas_atas": preds["batas_atas"],
+            "model_name": model_name_step,
+            "is_fallback": is_fallback_step
         })
         all_forecasts.append(step_df)
 

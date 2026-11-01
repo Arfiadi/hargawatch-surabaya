@@ -599,7 +599,7 @@ export default function ForecastingPage() {
               {/* Metrik 4: Akurasi & Model */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                  Model &amp; Akurasi
+                  Akurasi Model (H+7)
                 </span>
                 <div className="flex-1 flex flex-col justify-center py-1">
                   {modelMeta ? (
@@ -1193,7 +1193,7 @@ export default function ForecastingPage() {
                     Rincian Proyeksi Harian
                   </h2>
                   <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                    Taksiran harga rata-rata, rentang toleransi, dan catatan pemantauan harian.
+                    Taksiran harga harian multi-step (dengan benchmark validasi model pada H+7).
                   </p>
                 </div>
 
@@ -1281,6 +1281,11 @@ export default function ForecastingPage() {
                         <tr key={row.horizon} className="hover:bg-surface-subtle/50 transition-colors">
                           <td className="py-3 px-4 font-headline-sm text-body-md text-text-primary">
                             H+{row.horizon}
+                            {row.horizon === 7 && (
+                              <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-primary/10 text-primary font-semibold">
+                                Validasi Resmi
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-text-secondary">
                             <span className="font-semibold text-text-primary block">
@@ -1370,6 +1375,11 @@ export default function ForecastingPage() {
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 font-mono text-xs text-slate-500">
                             <span className="font-bold text-slate-900 tracking-wide">H+{row.horizon}</span>
+                            {row.horizon === 7 && (
+                              <span className="px-1.5 py-0.2 rounded text-[10px] bg-primary/10 text-primary font-semibold">
+                                Validasi Resmi
+                              </span>
+                            )}
                             <span>•</span>
                             <span className="text-slate-600 font-medium">{row.weekday}, {row.formattedDate}</span>
                           </div>
