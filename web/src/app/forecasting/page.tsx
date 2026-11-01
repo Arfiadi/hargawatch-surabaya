@@ -607,17 +607,17 @@ export default function ForecastingPage() {
                       <span className="font-metric-display text-metric-display text-text-primary font-bold">
                         {modelMeta.wape.toFixed(2)}%
                       </span>
-                      <span className="font-label-caps text-label-caps text-text-secondary">
+                      <span className="font-body-sm text-body-sm text-text-secondary">
                         selisih prediksi
                       </span>
                     </div>
                   ) : (
-                    <span className="font-label-caps text-label-caps text-text-secondary">
+                    <span className="font-body-sm text-body-sm text-text-secondary">
                       Hasil uji model belum tersedia
                     </span>
                   )}
                   {modelMeta && (
-                    <p className="font-label-caps text-label-caps text-text-muted leading-relaxed">
+                    <p className="font-body-sm text-body-sm text-text-muted leading-relaxed">
                       Secara total, dari setiap Rp100 harga aktual pada data uji, selisih prediksi sekitar Rp{modelMeta.wape.toLocaleString("id-ID", { maximumFractionDigits: 2 })}.
                     </p>
                   )}
