@@ -54,7 +54,7 @@ set "RC=%ERRORLEVEL%"
 
 if "%RC%"=="0" (
     echo [INFO] Menjalankan pembaruan forecasting & EWS... >> "%LOGFILE%"
-    "%PYEXE%" "%ROOT_DIR%\scripts\run_forecasting.py" --horizon 14 --from-db >> "%LOGFILE%" 2>&1
+    "%PYEXE%" "%ROOT_DIR%\scripts\run_forecasting.py" --horizon 14 --from-db --all-commodities >> "%LOGFILE%" 2>&1
     "%PYEXE%" "%ROOT_DIR%\scripts\generate_daily_alerts.py" >> "%LOGFILE%" 2>&1
 )
 
