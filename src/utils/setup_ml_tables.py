@@ -21,9 +21,24 @@ CREATE TABLE IF NOT EXISTS public.fact_forecast (
     harga_prediksi INT NOT NULL,
     batas_bawah INT,
     batas_atas INT,
+    horizon SMALLINT,
+    origin_date DATE,
+    model_name TEXT,
+    model_horizon SMALLINT,
+    model_sha256 CHAR(64),
+    is_fallback BOOLEAN,
+    forecast_run_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (tanggal, pasar_id, komoditas_id)
 );
+
+ALTER TABLE public.fact_forecast ADD COLUMN IF NOT EXISTS horizon SMALLINT;
+ALTER TABLE public.fact_forecast ADD COLUMN IF NOT EXISTS origin_date DATE;
+ALTER TABLE public.fact_forecast ADD COLUMN IF NOT EXISTS model_name TEXT;
+ALTER TABLE public.fact_forecast ADD COLUMN IF NOT EXISTS model_horizon SMALLINT;
+ALTER TABLE public.fact_forecast ADD COLUMN IF NOT EXISTS model_sha256 CHAR(64);
+ALTER TABLE public.fact_forecast ADD COLUMN IF NOT EXISTS is_fallback BOOLEAN;
+ALTER TABLE public.fact_forecast ADD COLUMN IF NOT EXISTS forecast_run_id UUID;
 
 -- Tabel untuk menyimpan hasil sistem skoring komposit Early Warning
 CREATE TABLE IF NOT EXISTS public.fact_early_warning (

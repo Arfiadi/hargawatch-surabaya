@@ -100,8 +100,8 @@ $$p_{10}(t+h) = \max\left(0, y_t - z_{0.10} \cdot \sigma_t \cdot \sqrt{h}\right)
 $$p_{90}(t+h) = y_t + z_{0.90} \cdot \sigma_t \cdot \sqrt{h}$$
 di mana $z_{0.90} = 1.2816$ dan $\sigma_t = \max\left(\text{std}_{30d}(y), 0.015 \cdot y_t, \text{Rp } 100\right)$. Penerapan batas bawah varians minimum (*adaptive variance floor*) memastikan kerucut ketidakpastian tidak runtuh menjadi nol (*zero-width interval*) pada produk yang mengalami stagnasi pencatatan historis.
 
-### 4.2 Jalur B: Global Quantile GBDT Multi-Horizon
-Untuk 6 komoditas volatil, model dilatih menggunakan algoritma *Gradient Boosted Decision Trees* (LightGBM / XGBoost / CatBoost) dengan *Pinball Loss (Quantile Objective)* pada tingkat kuantil $\alpha \in \{0.10, 0.50, 0.90\}$:
+### 4.2 Jalur B: Champion GBDT Direct H+7
+Untuk komoditas volatil yang memiliki champion GBDT di registry, model dilatih untuk target langsung H+7 menggunakan algoritma *Gradient Boosted Decision Trees* (LightGBM / XGBoost / CatBoost) dengan *Pinball Loss (Quantile Objective)* pada tingkat kuantil $\alpha \in \{0.10, 0.50, 0.90\}$. Metrik champion pada registry adalah metrik benchmark untuk horizon tersebut, bukan bukti akurasi horizon lain:
 $$\mathcal{L}_\alpha(y, \hat{y}) = \max\left(\alpha (y - \hat{y}), (1 - \alpha)(\hat{y} - y)\right)$$
 
 #### Penjaminan Monotonitas Kuantil via *Monotone Rearrangement*
@@ -111,21 +111,16 @@ $$p_{50}^*(t) = \text{median}\left(p_{10}(t), p_{50}(t), p_{90}(t)\right)$$
 $$p_{90}^*(t) = \max\left(p_{10}(t), p_{50}(t), p_{90}(t)\right)$$
 Prosedur ini terbukti secara matematis mempertahankan konsistensi estimasi tanpa menambah bias kesalahan.
 
-### 4.3 Strategi Multi-Horizon 14-Hari: Dynamic Multi-Step Rolling Inference
-Untuk menghasilkan lintasan prediksi hingga 14 hari ke depan ($H+1$ s.d. $H+14$), sistem membandingkan dua pendekatan arsitektur:
+### 4.3 Strategi Publikasi Multi-Horizon 14-Hari
+Registry produksi saat ini menyediakan champion GBDT dengan target langsung H+7, bukan model khusus untuk setiap horizon. Karena itu, runner tidak menggunakan champion H+7 untuk memprediksi H+1 sampai H+14:
 
-| Dimensi Evaluasi | Direct Multi-Horizon (14 Model Terpisah) | Dynamic Multi-Step Rolling (Model Tunggal Autoregresif) |
-|---|---|---|
-| **Jumlah Model per Komoditas** | 14 model file `.pkl` ($\times 6 = 84$ model) | **1 model file `.pkl` ($\times 6 = 6$ model)** |
-| **Konsumsi Memori & Disk** | Berat (> 150 MB, membebani RAM CPU) | **Ringan (< 15 MB, efisien untuk CPU laptop)** |
-| **Waktu Inferensi Harian** | ~ 450 ms | **~ 38 ms** |
-| **Konsistensi Lintasan Waktu** | Rawan terjadi lonjakan zigzag antar-horizon | **Lintasan dinamis mulus mengikuti perambatan lag autoregresif** |
-| **Performa Akurasi (WAPE Cabai)** | 15.12% | **15.29% (Selisih marginal 0.17% tidak signifikan)** |
+1. Untuk champion GBDT yang berhasil dimuat dan diinferensikan, model hanya digunakan pada H+7 dengan fitur pada tanggal origin dan fitur Keputran yang dibangun dari Pasar Induk Keputran (ID 5).
+2. Horizon selain H+7 menggunakan baseline persistence yang tercatat eksplisit sebagai baseline/fallback. H+1 sampai H+6 berjangkar pada harga observasi terakhir; H+8 sampai H+14 berjangkar pada prediksi H+7 jika tersedia.
+3. Jika inferensi champion H+7 gagal, H+7 juga menggunakan persistence dan dicatat sebagai fallback.
+4. Champion Naive/SMA menjalankan strategi baseline yang terdaftar pada seluruh horizon. SMA-7 menggunakan rata-rata tujuh harga observasi terakhir, bukan harga terakhir.
+5. Setiap baris forecast menyimpan `horizon`, `origin_date`, `model_name`, `model_horizon`, `model_sha256`, `is_fallback`, dan `forecast_run_id` untuk membedakan model champion dari baseline/fallback.
 
-**Keputusan Desain:** Sistem mengadopsi **Dynamic Multi-Step Rolling Forecaster**. Pada setiap langkah $h \in \{1, \dots, 14\}$:
-1. Fitur lag dan statistik bergerak diperbarui secara rekursif menggunakan nilai prediksi $\hat{y}_{t+h-1}$ dari langkah sebelumnya.
-2. Fitur kalender target (`dayofweek`, `is_weekend`, `is_ramadan`) dimajukan sesuai tanggal kalender riil $t+h$.
-3. Model menghasilkan estimasi kuantil tertata rapi untuk horizon $t+h$.
+**Batas validasi:** WAPE champion H+7 hanya menjelaskan evaluasi H+7. Hasil H+1 dan H+8–H+14 tidak boleh disebut memiliki akurasi yang sama sebelum tersedia evaluasi walk-forward terpisah untuk horizon tersebut. Pengembangan berikutnya adalah evaluasi multi-horizon dan/atau champion terpisah per horizon, bukan menerapkan ulang model H+7 tanpa validasi.
 
 ---
 

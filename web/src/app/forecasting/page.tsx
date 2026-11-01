@@ -596,31 +596,35 @@ export default function ForecastingPage() {
                 </div>
               </div>
 
-              {/* Metrik 4: Akurasi & Model */}
+              {/* Evaluasi backtest H+7 dan provenance forecast yang sedang ditampilkan */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                  Akurasi Model (H+7)
+                  Evaluasi Champion (H+7)
                 </span>
-                <div className="flex-1 flex flex-col justify-center py-1">
+                <div className="flex-1 flex flex-col justify-center py-1 gap-1.5">
                   {modelMeta ? (
                     <div className="flex items-baseline gap-2">
-                      <span className="font-metric-display text-metric-display text-status-normal font-bold">
-                        {modelMeta.accuracy.toFixed(1)}%
+                      <span className="font-metric-display text-metric-display text-text-primary font-bold">
+                        {modelMeta.wape.toFixed(2)}%
                       </span>
                       <span className="font-label-caps text-label-caps text-text-secondary">
-                        Akurasi (WAPE {modelMeta.wape.toFixed(2)}%)
+                        WAPE backtest H+7
                       </span>
                     </div>
                   ) : (
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-metric-display text-metric-display text-text-muted font-bold">
-                        —
-                      </span>
-                      <span className="font-label-caps text-label-caps text-text-secondary">
-                        Tidak Tersedia
-                      </span>
-                    </div>
+                    <span className="font-label-caps text-label-caps text-text-secondary">
+                      Metrik champion H+7 tidak tersedia
+                    </span>
                   )}
+                  <span className="text-[11px] text-text-muted">
+                    Champion benchmark: {modelMeta?.modelName || "Tidak tersedia"}
+                  </span>
+                  {targetHorizonRow ? (
+                    <span className="text-[11px] text-text-muted">
+                      Proyeksi H+{actualHorizon}: {targetHorizonRow.provenanceKnown ? targetHorizonRow.modelNames.join(", ") || "Metode tidak tercatat" : "Asal model tidak tercatat"}
+                      {targetHorizonRow.isFallback ? " · fallback/baseline" : ""}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </div>

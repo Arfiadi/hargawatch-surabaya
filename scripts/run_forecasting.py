@@ -10,10 +10,12 @@ Integrates with:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import pickle
 import sys
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import numpy as np
@@ -53,28 +55,29 @@ PRIORITY_KOMODITAS_IDS = [
 def load_champion_from_registry(
     komoditas_id: int,
     horizon: int = 7
-) -> Tuple[Optional[str], Optional[any], Optional[List[str]]]:
+) -> Tuple[Optional[str], Optional[any], Optional[List[str]], Optional[str]]:
     """Retrieves champion model metadata from local registry or W&B Artifacts."""
     if not REGISTRY_FILE.exists():
-        return None, None, None
+        return None, None, None, None
 
     try:
         with open(REGISTRY_FILE, "r", encoding="utf-8") as f:
             registry = json.load(f)
     except Exception:
-        return None, None, None
+        return None, None, None, None
 
     key = f"{komoditas_id}_h{horizon}"
     entry = registry.get(key)
     if not entry:
-        return None, None, None
+        return None, None, None, None
 
     model_name = entry.get("model_name", "")
     model_path_str = entry.get("model_path")
     features = entry.get("features", [])
+    expected_sha256 = entry.get("sha256")
 
     if "naive" in model_name.lower():
-        return model_name, None, features
+        return model_name, None, features, None
 
     model_obj = None
     resolved_path = None
@@ -93,11 +96,9 @@ def load_champion_from_registry(
                 raise PermissionError(f"Security violation: model path {resolved_path} outside {model_dir_resolved}")
 
             # Security: Mandatory SHA-256 integrity validation for non-naive models
-            expected_sha256 = entry.get("sha256")
             if not expected_sha256:
                 raise ValueError(f"Integrity check failed: champion entry {key} ({model_name}) lacks sha256 in registry.json")
 
-            import hashlib
             with open(resolved_path, "rb") as f:
                 actual_sha256 = hashlib.sha256(f.read()).hexdigest()
             if actual_sha256 != expected_sha256:
@@ -105,7 +106,7 @@ def load_champion_from_registry(
 
             with open(resolved_path, "rb") as f:
                 model_obj = pickle.load(f)
-            return model_name, model_obj, features
+            return model_name, model_obj, features, expected_sha256
         except Exception as e:
             print(f"  [SECURITY/INTEGRITY ERROR] Failed to load local model {resolved_path}: {e}")
 
@@ -116,21 +117,25 @@ def load_champion_from_registry(
         project = os.getenv("WANDB_PROJECT", "hargawatch-surabaya")
         artifact_path = f"{project}/forecast-model-{komoditas_id}-h{horizon}:production"
         artifact = api.artifact(artifact_path)
+        if not expected_sha256:
+            raise ValueError(f"Integrity check failed: champion entry {key} ({model_name}) lacks sha256 in registry.json")
         download_dir = artifact.download()
         pkl_files = list(Path(download_dir).glob("*.pkl"))
         if pkl_files:
             target_pkl = pkl_files[0].resolve()
-            # Security: Path containment check for downloaded artifact
             download_dir_resolved = Path(download_dir).resolve()
             if not target_pkl.is_relative_to(download_dir_resolved):
                 raise PermissionError(f"Security violation: artifact path {target_pkl} outside {download_dir_resolved}")
+            actual_sha256 = hashlib.sha256(target_pkl.read_bytes()).hexdigest()
+            if actual_sha256 != expected_sha256:
+                raise ValueError(f"Integrity check mismatch for W&B artifact {target_pkl.name}")
             with open(target_pkl, "rb") as f:
                 model_obj = pickle.load(f)
-            return model_name, model_obj, features
+            return model_name, model_obj, features, expected_sha256
     except Exception as e:
         print(f"  [WARN] W&B fallback artifact load skipped: {e}")
 
-    return model_name, None, features
+    return model_name, None, features, expected_sha256
 
 
 def train_and_forecast_commodity(
@@ -138,9 +143,10 @@ def train_and_forecast_commodity(
     commodity_name: str,
     horizon_days: int = 14,
     include_weather: bool = False,
-    force_db: bool = False
+    force_db: bool = False,
+    forecast_run_id: Optional[str] = None
 ) -> pd.DataFrame:
-    """Generates multi-step direct quantile forecasts using champion architectures."""
+    """Generate forecasts with registered baselines and a direct H+7 champion, when available."""
     df_harga, df_kal, df_cuaca = load_raw_datasets(force_db=force_db)
     df_base = prepare_base_series(df_harga, komoditas_id=komoditas_id)
     df_lags = build_lag_features(df_base)
@@ -183,7 +189,7 @@ def train_and_forecast_commodity(
         base_feature_cols += [c for c in w_cols if c in weather_feats.columns]
 
     # Check champion strategy from Registry for H7
-    champ_name, champ_model_h7, champ_features = load_champion_from_registry(komoditas_id, horizon=7)
+    champ_name, champ_model_h7, champ_features, champ_sha256 = load_champion_from_registry(komoditas_id, horizon=7)
 
     # Detect baseline strategy: SMA vs Last Value vs GBDT
     is_sma = bool(champ_name and "sma" in champ_name.lower())
@@ -193,154 +199,100 @@ def train_and_forecast_commodity(
 
     all_forecasts = []
     origin_dt = pd.to_datetime(origin_date)
-
-    # Dynamic multi-step rolling state per market
-    state_df = slice_origin.copy()
-
-    # Pre-build history buffer for full state reconstruction (prevents frozen lag drift)
-    history_buffers = {}
-    for pid in slice_origin["pasar_id"].unique():
-        sub_history = df_base[df_base["pasar_id"] == pid].sort_values("tanggal")
-        prices_tail = sub_history["harga_imputasi"].tail(15).tolist()
-        if len(prices_tail) < 15:
-            pad_val = prices_tail[0] if prices_tail else float(slice_origin.loc[slice_origin["pasar_id"] == pid, "price_current"].iloc[0])
-            prices_tail = [pad_val] * (15 - len(prices_tail)) + prices_tail
-        history_buffers[int(pid)] = prices_tail
+    run_id = forecast_run_id or str(uuid.uuid4())
+    observed_prices = slice_origin["price_current"].to_numpy(dtype=float)
+    h7_anchor = observed_prices.copy()
+    std_7d = slice_origin["rolling_std_7d"].fillna(slice_origin["price_current"] * 0.02).to_numpy(dtype=float)
+    is_ml_champion = bool(champ_model_h7 is not None and not is_naive_champion)
 
     for h in range(1, horizon_days + 1):
         target_date = origin_dt + pd.Timedelta(days=int(h))
-
-        # 1. Update calendar features dynamically for target_date
-        kal_target = df_kal[df_kal["tanggal"] == target_date]
-        if kal_target.empty:
-            state_df["target_bulan"] = target_date.month
-            state_df["target_is_weekend"] = int(target_date.weekday() >= 5)
-            state_df["target_is_libur_nasional"] = 0
-            state_df["target_is_ramadan"] = 0
-            state_df["target_is_pra_ramadan"] = 0
-        else:
-            state_df["target_bulan"] = kal_target["bulan"].iloc[0]
-            state_df["target_is_weekend"] = kal_target["is_weekend"].iloc[0]
-            state_df["target_is_libur_nasional"] = kal_target["is_libur_nasional"].iloc[0]
-            state_df["target_is_ramadan"] = kal_target["is_ramadan"].iloc[0]
-            state_df["target_is_pra_ramadan"] = kal_target["is_pra_ramadan"].iloc[0]
-
-        state_df["target_hari_ke_idulfitri"] = calculate_days_to_idulfitri(pd.Series([target_date])).iloc[0]
-
         is_fallback_step = False
+        model_horizon_step = None
+        model_sha256_step = None
         model_name_step = champ_name or ("Naive 7d SMA" if is_sma else "Naive Last Value")
+        preds = None
 
-        if is_naive_champion or champ_model_h7 is None:
-            # Baseline with square-root diffusion uncertainty cone
-            if is_sma:
-                p_curr = slice_origin["rolling_mean_7d"].fillna(slice_origin["price_current"]).values
+        if is_naive_champion:
+            p50_base = (
+                slice_origin["rolling_mean_7d"].fillna(slice_origin["price_current"]).to_numpy(dtype=float)
+                if is_sma else observed_prices
+            )
+        elif h == 7 and is_ml_champion:
+            infer_slice = slice_origin.copy()
+            kal_target = df_kal[df_kal["tanggal"] == target_date]
+            if kal_target.empty:
+                infer_slice["target_bulan"] = target_date.month
+                infer_slice["target_is_weekend"] = int(target_date.weekday() >= 5)
+                infer_slice["target_is_libur_nasional"] = 0
+                infer_slice["target_is_ramadan"] = 0
+                infer_slice["target_is_pra_ramadan"] = 0
             else:
-                p_curr = slice_origin["price_current"].values
+                infer_slice["target_bulan"] = kal_target["bulan"].iloc[0]
+                infer_slice["target_is_weekend"] = kal_target["is_weekend"].iloc[0]
+                infer_slice["target_is_libur_nasional"] = kal_target["is_libur_nasional"].iloc[0]
+                infer_slice["target_is_ramadan"] = kal_target["is_ramadan"].iloc[0]
+                infer_slice["target_is_pra_ramadan"] = kal_target["is_pra_ramadan"].iloc[0]
+            infer_slice["target_hari_ke_idulfitri"] = calculate_days_to_idulfitri(pd.Series([target_date])).iloc[0]
 
-            std_7d = slice_origin["rolling_std_7d"].fillna(slice_origin["price_current"] * 0.02).values
-            variance_floor = np.maximum(p_curr * 0.015, 100.0)
-            std_effective = np.maximum(std_7d, variance_floor)
-            diffusion_scale = np.sqrt(h / 7.0)
-            p50 = np.maximum(0, np.nan_to_num(np.round(p_curr), nan=0)).astype(int)
-            p10 = np.maximum(0, np.nan_to_num(np.round(p_curr - 1.28 * std_effective * diffusion_scale), nan=0)).astype(int)
-            p10 = np.minimum(p10, p50)
-            p90 = np.maximum(p50, np.nan_to_num(np.round(p_curr + 1.28 * std_effective * diffusion_scale), nan=p50)).astype(int)
-            preds = {
-                "harga_prediksi": p50,
-                "batas_bawah": p10,
-                "batas_atas": p90
-            }
-            if champ_model_h7 is None and not is_naive_champion:
-                is_fallback_step = True
-                model_name_step = "Fallback Persistence"
-        else:
-            # Dynamic Machine Learning Inference (Step-by-Step with mathematically complete state updates)
             expected_cols = getattr(champ_model_h7, "feature_cols", champ_features or base_feature_cols)
             for col in expected_cols:
-                if col not in state_df.columns:
-                    state_df[col] = 0.0
+                if col not in infer_slice.columns:
+                    infer_slice[col] = 0.0
 
             try:
-                out = champ_model_h7.predict(state_df)
+                out = champ_model_h7.predict(infer_slice)
                 raw_pred = np.asarray(out["harga_prediksi"], dtype=float)
                 raw_low = np.asarray(out.get("batas_bawah", raw_pred), dtype=float)
                 raw_high = np.asarray(out.get("batas_atas", raw_pred), dtype=float)
-
-                # Calibrated diffusion interval: expands dynamically with horizon to prevent interval collapse
-                base_spread = np.maximum((raw_high - raw_low) / 2.0, raw_pred * 0.03)
-                diffusion_factor = np.sqrt(h / 7.0)
-                calibrated_spread = base_spread * diffusion_factor
-
-                p50 = np.round(raw_pred).astype(int)
-                p10 = np.maximum(0, np.round(raw_pred - calibrated_spread)).astype(int)
-                p90 = np.round(raw_pred + calibrated_spread).astype(int)
-
-                # Monotonic non-crossing guardrail: 0 <= p10 <= p50 <= p90
-                p10 = np.minimum(p10, p50)
-                p90 = np.maximum(p90, p50)
-
-                preds = {
-                    "harga_prediksi": p50,
-                    "batas_bawah": p10,
-                    "batas_atas": p90
-                }
-
-                # Complete state rolling: update history buffer and recompute ALL features for step h+1
-                for idx, pid in enumerate(state_df["pasar_id"].astype(int).values):
-                    history_buffers[pid].append(float(raw_pred[idx]))
-
-                keputran_buf = history_buffers.get(1, None)
-
-                for idx, pid in enumerate(state_df["pasar_id"].astype(int).values):
-                    buf = history_buffers[pid]
-                    # buf[-1] is predicted price at step h; buf[-2] is lag 1, buf[-3] is lag 2, etc.
-                    mask_p = (state_df["pasar_id"] == pid)
-                    state_df.loc[mask_p, "price_current"] = buf[-1]
-                    if "price_lag_1" in state_df.columns:
-                        state_df.loc[mask_p, "price_lag_1"] = buf[-2]
-                    if "price_lag_2" in state_df.columns:
-                        state_df.loc[mask_p, "price_lag_2"] = buf[-3]
-                    if "price_lag_3" in state_df.columns:
-                        state_df.loc[mask_p, "price_lag_3"] = buf[-4]
-                    if "price_lag_7" in state_df.columns:
-                        state_df.loc[mask_p, "price_lag_7"] = buf[-8]
-                    if "price_lag_14" in state_df.columns:
-                        state_df.loc[mask_p, "price_lag_14"] = buf[-15]
-                    if "rolling_mean_7d" in state_df.columns:
-                        state_df.loc[mask_p, "rolling_mean_7d"] = float(np.mean(buf[-7:]))
-                    if "rolling_std_7d" in state_df.columns:
-                        std7 = float(np.std(buf[-7:], ddof=1)) if len(buf) >= 7 else 0.0
-                        state_df.loc[mask_p, "rolling_std_7d"] = std7
-                    if "rolling_mean_14d" in state_df.columns:
-                        state_df.loc[mask_p, "rolling_mean_14d"] = float(np.mean(buf[-14:]))
-                    if "rolling_std_14d" in state_df.columns:
-                        std14 = float(np.std(buf[-14:], ddof=1)) if len(buf) >= 14 else 0.0
-                        state_df.loc[mask_p, "rolling_std_14d"] = std14
-                    if "pct_change_1d" in state_df.columns:
-                        denom1 = buf[-2] if buf[-2] > 0 else 1.0
-                        state_df.loc[mask_p, "pct_change_1d"] = (buf[-1] - buf[-2]) / denom1
-                    if "pct_change_7d" in state_df.columns:
-                        denom7 = buf[-8] if buf[-8] > 0 else 1.0
-                        state_df.loc[mask_p, "pct_change_7d"] = (buf[-1] - buf[-8]) / denom7
-
-                    k_src = keputran_buf if keputran_buf is not None else buf
-                    if "keputran_price_lag_1" in state_df.columns:
-                        state_df.loc[mask_p, "keputran_price_lag_1"] = k_src[-2]
-                    if "keputran_price_lag_2" in state_df.columns:
-                        state_df.loc[mask_p, "keputran_price_lag_2"] = k_src[-3]
-                    if "keputran_price_lag_3" in state_df.columns:
-                        state_df.loc[mask_p, "keputran_price_lag_3"] = k_src[-4]
-
+                p50_base = np.maximum(0, np.nan_to_num(np.round(raw_pred), nan=0)).astype(int)
+                spread = np.maximum((raw_high - raw_low) / 2.0, np.maximum(raw_pred, 0) * 0.03)
+                p10 = np.maximum(0, np.nan_to_num(np.round(raw_pred - spread), nan=0)).astype(int)
+                p90 = np.maximum(p50_base, np.nan_to_num(np.round(raw_pred + spread), nan=p50_base)).astype(int)
+                p10 = np.minimum(p10, p50_base)
+                preds = {"harga_prediksi": p50_base, "batas_bawah": p10, "batas_atas": p90}
+                h7_anchor = p50_base.astype(float)
+                model_horizon_step = 7
+                model_sha256_step = champ_sha256
             except Exception as e:
-                print(f"  [WARN] Dynamic inference error at step h={h} for {commodity_name}: {e}. Fallback to persistence.")
+                print(f"  [WARN] H+7 champion inference failed for {commodity_name}: {e}. Falling back to persistence.")
                 is_fallback_step = True
-                model_name_step = "Fallback Persistence"
-                p_curr = slice_origin["price_current"].values
-                p50 = np.round(p_curr).astype(int)
-                preds = {"harga_prediksi": p50, "batas_bawah": p50, "batas_atas": p50}
+                model_name_step = "Fallback Persistence (H+7 inference failed)"
+                p50_base = observed_prices
+        else:
+            if is_ml_champion:
+                is_fallback_step = True
+                model_name_step = f"Persistence baseline (no direct H+{h} champion)"
+                p50_base = h7_anchor if h > 7 else observed_prices
+            elif not is_naive_champion:
+                is_fallback_step = True
+                model_name_step = f"Persistence baseline (champion unavailable for H+{h})"
+                p50_base = observed_prices
+            else:
+                p50_base = (
+                    slice_origin["rolling_mean_7d"].fillna(slice_origin["price_current"]).to_numpy(dtype=float)
+                    if is_sma else observed_prices
+                )
+
+        if preds is None:
+            p50 = np.maximum(0, np.nan_to_num(np.round(p50_base), nan=0)).astype(int)
+            std_effective = np.maximum(std_7d, np.maximum(p50_base * 0.015, 100.0))
+            diffusion_scale = np.sqrt(h / 7.0)
+            p10 = np.maximum(0, np.nan_to_num(np.round(p50_base - 1.28 * std_effective * diffusion_scale), nan=0)).astype(int)
+            p90 = np.maximum(p50, np.nan_to_num(np.round(p50_base + 1.28 * std_effective * diffusion_scale), nan=p50)).astype(int)
+            p10 = np.minimum(p10, p50)
+            preds = {"harga_prediksi": p50, "batas_bawah": p10, "batas_atas": p90}
+            if h == 7 and not is_fallback_step and is_ml_champion:
+                model_name_step = champ_name
+                model_horizon_step = 7
+                model_sha256_step = champ_sha256
+
+        if h == 7 and is_fallback_step:
+            h7_anchor = np.asarray(preds["harga_prediksi"], dtype=float)
 
         step_df = pd.DataFrame({
             "tanggal": target_date.strftime("%Y-%m-%d"),
+            "origin_date": origin_dt.date(),
             "pasar_id": slice_origin["pasar_id"].astype(int).values,
             "komoditas_id": komoditas_id,
             "horizon": int(h),
@@ -348,7 +300,10 @@ def train_and_forecast_commodity(
             "batas_bawah": preds["batas_bawah"],
             "batas_atas": preds["batas_atas"],
             "model_name": model_name_step,
-            "is_fallback": is_fallback_step
+            "model_horizon": model_horizon_step,
+            "model_sha256": model_sha256_step,
+            "is_fallback": is_fallback_step,
+            "forecast_run_id": run_id,
         })
         all_forecasts.append(step_df)
 
@@ -429,16 +384,33 @@ def upsert_to_supabase(df_forecast: pd.DataFrame, df_ews: pd.DataFrame):
 
         # 1. Upsert fact_forecast
         sql_forecast = """
-            INSERT INTO public.fact_forecast (tanggal, pasar_id, komoditas_id, harga_prediksi, batas_bawah, batas_atas)
+            INSERT INTO public.fact_forecast (
+                tanggal, pasar_id, komoditas_id, harga_prediksi, batas_bawah, batas_atas,
+                horizon, origin_date, model_name, model_horizon, model_sha256,
+                is_fallback, forecast_run_id
+            )
             VALUES %s
             ON CONFLICT (tanggal, pasar_id, komoditas_id) DO UPDATE
             SET harga_prediksi = EXCLUDED.harga_prediksi,
                 batas_bawah = EXCLUDED.batas_bawah,
                 batas_atas = EXCLUDED.batas_atas,
+                horizon = EXCLUDED.horizon,
+                origin_date = EXCLUDED.origin_date,
+                model_name = EXCLUDED.model_name,
+                model_horizon = EXCLUDED.model_horizon,
+                model_sha256 = EXCLUDED.model_sha256,
+                is_fallback = EXCLUDED.is_fallback,
+                forecast_run_id = EXCLUDED.forecast_run_id,
                 created_at = CURRENT_TIMESTAMP;
         """
         rows_forecast = [
-            (r.tanggal, r.pasar_id, r.komoditas_id, r.harga_prediksi, r.batas_bawah, r.batas_atas)
+            (
+                r.tanggal, r.pasar_id, r.komoditas_id, r.harga_prediksi,
+                r.batas_bawah, r.batas_atas, r.horizon, r.origin_date,
+                r.model_name, r.model_horizon if pd.notna(r.model_horizon) else None,
+                r.model_sha256 if pd.notna(r.model_sha256) else None,
+                bool(r.is_fallback), r.forecast_run_id,
+            )
             for r in df_forecast.itertuples()
         ]
         execute_values(cur, sql_forecast, rows_forecast, page_size=500)
@@ -510,6 +482,7 @@ def main():
     name_map = dict(zip(df_kom["komoditas_id"], df_kom["komoditas"]))
 
     all_forecast_dfs = []
+    forecast_run_id = str(uuid.uuid4())
     print(f"\n[INFO] Generating forecasts for {len(target_ids)} target commodities...")
     for cid in target_ids:
         cname = name_map.get(cid, f"ID_{cid}")
@@ -519,7 +492,8 @@ def main():
             commodity_name=cname,
             horizon_days=args.horizon,
             include_weather=args.use_weather,
-            force_db=False  # Pulled fresh once in main(), use local cache to prevent N redundant queries
+            force_db=False,  # Pulled fresh once in main(), use local cache to prevent N redundant queries
+            forecast_run_id=forecast_run_id
         )
         if not fc_df.empty:
             all_forecast_dfs.append(fc_df)

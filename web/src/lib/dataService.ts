@@ -25,6 +25,7 @@ export interface CommodityPrice {
   sparkClass: string;
   basketItemName: string;
   basketItemPrice: number;
+  hasPriceData?: boolean;
   savingBadge?: string;
   trend7d?: string;
   hasMarketAlert?: boolean;
@@ -82,6 +83,10 @@ export interface ForecastDayItem {
   deltaRp: number;
   status: "Normal" | "Waspada" | "Tinggi";
   recom: string;
+  modelNames: string[];
+  modelHorizon: number | null;
+  isFallback: boolean;
+  provenanceKnown: boolean;
 }
 
 export interface CommodityForecastDetails {
@@ -131,6 +136,7 @@ export const TIMEFRAME_DAYS: Record<TimeframeOption, number> = {
 
 export interface RawMarketPriceRow {
   tanggal: string;
+  komoditas_id?: number | null;
   harga_asli?: number | null;
   harga_imputasi?: number | null;
   is_imputed?: boolean | null;
@@ -143,6 +149,12 @@ export interface RawForecastRow {
   harga_prediksi?: number | null;
   batas_bawah?: number | null;
   batas_atas?: number | null;
+  model_name?: string | null;
+  model_horizon?: number | null;
+  is_fallback?: boolean | null;
+  forecast_run_id?: string | null;
+  origin_date?: string | null;
+  created_at?: string | null;
 }
 
 export const FORECAST_COMMODITIES = [
@@ -296,36 +308,56 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
   if (!supabase) return null;
 
   try {
-    const priorityIds = [2, 10, 50, 16, 39, 13, 7, 49]; // Beras, Minyak, Cabai, Telur, Bawang Merah, Ayam, Gula Pasir, Bawang Putih
+    const catalogIds = ALL_CATALOG_COMMODITIES.map((commodity) => commodity.id);
 
     const [komRes, pasarRes, priceRes, ewsRes] = await Promise.all([
       supabase.from("dim_komoditas").select("komoditas_id, nama_komoditas, grup, satuan"),
       supabase.from("dim_pasar").select("pasar_id, nama_pasar"),
       supabase
         .from("fact_harga_pasar")
-        .select("komoditas_id, pasar_id, harga_imputasi, tanggal")
-        .in("komoditas_id", priorityIds)
-        .not("harga_imputasi", "eq", "NaN")
+        .select("tanggal")
+        .in("komoditas_id", catalogIds)
         .order("tanggal", { ascending: false })
-        .limit(500),
+        .limit(1),
       supabase
         .from("fact_early_warning")
         .select("komoditas_id, pasar_id, total_skor, status_warning, tanggal")
-        .in("komoditas_id", priorityIds)
+        .in("komoditas_id", catalogIds)
         .order("tanggal", { ascending: false })
-        .limit(150)
+        .limit(1000)
     ]);
 
-    if (!komRes.data || !pasarRes.data || !priceRes.data || priceRes.data.length === 0) {
+    if (!komRes.data || !pasarRes.data || !priceRes.data) {
       return null;
     }
 
     const komMap = new Map(komRes.data.map(k => [k.komoditas_id, k]));
     const pasarMap = new Map(pasarRes.data.map(p => [p.pasar_id, p.nama_pasar]));
 
-    // Tanggal terbaru transaksi
-    const latestDate = priceRes.data[0].tanggal;
-    const latestPrices = priceRes.data.filter(p => p.tanggal === latestDate && !isNaN(Number(p.harga_imputasi)));
+    // Tarik seluruh jendela 7 hari dalam batch agar tidak terpotong batas row Supabase.
+    const latestDate = priceRes.data[0]?.tanggal || null;
+    let priceRows: RawMarketPriceRow[] = [];
+    if (latestDate) {
+      const startDate = new Date(`${latestDate}T00:00:00Z`);
+      startDate.setUTCDate(startDate.getUTCDate() - 6);
+      const firstDate = startDate.toISOString().slice(0, 10);
+      const catalogBatches = Array.from({ length: Math.ceil(catalogIds.length / 12) }, (_, index) =>
+        catalogIds.slice(index * 12, (index + 1) * 12)
+      );
+      const historyResults = await Promise.all(catalogBatches.map((ids) =>
+        supabase
+          .from("fact_harga_pasar")
+          .select("komoditas_id, pasar_id, harga_imputasi, tanggal")
+          .in("komoditas_id", ids)
+          .gte("tanggal", firstDate)
+          .lte("tanggal", latestDate)
+          .not("harga_imputasi", "eq", "NaN")
+          .order("tanggal", { ascending: false })
+          .limit(1000)
+      ));
+      priceRows = historyResults.flatMap((response) => response.data || []);
+    }
+    const latestPrices = latestDate ? priceRows.filter((p) => p.tanggal === latestDate) : [];
 
     // EWS records untuk tanggal terbaru
     const latestEwsDate = ewsRes.data && ewsRes.data.length > 0 ? ewsRes.data[0].tanggal : null;
@@ -333,12 +365,53 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
 
     const result: CommodityPrice[] = [];
 
-    for (const cid of priorityIds) {
+    for (const catalogItem of ALL_CATALOG_COMMODITIES) {
+      const cid = catalogItem.id;
       const komMeta = komMap.get(cid);
-      if (!komMeta) continue;
+      const commodityName = formatCommodityName(komMeta?.nama_komoditas || catalogItem.name);
+      const unit = komMeta?.satuan || catalogItem.unit;
+      const commodityEws = ewsList.filter(e => e.komoditas_id === cid);
+      const alertMarkets = commodityEws.filter(e => e.status_warning !== "NORMAL");
+      const hasMarketAlert = alertMarkets.length > 0;
+      const isCritical = commodityEws.some(e => e.status_warning === "TINGGI");
+      const isWarning = !isCritical && commodityEws.some(e => e.status_warning === "WASPADA");
+      const status = isCritical ? "Tinggi" : isWarning ? "Waspada" : commodityEws.length > 0 ? "Normal" : "Belum tersedia";
+      const alertMarketNames = alertMarkets.map(m => (pasarMap.get(m.pasar_id) || "Pasar").replace("Pasar ", "")).join(", ");
+      const marketAlertNote = hasMarketAlert ? `Fluktuasi di ${alertMarkets.length} pasar lain (${alertMarketNames})` : undefined;
 
       const items = latestPrices.filter(p => p.komoditas_id === cid && Number(p.harga_imputasi) > 0);
-      if (items.length === 0) continue;
+      if (items.length === 0) {
+        result.push({
+          id: `kom_${cid}`,
+          komoditas_id: cid,
+          category: catalogItem.group,
+          tag: catalogItem.group,
+          name: commodityName,
+          status,
+          isCritical,
+          isWarning,
+          cheapestBadge: "Harga lapangan",
+          cheapestSub: "Belum ada data harga",
+          marketName: "Data harga belum tersedia",
+          marketSub: latestDate ? "Tidak ada harga tercatat hari ini" : "Belum ada data harga lapangan",
+          price: "Belum tersedia",
+          unit: `/${unit}`,
+          cityAvg: "Belum tersedia",
+          delta: "Belum tersedia",
+          deltaIcon: "horizontal_rule",
+          deltaClass: "text-text-muted",
+          sparkPath: "M0,16 L200,16",
+          sparkClass: "text-text-muted",
+          basketItemName: commodityName,
+          basketItemPrice: 0,
+          hasPriceData: false,
+          savingBadge: "Harga belum tersedia",
+          trend7d: "Belum tersedia",
+          hasMarketAlert,
+          marketAlertNote,
+        });
+        continue;
+      }
 
       // Temukan pasar termurah di Surabaya
       items.sort((a, b) => Number(a.harga_imputasi) - Number(b.harga_imputasi));
@@ -355,21 +428,9 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
       const savingPct = avg > 0 ? Math.round((diff / avg) * 100) : 0;
       const savingBadge = diff > 0 ? `${savingPct}% lebih hemat` : "Sesuai rerata";
 
-      // Evaluasi status EWS untuk komoditas ini lintas pasar (Harmonisasi Kontrak Sprint 2)
-      const commodityEws = ewsList.filter(e => e.komoditas_id === cid);
-      const alertMarkets = commodityEws.filter(e => e.status_warning !== "NORMAL");
-      const hasMarketAlert = alertMarkets.length > 0;
-
-      // Evaluasi tingkat risiko tertinggi komoditas di Kota Surabaya (Worst-case market risk)
-      const isCritical = commodityEws.some(e => e.status_warning === "TINGGI");
-      const isWarning = !isCritical && commodityEws.some(e => e.status_warning === "WASPADA");
-      const status: "Tinggi" | "Waspada" | "Normal" = isCritical ? "Tinggi" : isWarning ? "Waspada" : "Normal";
-
-      const alertMarketNames = alertMarkets.map(m => (pasarMap.get(m.pasar_id) || "Pasar").replace("Pasar ", "")).join(", ");
-      const marketAlertNote = hasMarketAlert ? `Fluktuasi di ${alertMarkets.length} pasar lain (${alertMarketNames})` : undefined;
 
       // Hitung tren historis 7 hari sebenarnya untuk komoditas ini
-      const cidAllRows = priceRes.data.filter(r => r.komoditas_id === cid && Number(r.harga_imputasi) > 0);
+      const cidAllRows = priceRows.filter(r => r.komoditas_id === cid && Number(r.harga_imputasi) > 0);
       const dateMap = new Map<string, number[]>();
       for (const r of cidAllRows) {
         if (!dateMap.has(r.tanggal)) dateMap.set(r.tanggal, []);
@@ -425,19 +486,19 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
       result.push({
         id: `kom_${cid}`,
         komoditas_id: cid,
-        category: komMeta.grup || "Pangan Pokok",
-        tag: komMeta.grup || "Pangan Strategis",
-        name: formatCommodityName(komMeta.nama_komoditas),
+        category: catalogItem.group,
+        tag: catalogItem.group,
+        name: commodityName,
         status,
         isCritical,
         isWarning,
         cheapestBadge: "Termurah di Surabaya",
-        cheapestSub: diff > 0 ? `Hemat Rp ${diff.toLocaleString("id-ID")}/${komMeta.satuan || "kg"}` : "Harga Terkendali",
+        cheapestSub: diff > 0 ? `Hemat Rp ${diff.toLocaleString("id-ID")}/${unit}` : "Harga Terkendali",
         marketName,
         marketSub: "Kota Surabaya",
         price: `Rp ${cheapestPrice.toLocaleString("id-ID")}`,
         numericPrice: cheapestPrice,
-        unit: `/${komMeta.satuan || "kg"}`,
+        unit: `/${unit}`,
         cityAvg: `Rp ${avg.toLocaleString("id-ID")}`,
         numericCityAvg: avg,
         delta: savingBadge,
@@ -445,8 +506,9 @@ export async function getLiveCommodities(): Promise<CommodityPrice[] | null> {
         deltaClass,
         sparkPath,
         sparkClass,
-        basketItemName: formatCommodityName(komMeta.nama_komoditas),
+        basketItemName: commodityName,
         basketItemPrice: cheapestPrice,
+        hasPriceData: true,
         savingBadge,
         trend7d,
         hasMarketAlert,
@@ -727,14 +789,16 @@ export async function getLiveForecastDetails(
     // 4. Ambil proyeksi masa depan dari fact_forecast (tanggal > latestDate)
     const { data: fcData, error: fcErr } = await supabase
       .from("fact_forecast")
-      .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas, created_at")
+      .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas, created_at, model_name, model_horizon, is_fallback, forecast_run_id, origin_date")
       .eq("komoditas_id", komoditasId)
       .gt("tanggal", latestDate)
-      .order("tanggal", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (fcErr || !fcData || fcData.length === 0) return null;
 
-    const rawCreatedAt = fcData[0]?.created_at || null;
+    const latestRunId = fcData.find((row) => row.forecast_run_id)?.forecast_run_id || null;
+    const runRows = latestRunId ? fcData.filter((row) => row.forecast_run_id === latestRunId) : fcData;
+    const rawCreatedAt = runRows[0]?.created_at || null;
     let formattedModelCreatedAt: string | undefined = undefined;
     if (rawCreatedAt) {
       const dModel = new Date(rawCreatedAt);
@@ -750,7 +814,7 @@ export async function getLiveForecastDetails(
     }
 
     // Agregasi multi-pasar resmi: kelompokkan proyeksi per tanggal dengan pelacakan pasar
-    const uniqueDates = Array.from(new Set(fcData.map((r) => r.tanggal))).sort().slice(0, 14);
+    const uniqueDates = Array.from(new Set(runRows.map((r) => r.tanggal))).sort().slice(0, 14);
     const lastKnownMarketPred = new Map<number, { p: number; l: number; u: number }>();
     const strategicMarketIds = [5, 2, 3, 4, 1, 146]; // Keputran, Wonokromo, Genteng, Pucang Anom, Tambahrejo, Soponyono
 
@@ -763,7 +827,7 @@ export async function getLiveForecastDetails(
 
     for (const tgl of uniqueDates) {
       if (h > 14) break;
-      const rowsForDate = fcData.filter((r) => r.tanggal === tgl);
+      const rowsForDate = runRows.filter((r) => r.tanggal === tgl);
 
       // Perbarui prediksi pasar yang aktif pada tanggal ini
       for (const row of rowsForDate) {
@@ -846,6 +910,12 @@ export async function getLiveForecastDetails(
       });
       const weekday = d.toLocaleDateString("id-ID", { weekday: "long" });
 
+      const modelNames = Array.from(new Set(rowsForDate.map((row) => row.model_name).filter((name): name is string => Boolean(name))));
+      const provenanceKnown = rowsForDate.length > 0 && rowsForDate.every(
+        (row) => Boolean(row.forecast_run_id && row.model_name) && row.is_fallback !== null && row.is_fallback !== undefined
+      );
+      const modelHorizon = rowsForDate.find((row) => row.model_horizon !== null && row.model_horizon !== undefined)?.model_horizon ?? null;
+
       forecast.push({
         horizon: h++,
         tanggal: tgl,
@@ -858,6 +928,10 @@ export async function getLiveForecastDetails(
         deltaRp,
         status,
         recom,
+        modelNames,
+        modelHorizon,
+        isFallback: rowsForDate.some((row) => row.is_fallback === true),
+        provenanceKnown,
       });
     }
 
@@ -1101,6 +1175,24 @@ export const ALL_CATALOG_COMMODITIES: CatalogCommodity[] = [
   { id: 20, name: "Susu Kental Manis Bendera", unit: "kl", icon: "susu", shortName: "Susu Bendera", group: "Palawija & Lainnya" },
   { id: 21, name: "Susu Kental Manis Indomilk", unit: "kl", icon: "susu", shortName: "Susu Indomilk", group: "Palawija & Lainnya" },
   { id: 35, name: "Indomie Kari Ayam", unit: "bks", icon: "mie", shortName: "Indomie", group: "Palawija & Lainnya" },
+];
+
+const BEST_PRICE_CATEGORY_ORDER = [
+  "Cabai & Bumbu",
+  "Beras & Gandum",
+  "Minyak & Gula",
+  "Daging & Telur",
+  "Ikan Segar",
+  "Sayur Mayur",
+  "Palawija & Lainnya",
+] as const;
+
+export const BEST_PRICE_CATEGORIES = [
+  { name: "Semua", count: ALL_CATALOG_COMMODITIES.length },
+  ...BEST_PRICE_CATEGORY_ORDER.map((name) => ({
+    name,
+    count: ALL_CATALOG_COMMODITIES.filter((commodity) => commodity.group === name).length,
+  })),
 ];
 
 export const AVAILABLE_TREND_COMMODITIES = [

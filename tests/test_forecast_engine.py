@@ -288,18 +288,106 @@ def test_forecast_engine_log_notebook_experiment_returns_none_when_disabled(monk
 
 
 
-def test_naive_7d_sma_loader_and_provenance():
-    """Verifies ID 20 champion loads specifically as Naive 7d SMA with provenance."""
-    from scripts.run_forecasting import load_champion_from_registry, train_and_forecast_commodity
+def _make_forecast_input(commodity_id=20):
+    dates = pd.date_range("2026-01-01", periods=24, freq="D")
+    records = []
+    for market_id in (1, 2, 5):
+        for idx, date in enumerate(dates):
+            price = 10000 + market_id * 1000 + idx * (100 + market_id)
+            records.append({
+                "tanggal": date,
+                "pasar_id": market_id,
+                "komoditas_id": commodity_id,
+                "harga_asli": price,
+                "harga_imputasi": price,
+                "is_imputed": False,
+            })
+    df_harga = pd.DataFrame(records)
+    df_kal = pd.DataFrame({
+        "tanggal": pd.date_range(dates.min(), dates.max() + pd.Timedelta(days=14), freq="D"),
+    })
+    df_kal["bulan"] = df_kal["tanggal"].dt.month
+    df_kal["is_weekend"] = (df_kal["tanggal"].dt.weekday >= 5).astype(int)
+    df_kal["is_libur_nasional"] = 0
+    df_kal["is_ramadan"] = 0
+    df_kal["is_pra_ramadan"] = 0
+    return df_harga, df_kal, pd.DataFrame()
 
-    champ_name, model_obj, features = load_champion_from_registry(20, horizon=7)
+
+def test_naive_7d_sma_loader_and_forecast_values(monkeypatch):
+    """ID 20 forecast values must use the trailing seven observed prices."""
+    import scripts.run_forecasting as rf
+
+    input_data = _make_forecast_input()
+    monkeypatch.setattr(rf, "load_raw_datasets", lambda force_db=False: input_data)
+    monkeypatch.setattr(
+        rf,
+        "load_champion_from_registry",
+        lambda komoditas_id, horizon=7: ("Naive 7d SMA", None, [], None),
+    )
+
+    champ_name, model_obj, features, model_sha256 = rf.load_champion_from_registry(20, horizon=7)
     assert champ_name == "Naive 7d SMA"
     assert model_obj is None
+    assert model_sha256 is None
 
-    df_fc = train_and_forecast_commodity(20, "Susu Kental Manis Merk Bendera", horizon_days=3)
+    df_fc = rf.train_and_forecast_commodity(20, "Susu Kental Manis Merk Bendera", horizon_days=3)
+    df_base = rf.prepare_base_series(input_data[0], komoditas_id=20)
+    df_features = rf.build_lag_features(df_base)
+    latest = df_features[df_features["tanggal"] == df_features["tanggal"].max()]
+    expected = latest.set_index("pasar_id")["rolling_mean_7d"].round().astype(int).to_dict()
+
     assert not df_fc.empty
-    assert "model_name" in df_fc.columns
-    assert "is_fallback" in df_fc.columns
-    assert "horizon" in df_fc.columns
     assert (df_fc["model_name"] == "Naive 7d SMA").all()
     assert not df_fc["is_fallback"].any()
+    assert set(df_fc["forecast_run_id"]) == {df_fc["forecast_run_id"].iloc[0]}
+    for row in df_fc.itertuples():
+        assert row.harga_prediksi == expected[row.pasar_id]
+
+
+def test_h7_champion_is_only_used_at_h7_and_records_keputran_features(monkeypatch):
+    """A direct H+7 champion must not be repeatedly applied to H+1..H+14."""
+    import scripts.run_forecasting as rf
+
+    input_data = _make_forecast_input(commodity_id=50)
+    monkeypatch.setattr(rf, "load_raw_datasets", lambda force_db=False: input_data)
+
+    class FakeChampion:
+        feature_cols = ["price_current", "keputran_price_lag_1"]
+
+        def __init__(self):
+            self.calls = []
+
+        def predict(self, df):
+            self.calls.append(df.copy())
+            pred = df["price_current"].to_numpy(dtype=float) + 500
+            return {
+                "harga_prediksi": pred,
+                "batas_bawah": pred - 100,
+                "batas_atas": pred + 100,
+            }
+
+    champion = FakeChampion()
+    digest = "a" * 64
+    monkeypatch.setattr(
+        rf,
+        "load_champion_from_registry",
+        lambda komoditas_id, horizon=7: ("XGBoost p50", champion, champion.feature_cols, digest),
+    )
+
+    df_fc = rf.train_and_forecast_commodity(
+        50, "Cabe Rawit Merah", horizon_days=14, forecast_run_id="test-run"
+    )
+
+    assert len(champion.calls) == 1
+    assert set(df_fc.loc[df_fc["horizon"] == 7, "model_name"]) == {"XGBoost p50"}
+    assert not df_fc.loc[df_fc["horizon"] == 7, "is_fallback"].any()
+    assert (df_fc.loc[df_fc["horizon"] != 7, "is_fallback"]).all()
+    assert set(df_fc.loc[df_fc["horizon"] == 7, "model_horizon"]) == {7}
+    assert df_fc.loc[df_fc["horizon"] == 7, "model_sha256"].eq(digest).all()
+    assert set(df_fc["forecast_run_id"]) == {"test-run"}
+
+    keputran_price = input_data[0].query("pasar_id == 5 and tanggal == @input_data[0].tanggal.max()")["harga_imputasi"].iloc[0]
+    captured = champion.calls[0]
+    non_keputran = captured[captured["pasar_id"] == 2].iloc[0]
+    assert non_keputran["keputran_price_lag_1"] == keputran_price

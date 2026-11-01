@@ -33,7 +33,7 @@ def test_security_rejection_outside_model_dir(tmp_path, monkeypatch):
         json.dump(reg_data, f)
 
     monkeypatch.setattr(rf, "REGISTRY_FILE", reg_file)
-    model_name, model_obj, features = load_champion_from_registry(50, 7)
+    model_name, model_obj, features, model_sha256 = load_champion_from_registry(50, 7)
     assert model_obj is None
 
 
@@ -59,7 +59,7 @@ def test_security_rejection_missing_sha256(tmp_path, monkeypatch):
         json.dump(reg_data, f)
 
     monkeypatch.setattr(rf, "REGISTRY_FILE", reg_file)
-    model_name, model_obj, features = load_champion_from_registry(50, 7)
+    model_name, model_obj, features, model_sha256 = load_champion_from_registry(50, 7)
     assert model_obj is None
 
 
@@ -85,7 +85,7 @@ def test_security_rejection_tampered_sha256(tmp_path, monkeypatch):
         json.dump(reg_data, f)
 
     monkeypatch.setattr(rf, "REGISTRY_FILE", reg_file)
-    model_name, model_obj, features = load_champion_from_registry(50, 7)
+    model_name, model_obj, features, model_sha256 = load_champion_from_registry(50, 7)
     assert model_obj is None
 
 

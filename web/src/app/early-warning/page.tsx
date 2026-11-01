@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { getLiveEarlyWarning, EarlyWarningItem, EarlyWarningStats, formatCommodityName } from "@/lib/dataService";
+import { getLiveEarlyWarning, EarlyWarningItem, EarlyWarningStats, formatCommodityName, ALL_CATALOG_COMMODITIES } from "@/lib/dataService";
 import { OFFICIAL_REGULATORY_BENCHMARKS } from "@/lib/regulatoryData";
 
 const MARKET_CONFIGS = [
@@ -30,51 +30,22 @@ const COMMODITY_METADATA: Record<number, { initials: string }> = {
   38: { initials: "CB" },
 };
 
-const CATEGORIES = [
+const ORDERED_GROUPS = [
   "Semua",
-  "Beras",
-  "Bumbu/Cabai",
-  "Daging & Telur",
+  "Cabai & Bumbu",
+  "Beras & Gandum",
   "Minyak & Gula",
-  "Sayur & Ikan",
+  "Daging & Telur",
+  "Ikan Segar",
+  "Sayur Mayur",
+  "Palawija & Lainnya",
 ] as const;
 
-type CommodityCategory = (typeof CATEGORIES)[number];
+type CommodityGroup = (typeof ORDERED_GROUPS)[number];
 
-function getCommodityCategory(nama: string): CommodityCategory {
-  const n = (nama || "").toLowerCase();
-  if (
-    n.includes("beras") ||
-    n.includes("jagung") ||
-    n.includes("terigu") ||
-    n.includes("kedelai") ||
-    n.includes("indomie") ||
-    n.includes("gandum")
-  ) {
-    return "Beras";
-  }
-  if (
-    n.includes("cabe") ||
-    n.includes("cabai") ||
-    n.includes("bawang") ||
-    n.includes("garam")
-  ) {
-    return "Bumbu/Cabai";
-  }
-  if (
-    n.includes("daging") ||
-    n.includes("ayam") ||
-    n.includes("telur") ||
-    n.includes("susu") ||
-    n.includes("sapi")
-  ) {
-    return "Daging & Telur";
-  }
-  if (n.includes("minyak") || n.includes("gula")) {
-    return "Minyak & Gula";
-  }
-  return "Sayur & Ikan";
-}
+const catalogGroupOf = (komoditasId: number): CommodityGroup =>
+  (ALL_CATALOG_COMMODITIES.find((c) => c.id === komoditasId)?.group as CommodityGroup) ||
+  "Palawija & Lainnya";
 
 function getCommodityIcon(nama: string): string {
   const n = (nama || "").toLowerCase();
@@ -127,7 +98,7 @@ export default function EarlyWarningPage() {
   const [ewsStats, setEwsStats] = useState<EarlyWarningStats | null>(null);
 
   // Table UX States: Category Filter & Pagination (10 per page)
-  const [selectedCategory, setSelectedCategory] = useState<CommodityCategory>("Semua");
+  const [selectedCategory, setSelectedCategory] = useState<CommodityGroup>("Semua");
   const [tableFilter] = useState<"ALL" | "ACTION" | "NORMAL">("ALL");
   const [tableSearch, setTableSearch] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -181,7 +152,7 @@ export default function EarlyWarningPage() {
     const grouped: Record<number, {
       komoditas_id: number;
       nama_komoditas: string;
-      category: CommodityCategory;
+      category: CommodityGroup;
       initials: string;
       icon: string;
       hapRef: string;
@@ -204,7 +175,7 @@ export default function EarlyWarningPage() {
         grouped[item.komoditas_id] = {
           komoditas_id: item.komoditas_id,
           nama_komoditas: formatCommodityName(item.nama_komoditas),
-          category: getCommodityCategory(item.nama_komoditas),
+          category: catalogGroupOf(item.komoditas_id),
           initials: meta.initials,
           icon: getCommodityIcon(item.nama_komoditas),
           hapRef: officialHapRef,
@@ -235,7 +206,7 @@ export default function EarlyWarningPage() {
   // Category counts
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { Semua: pivotedRows.length };
-    CATEGORIES.forEach((cat) => {
+    ORDERED_GROUPS.forEach((cat) => {
       if (cat !== "Semua") {
         counts[cat] = pivotedRows.filter((r) => r.category === cat).length;
       }
@@ -668,25 +639,28 @@ export default function EarlyWarningPage() {
                 {/* Table Filter & Search Toolbar */}
                 <div className="p-space-md flex flex-col gap-space-sm border-b border-border-subtle/40 bg-surface-subtle/30">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm">
-                    {/* Category Filter Pills (Semua, Beras, Bumbu/Cabai, Daging & Telur, Minyak & Gula, Sayur & Ikan) */}
+                    {/* Category Filter Pills (Semua, Cabai & Bumbu, Beras & Gandum, etc.) */}
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none pr-8">
-                      {CATEGORIES.map((cat) => {
+                      {ORDERED_GROUPS.map((cat) => {
                         const count = categoryCounts[cat] || 0;
                         const isSelected = selectedCategory === cat;
                         return (
                           <button
                             key={cat}
+                            type="button"
                             onClick={() => setSelectedCategory(cat)}
-                            className={`px-3 py-1.5 rounded-lg font-label-caps text-label-caps font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer inline-flex items-center gap-1.5 ${
                               isSelected
-                                ? "bg-primary text-on-primary shadow-xs"
-                                : "bg-surface-card hover:bg-surface-subtle text-text-secondary border border-border-subtle/80 hover:text-text-primary"
+                                ? "bg-primary text-white shadow-xs"
+                                : "bg-surface-card text-text-secondary hover:text-text-primary hover:bg-surface-subtle border border-border-subtle/80"
                             }`}
                           >
                             <span>{cat}</span>
                             <span
-                              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                                isSelected ? "bg-white/20 text-white" : "bg-surface-subtle text-text-muted"
+                              className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-tight ${
+                                isSelected
+                                  ? "bg-white/20 text-white"
+                                  : "bg-surface-subtle text-text-muted"
                               }`}
                             >
                               {count}

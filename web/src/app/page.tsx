@@ -18,6 +18,7 @@ import {
   MarketTrendComparisonResult,
   TREND_MARKET_CONFIGS,
   ALL_CATALOG_COMMODITIES,
+  BEST_PRICE_CATEGORIES,
   TIMEFRAME_CONFIG,
   TimeframeOption,
 } from "@/lib/dataService";
@@ -199,26 +200,9 @@ export default function HomePage() {
     };
   }, [activeBasketList]);
 
-  const categories = [
-    "Semua",
-    "Beras",
-    "Minyak Goreng",
-    "Cabai",
-    "Bawang",
-    "Telur",
-    "Daging",
-  ];
-
   const handleAddToBasket = (item: CommodityPrice) => {
-    const fallbackIdMap: Record<string, number> = {
-      beras: 2,
-      minyak: 10,
-      cabai: 50,
-      telur: 16,
-      ayam: 13,
-      bawang: 39,
-    };
-    const cid: number = item.komoditas_id || fallbackIdMap[item.id] || 2;
+    const cid = item.komoditas_id;
+    if (cid === undefined) return;
     const meta = COMMODITY_BASKET_META[cid] || {
       icon: "shopping_basket",
       unit: item.unit.replace("/", "") || "kg",
@@ -410,20 +394,7 @@ export default function HomePage() {
 
     if (!matchSearch) return false;
 
-    if (selectedCategory === "Semua") return true;
-
-    const catLow = selectedCategory.toLowerCase();
-    const itemCatLow = (item.category || "").toLowerCase();
-    const itemNameLow = (item.name || "").toLowerCase();
-    const itemTagLow = (item.tag || "").toLowerCase();
-
-    return (
-      itemCatLow.includes(catLow) ||
-      itemNameLow.includes(catLow) ||
-      itemTagLow.includes(catLow) ||
-      (catLow === "cabai" && (itemCatLow.includes("cabe") || itemNameLow.includes("cabe"))) ||
-      (catLow === "daging" && (itemCatLow.includes("ayam") || itemNameLow.includes("ayam") || itemNameLow.includes("sapi")))
-    );
+    return selectedCategory === "Semua" || item.category === selectedCategory;
   });
 
   return (
@@ -724,20 +695,32 @@ export default function HomePage() {
                     </div>
                   </div>
                   {/* Category Filter Pills */}
-                  <div className="flex items-center gap-space-2xs overflow-x-auto pb-1 no-scrollbar">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-space-sm py-space-2xs rounded-full font-body-sm text-body-sm whitespace-nowrap transition-colors ${
-                          selectedCategory === cat
-                            ? "bg-primary-container text-on-primary active-category"
-                            : "bg-surface-subtle text-text-secondary hover:bg-surface-variant/40"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" aria-label="Filter kategori komoditas">
+                    {BEST_PRICE_CATEGORIES.map(({ name, count }) => {
+                      const isSelected = selectedCategory === name;
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => setSelectedCategory(name)}
+                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full border font-body-sm text-body-sm whitespace-nowrap transition-colors ${
+                            isSelected
+                              ? "bg-primary text-on-primary border-primary shadow-sm"
+                              : "bg-white text-text-primary border-border-subtle hover:bg-surface-subtle"
+                          }`}
+                        >
+                          <span>{name}</span>
+                          <span
+                            className={`inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1 text-[11px] font-semibold ${
+                              isSelected ? "bg-white/20 text-on-primary" : "bg-surface-subtle text-text-muted"
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -865,6 +848,8 @@ export default function HomePage() {
                                       ? "bg-status-critical-bg text-status-critical border border-rose-200"
                                       : item.isWarning
                                       ? "bg-status-warning-bg text-status-warning border border-amber-200"
+                                      : item.status === "Belum tersedia"
+                                      ? "bg-surface-subtle text-text-secondary border border-border-subtle"
                                       : "bg-status-normal-bg text-status-normal border border-emerald-200"
                                   }`}
                                 >
@@ -874,6 +859,8 @@ export default function HomePage() {
                                         ? "bg-status-critical"
                                         : item.isWarning
                                         ? "bg-status-warning"
+                                        : item.status === "Belum tersedia"
+                                        ? "bg-text-muted"
                                         : "bg-status-normal"
                                     }`}
                                   />
@@ -895,7 +882,7 @@ export default function HomePage() {
                                 <span className="font-extrabold text-base text-slate-900 tabular-nums">
                                   {item.price}
                                 </span>
-                                <span className="text-[10px] text-slate-500 font-medium">{item.unit}</span>
+                                {item.hasPriceData !== false && <span className="text-[10px] text-slate-500 font-medium">{item.unit}</span>}
                               </div>
                               {item.cheapestSub && (
                                 <span
@@ -978,6 +965,8 @@ export default function HomePage() {
                                     ? "bg-status-critical-bg text-status-critical border border-rose-200"
                                     : item.isWarning
                                     ? "bg-status-warning-bg text-status-warning border border-amber-200"
+                                    : item.status === "Belum tersedia"
+                                    ? "bg-surface-subtle text-text-secondary border border-border-subtle"
                                     : "bg-status-normal-bg text-status-normal border border-emerald-200"
                                 }`}
                               >
@@ -987,6 +976,8 @@ export default function HomePage() {
                                       ? "bg-status-critical"
                                       : item.isWarning
                                       ? "bg-status-warning"
+                                      : item.status === "Belum tersedia"
+                                      ? "bg-text-muted"
                                       : "bg-status-normal"
                                   }`}
                                 ></span>
@@ -1028,7 +1019,7 @@ export default function HomePage() {
                                   <span className="font-extrabold text-sm sm:text-metric-value text-slate-900">
                                     {item.price}
                                   </span>
-                                  <span className="text-[10px] sm:text-body-sm text-slate-500 ml-0.5">{item.unit}</span>
+                                  {item.hasPriceData !== false && <span className="text-[10px] sm:text-body-sm text-slate-500 ml-0.5">{item.unit}</span>}
                                 </div>
                                 <div className="order-2 sm:order-1 min-w-0">
                                   <span className="font-semibold text-xs sm:text-body-md text-primary truncate flex items-center gap-1" title={item.marketName}>
@@ -1062,7 +1053,11 @@ export default function HomePage() {
                                 <span className="sm:hidden">Rerata: </span>
                                 <strong className="font-semibold text-text-primary">{item.cityAvg}</strong>
                               </span>
-                              <span className="inline-flex items-center font-bold text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/50 px-1.5 py-0.5 rounded shrink-0">
+                              <span className={`inline-flex items-center font-bold text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                                item.hasPriceData === false
+                                  ? "text-text-secondary bg-surface-subtle border border-border-subtle"
+                                  : "text-emerald-700 bg-emerald-50 border border-emerald-200/50"
+                              }`}>
                                 {item.savingBadge || item.delta}
                               </span>
                             </div>
