@@ -787,12 +787,25 @@ export async function getLiveForecastDetails(
     const currentPrice = history.length > 0 ? history[history.length - 1].harga : 60000;
 
     // 4. Ambil proyeksi masa depan dari fact_forecast (tanggal > latestDate)
-    const { data: fcData, error: fcErr } = await supabase
+    let { data: fcData, error: fcErr } = await supabase
       .from("fact_forecast")
       .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas, created_at, model_name, model_horizon, is_fallback, forecast_run_id, origin_date")
       .eq("komoditas_id", komoditasId)
       .gt("tanggal", latestDate)
       .order("created_at", { ascending: false });
+
+    // Skema DB lama belum punya kolom provenance (Postgres 42703: undefined_column).
+    // Fallback ke kolom inti agar proyeksi tetap tampil tanpa metadata model.
+    if (fcErr?.code === "42703") {
+      const legacy = await supabase
+        .from("fact_forecast")
+        .select("tanggal, pasar_id, harga_prediksi, batas_bawah, batas_atas, created_at")
+        .eq("komoditas_id", komoditasId)
+        .gt("tanggal", latestDate)
+        .order("created_at", { ascending: false });
+      fcData = legacy.data as typeof fcData;
+      fcErr = legacy.error;
+    }
 
     if (fcErr || !fcData || fcData.length === 0) return null;
 
