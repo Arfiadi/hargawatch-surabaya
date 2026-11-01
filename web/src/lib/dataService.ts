@@ -256,11 +256,12 @@ export async function getLiveStabilitySummary(): Promise<FoodStabilitySummary | 
     const stabilityNum = total > 0 ? (normalCount / total) * 100 : 100;
     const stabilityPct = stabilityNum.toFixed(1);
 
-    // Evaluasi status stabilitas kota secara proporsional terhadap target ketahanan kota (>90%)
-    const isCityStable = stabilityNum >= 90;
-    const isCityCritical = stabilityNum < 75;
+    // Evaluasi status stabilitas kota selaras taksonomi EWS 3-level: Terkendali (Hijau), Waspada (Kuning), Siaga (Merah)
+    const highRiskItems = ewsRes.data.filter(r => r.status_warning === "TINGGI");
+    const isCityStable = stabilityNum >= 90 && alertCount === 0;
+    const isCityCritical = highRiskItems.length > 0 || stabilityNum < 50;
     const statusLabel = isCityCritical
-      ? "Kritis"
+      ? "Siaga"
       : isCityStable
       ? "Terkendali"
       : "Waspada";

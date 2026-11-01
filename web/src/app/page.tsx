@@ -544,16 +544,20 @@ export default function HomePage() {
                       </div>
                       <span
                         className={`inline-flex items-center gap-1 px-space-xs py-space-2xs rounded-full font-label-caps text-label-caps ${
-                          stabilitySummary.isNormal
-                            ? "bg-status-normal-bg text-status-normal"
-                            : "bg-status-warning-bg text-status-warning"
+                          stabilitySummary.statusLabel === "Siaga" || stabilitySummary.statusLabel === "Kritis"
+                            ? "bg-rose-50 text-rose-700"
+                            : stabilitySummary.statusLabel === "Waspada"
+                            ? "bg-status-warning-bg text-status-warning"
+                            : "bg-status-normal-bg text-status-normal"
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
-                            stabilitySummary.isNormal
-                              ? "bg-status-normal animate-pulse"
-                              : "bg-status-warning animate-pulse"
+                            stabilitySummary.statusLabel === "Siaga" || stabilitySummary.statusLabel === "Kritis"
+                              ? "bg-rose-600 animate-pulse"
+                              : stabilitySummary.statusLabel === "Waspada"
+                              ? "bg-status-warning animate-pulse"
+                              : "bg-status-normal animate-pulse"
                           }`}
                         ></span>
                         {stabilitySummary.statusLabel}
