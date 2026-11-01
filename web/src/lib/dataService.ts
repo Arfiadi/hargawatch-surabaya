@@ -60,6 +60,9 @@ export interface EarlyWarningStats {
   focusText: string;
   subtitle: string;
   anomaliesCount: number;
+  supervisedPointsCount: number;
+  highPointsCount: number;
+  warningPointsCount: number;
   criticalCommodities: string[];
   warningCommodities: string[];
 }
@@ -635,6 +638,10 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
     const totalRecords = evaluatedItems.length; // 208 record riil ter-evaluasi
     const stabilityPercentage = totalRecords > 0 ? Number(((normalCount / totalRecords) * 100).toFixed(1)) : 0;
     const anomaliesCount = evaluatedItems.filter(i => (i.skor_anomali || 0) > 0).length;
+    const supervisedItems = evaluatedItems.filter(i => i.status_warning !== "NORMAL");
+    const supervisedPointsCount = supervisedItems.length;
+    const highPointsCount = highRiskItems.length;
+    const warningPointsCount = evaluatedItems.filter(i => i.status_warning === "WASPADA").length;
 
     // Format tanggal Indonesia: misal "10 Okt 2026"
     let formattedDate = latestDate;
@@ -680,6 +687,9 @@ export async function getLiveEarlyWarning(): Promise<{ items: EarlyWarningItem[]
         focusText,
         subtitle,
         anomaliesCount,
+        supervisedPointsCount,
+        highPointsCount,
+        warningPointsCount,
         criticalCommodities: highRiskCommodities,
         warningCommodities,
       }

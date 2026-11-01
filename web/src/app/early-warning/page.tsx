@@ -574,22 +574,22 @@ export default function EarlyWarningPage() {
                 </div>
               </div>
 
-              {/* KPI 3: Titik Anomali Pasar */}
+              {/* KPI 3: Titik Dalam Pengawasan (Solusi 1: Selaras Taksonomi 208 Titik) */}
               <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                    Titik Anomali Pasar
+                    Titik Dalam Pengawasan
                   </span>
                   <span
                     className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                       !ewsStats
                         ? "bg-surface-subtle text-text-muted"
-                        : ewsStats.anomaliesCount > 0
+                        : ewsStats.supervisedPointsCount > 0
                         ? "bg-status-warning-bg text-status-warning"
                         : "bg-surface-subtle text-status-normal"
                     }`}
                   >
-                    <span className="material-symbols-outlined text-body-lg">radar</span>
+                    <span className="material-symbols-outlined text-body-lg">policy</span>
                   </span>
                 </div>
                 <div className="flex-1 flex flex-col justify-center py-2 gap-space-2xs">
@@ -598,21 +598,27 @@ export default function EarlyWarningPage() {
                       className={`font-metric-display text-metric-display ${
                         !ewsStats
                           ? "text-text-muted"
-                          : ewsStats.anomaliesCount > 0
+                          : ewsStats.supervisedPointsCount > 0
                           ? "text-status-warning"
                           : "text-status-normal"
                       }`}
                     >
-                      {ewsStats ? `${ewsStats.anomaliesCount} Titik` : "—"}
+                      {ewsStats ? `${ewsStats.supervisedPointsCount} Titik` : "—"}
                     </span>
-                    <span className="font-label-caps text-label-caps text-text-muted">Outlier Deviasi</span>
+                    <span className="font-label-caps text-label-caps text-text-muted">
+                      {ewsStats && ewsStats.highPointsCount > 0
+                        ? `${ewsStats.warningPointsCount} Waspada · ${ewsStats.highPointsCount} Siaga`
+                        : ewsStats
+                        ? `${ewsStats.warningPointsCount} Waspada`
+                        : "Perlu Pengawasan"}
+                    </span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-secondary">
                     {ewsStats
-                      ? ewsStats.anomaliesCount > 0
-                        ? `${ewsStats.anomaliesCount} titik pantau terdeteksi deviasi antar-pasar`
-                        : "Seluruh pasar selaras dalam toleransi"
-                      : "Menunggu pemindaian anomali"}
+                      ? ewsStats.supervisedPointsCount > 0
+                        ? `${ewsStats.supervisedPointsCount} dari ${ewsStats.totalRecords} titik pantau terdeteksi risiko harga`
+                        : "Seluruh titik pantau dalam batas aman normal"
+                      : "Menunggu pemindaian risiko"}
                   </span>
                 </div>
               </div>
