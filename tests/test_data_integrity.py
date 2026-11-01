@@ -172,10 +172,15 @@ def test_freshness_guardrail_stale_triggers_catchup():
     assert len(catchup_called) == 1
 
 
-def test_freshness_guardrail_catchup_failure_aborts():
+def test_freshness_guardrail_catchup_failure_aborts(monkeypatch):
     """Stale data where catchup fails returns False to abort the pipeline."""
     stale_date = datetime.now().date() - timedelta(days=5)
     mock_conn = lambda: MockConnection(stale_date)
+    alerts = []
+    monkeypatch.setattr(
+        "src.utils.utils_alerting.send_telegram_alert",
+        lambda message: alerts.append(message),
+    )
 
     res = check_data_freshness_and_catchup(
         max_stale_days=3,
@@ -183,3 +188,5 @@ def test_freshness_guardrail_catchup_failure_aborts():
         run_catchup_fn=lambda: False
     )
     assert res is False
+    assert len(alerts) == 1
+    assert "Data harga pasar basi (5 hari tertinggal" in alerts[0]

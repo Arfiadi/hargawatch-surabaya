@@ -396,6 +396,7 @@ export default function HomePage() {
 
     return selectedCategory === "Semua" || item.category === selectedCategory;
   });
+  const visibleCommodities = filteredCommodities.slice(0, 6);
 
   return (
     <div className="bg-surface-canvas text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col">
@@ -695,7 +696,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   {/* Category Filter Pills */}
-                  <div className="flex flex-wrap items-center gap-2" aria-label="Filter kategori komoditas">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 min-[880px]:grid-cols-4" aria-label="Filter kategori komoditas">
                     {BEST_PRICE_CATEGORIES.map(({ name, count }) => {
                       const isSelected = selectedCategory === name;
                       return (
@@ -704,7 +705,7 @@ export default function HomePage() {
                           type="button"
                           aria-pressed={isSelected}
                           onClick={() => setSelectedCategory(name)}
-                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full border font-body-sm text-body-sm whitespace-nowrap transition-colors ${
+                          className={`inline-flex min-h-12 w-full items-center justify-center gap-1.5 rounded-full border px-2 py-2 font-body-sm text-body-sm whitespace-nowrap transition-colors sm:px-3 ${
                             isSelected
                               ? "bg-primary text-on-primary border-primary shadow-sm"
                               : "bg-white text-text-primary border-border-subtle hover:bg-surface-subtle"
@@ -725,6 +726,11 @@ export default function HomePage() {
                 </div>
 
                 {/* Commodity Cards List */}
+                {!loadingCommodities && !errorCommodities && filteredCommodities.length > 0 && (
+                  <p className="font-label-caps text-label-caps text-text-muted">
+                    Menampilkan {visibleCommodities.length} dari {filteredCommodities.length} komoditas. Gunakan pencarian atau kategori untuk menemukan lainnya.
+                  </p>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-space-md" id="commodity-grid">
                   {loadingCommodities ? (
                     Array.from({ length: 6 }).map((_, i) => (
@@ -808,7 +814,7 @@ export default function HomePage() {
                       <p className="font-body-md text-text-secondary">Tidak ada komoditas yang cocok dengan pencarian.</p>
                     </div>
                   ) : (
-                    filteredCommodities.map((item) => (
+                    visibleCommodities.map((item) => (
                       <div
                         key={item.id}
                         className="bg-surface-card rounded-xl p-3 sm:p-space-md shadow-xs hover:shadow-md transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden group border border-border-subtle/50 will-change-transform"
