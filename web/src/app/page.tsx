@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -45,6 +45,37 @@ export default function HomePage() {
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const shoppingFreq = 4;
   const [basketViewMode, setBasketViewMode] = useState<"single" | "split">("single");
+
+  // Category horizontal scroll controls for desktop
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScrollState = () => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  };
+
+  useEffect(() => {
+    checkScrollState();
+    const el = categoryScrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkScrollState, { passive: true });
+    window.addEventListener("resize", checkScrollState);
+    return () => {
+      el.removeEventListener("scroll", checkScrollState);
+      window.removeEventListener("resize", checkScrollState);
+    };
+  }, [commodities]);
+
+  const scrollCategories = (direction: "left" | "right") => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = direction === "left" ? -220 : 220;
+      categoryScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   const activeBasketList = useMemo(() => {
     return basketList.filter((b) => checkedItems[b.komoditas_id] !== false);
@@ -694,35 +725,73 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
-                  {/* Category Filter Pills (Horizontal Scrollable) */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pr-4" aria-label="Filter kategori komoditas">
-                    {BEST_PRICE_CATEGORIES.map(({ name, count }) => {
-                      const isSelected = selectedCategory === name;
-                      return (
-                        <button
-                          key={name}
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() => setSelectedCategory(name)}
-                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer inline-flex items-center gap-1.5 ${
-                            isSelected
-                              ? "bg-primary text-white shadow-xs"
-                              : "bg-surface-card text-text-secondary hover:text-text-primary hover:bg-surface-subtle border border-border-subtle/80"
-                          }`}
-                        >
-                          <span>{name}</span>
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-tight ${
+                  {/* Category Filter Pills (Horizontal Scrollable with Desktop Navigation Arrows) */}
+                  <div className="relative flex items-center gap-1">
+                    {/* Left Scroll Arrow (Desktop Only) */}
+                    <button
+                      type="button"
+                      disabled={!canScrollLeft}
+                      onClick={() => scrollCategories("left")}
+                      className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-surface-card text-text-secondary border border-border-subtle/80 shadow-xs shrink-0 transition-all ${
+                        canScrollLeft
+                          ? "hover:bg-surface-subtle hover:text-text-primary cursor-pointer opacity-100"
+                          : "opacity-25 cursor-not-allowed pointer-events-none"
+                      }`}
+                      title="Geser kategori ke kiri"
+                      aria-label="Geser kategori ke kiri"
+                    >
+                      <span className="material-symbols-outlined text-[17px]">chevron_left</span>
+                    </button>
+
+                    <div
+                      ref={categoryScrollRef}
+                      className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar flex-1 scroll-smooth"
+                      aria-label="Filter kategori komoditas"
+                    >
+                      {BEST_PRICE_CATEGORIES.map(({ name, count }) => {
+                        const isSelected = selectedCategory === name;
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            aria-pressed={isSelected}
+                            onClick={() => setSelectedCategory(name)}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer inline-flex items-center gap-1.5 ${
                               isSelected
-                                ? "bg-white/20 text-white"
-                                : "bg-surface-subtle text-text-muted"
+                                ? "bg-primary text-white shadow-xs"
+                                : "bg-surface-card text-text-secondary hover:text-text-primary hover:bg-surface-subtle border border-border-subtle/80"
                             }`}
                           >
-                            {count}
-                          </span>
-                        </button>
-                      );
-                    })}
+                            <span>{name}</span>
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-tight ${
+                                isSelected
+                                  ? "bg-white/20 text-white"
+                                  : "bg-surface-subtle text-text-muted"
+                              }`}
+                            >
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right Scroll Arrow (Desktop Only) */}
+                    <button
+                      type="button"
+                      disabled={!canScrollRight}
+                      onClick={() => scrollCategories("right")}
+                      className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-surface-card text-text-secondary border border-border-subtle/80 shadow-xs shrink-0 transition-all ${
+                        canScrollRight
+                          ? "hover:bg-surface-subtle hover:text-text-primary cursor-pointer opacity-100"
+                          : "opacity-25 cursor-not-allowed pointer-events-none"
+                      }`}
+                      title="Geser kategori ke kanan"
+                      aria-label="Geser kategori ke kanan"
+                    >
+                      <span className="material-symbols-outlined text-[17px]">chevron_right</span>
+                    </button>
                   </div>
                 </div>
 
