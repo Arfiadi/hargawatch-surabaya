@@ -40,11 +40,11 @@ REGISTRY_FILE = MODEL_DIR / "registry.json"
 
 # Strategic priority commodities identified in EDA
 PRIORITY_KOMODITAS_IDS = [
-    50,  # Cabe Rawit Merah (Most Volatile -> LightGBM + Calendar)
+    50,  # Cabe Rawit Merah (Most Volatile -> XGBoost + Calendar)
     39,  # Bawang Merah (High Volatility -> CatBoost)
     2,   # Beras Premium (Strategic Staple -> Naive Last Value)
     13,  # Daging Ayam Ras (Stable -> Naive Last Value)
-    16,  # Telur Ayam Ras (Medium Volatility -> CatBoost)
+    16,  # Telur Ayam Ras (Medium Volatility -> XGBoost)
     10,  # Minyak Goreng Curah
     7    # Gula Kristal Putih
 ]
