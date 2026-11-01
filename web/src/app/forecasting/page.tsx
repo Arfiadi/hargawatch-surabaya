@@ -490,11 +490,11 @@ export default function ForecastingPage() {
             {/* 2. Ringkasan Metrik Cepat */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
               {/* Metrik 1: Harga Riil Saat Ini */}
-              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between">
+              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                   Harga Rata-rata Terkini
                 </span>
-                <div className="my-1">
+                <div className="flex-1 flex flex-col justify-center py-1">
                   {loading || !isDataInSync || !forecastData ? (
                     <div className="space-y-1.5 animate-pulse">
                       <div className="w-28 h-7 bg-surface-subtle rounded"></div>
@@ -519,11 +519,11 @@ export default function ForecastingPage() {
               </div>
 
               {/* Metrik 2: Estimasi Akhir Periode */}
-              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between">
+              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                   Prakiraan Hari ke-{actualHorizon}
                 </span>
-                <div className="my-1">
+                <div className="flex-1 flex flex-col justify-center py-1">
                   {loading || !isDataInSync || !targetHorizonRow ? (
                     <div className="space-y-1.5 animate-pulse">
                       <div className="w-28 h-7 bg-surface-subtle rounded"></div>
@@ -548,11 +548,11 @@ export default function ForecastingPage() {
               </div>
 
               {/* Metrik 3: Arah Tren Perubahan */}
-              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col justify-between">
+              <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-border-subtle/70 flex flex-col hover:shadow-md transition-shadow">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                   Arah Perubahan Harga
                 </span>
-                <div className="my-1">
+                <div className="flex-1 flex flex-col justify-center py-1">
                   {loading || !isDataInSync || !targetHorizonRow ? (
                     <div className="space-y-1.5 animate-pulse">
                       <div className="w-32 h-7 bg-surface-subtle rounded"></div>
@@ -601,21 +601,16 @@ export default function ForecastingPage() {
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
                   Model &amp; Akurasi
                 </span>
-                <div className="flex-1 flex flex-col justify-center py-2">
+                <div className="flex-1 flex flex-col justify-center py-1">
                   {modelMeta ? (
-                    <>
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-metric-display text-metric-display text-status-normal font-bold">
-                          {modelMeta.accuracy.toFixed(1)}%
-                        </span>
-                        <span className="font-label-caps text-label-caps text-text-secondary">
-                          Akurasi (WAPE {modelMeta.wape.toFixed(2)}%)
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-text-muted mt-1 block">
-                        Model: {modelMeta.modelName} • H+7 Walk-Forward Backtest
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-metric-display text-metric-display text-status-normal font-bold">
+                        {modelMeta.accuracy.toFixed(1)}%
                       </span>
-                    </>
+                      <span className="font-label-caps text-label-caps text-text-secondary">
+                        Akurasi (WAPE {modelMeta.wape.toFixed(2)}%)
+                      </span>
+                    </div>
                   ) : (
                     <div className="flex items-baseline gap-2">
                       <span className="font-metric-display text-metric-display text-text-muted font-bold">
