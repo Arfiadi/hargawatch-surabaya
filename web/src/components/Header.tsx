@@ -9,7 +9,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { label: "Dashboard Publik", href: "/" },
+    { label: "Dashboard Publik", href: "/dashboard" },
     { label: "Peta & Disparitas Pasar", href: "/peta" },
     { label: "Early Warning & Risiko", href: "/early-warning" },
     { label: "Forecasting & Tren", href: "/forecasting" },
@@ -21,7 +21,7 @@ export default function Header() {
         {/* Logo & Subtitle */}
         <div className="flex items-center gap-space-md min-w-max">
           {/* Brand → beranda platform (landing); Dashboard Publik tetap di menu */}
-          <Link href="/landing" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-2.5 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="HargaWatch Logo"

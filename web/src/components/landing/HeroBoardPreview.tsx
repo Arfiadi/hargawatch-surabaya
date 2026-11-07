@@ -80,7 +80,7 @@ export default function HeroBoardPreview() {
         {cards.map((item) => (
           <Link
             key={item.id}
-            href={`/?search=${encodeURIComponent(item.name)}`}
+            href={`/dashboard?search=${encodeURIComponent(item.name)}`}
             className="group relative flex min-w-0 flex-col gap-3 rounded-xl border border-border-subtle bg-surface-card p-3.5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:border-primary/50 sm:p-4"
           >
             <span className="flex items-start justify-between gap-2">
