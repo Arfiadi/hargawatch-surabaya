@@ -42,6 +42,9 @@ ehthumbs.db
 .hermes/
 memory/
 skills-lock.json
+.commandcode/
+.hallmark/
+web/.hallmark/
 
 scratch/
 data/external/

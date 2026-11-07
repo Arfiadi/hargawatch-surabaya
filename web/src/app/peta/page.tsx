@@ -458,7 +458,7 @@ export default function SpatialMapPage() {
     <div className="bg-surface-canvas text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col">
       <Header />
 
-      <main className="w-full pt-20 bg-surface-canvas min-h-screen">
+      <main className="w-full pt-16 bg-surface-canvas min-h-screen">
         <div className="flex flex-col w-full">
           <section className="w-full px-space-md lg:px-gutter-desktop py-space-md max-w-[80rem] mx-auto">
             {/* Header Context & Dynamic Quick Metrics Strip */}

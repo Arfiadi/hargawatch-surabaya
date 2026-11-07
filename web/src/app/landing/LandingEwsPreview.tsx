@@ -1,0 +1,216 @@
+"use client";
+
+import Link from "next/link";
+
+interface StrategicMarketCell {
+  price: string;
+  status: "normal" | "warning" | "critical";
+}
+
+interface EwsMatrixRow {
+  id: number;
+  komoditas: string;
+  rerata: string;
+  keputran: StrategicMarketCell;
+  wonokromo: StrategicMarketCell;
+  genteng: StrategicMarketCell;
+  soponyono: StrategicMarketCell;
+  skorRisiko: number;
+  statusLabel: "Aman" | "Waspada" | "Siaga";
+}
+
+const EWS_ROWS: EwsMatrixRow[] = [
+  {
+    id: 16,
+    komoditas: "Telur Ayam Ras",
+    rerata: "Rp 28.500",
+    keputran: { price: "Rp 27.500", status: "normal" },
+    wonokromo: { price: "Rp 28.000", status: "normal" },
+    genteng: { price: "Rp 29.500", status: "warning" },
+    soponyono: { price: "Rp 31.000", status: "critical" },
+    skorRisiko: 70,
+    statusLabel: "Siaga",
+  },
+  {
+    id: 50,
+    komoditas: "Cabai Rawit Merah",
+    rerata: "Rp 72.000",
+    keputran: { price: "Rp 68.000", status: "normal" },
+    wonokromo: { price: "Rp 70.000", status: "normal" },
+    genteng: { price: "Rp 74.000", status: "warning" },
+    soponyono: { price: "Rp 76.000", status: "warning" },
+    skorRisiko: 58,
+    statusLabel: "Waspada",
+  },
+  {
+    id: 39,
+    komoditas: "Bawang Merah",
+    rerata: "Rp 38.000",
+    keputran: { price: "Rp 36.000", status: "normal" },
+    wonokromo: { price: "Rp 38.000", status: "normal" },
+    genteng: { price: "Rp 39.000", status: "normal" },
+    soponyono: { price: "Rp 39.000", status: "normal" },
+    skorRisiko: 42,
+    statusLabel: "Waspada",
+  },
+  {
+    id: 2,
+    komoditas: "Beras Premium",
+    rerata: "Rp 15.000",
+    keputran: { price: "Rp 14.800", status: "normal" },
+    wonokromo: { price: "Rp 15.000", status: "normal" },
+    genteng: { price: "Rp 15.200", status: "normal" },
+    soponyono: { price: "Rp 15.000", status: "normal" },
+    skorRisiko: 25,
+    statusLabel: "Aman",
+  },
+];
+
+export default function LandingEwsPreview() {
+  const getCellBadge = (status: "normal" | "warning" | "critical") => {
+    if (status === "critical") {
+      return "bg-rose-50 text-rose-800 border-rose-200/80 font-semibold";
+    }
+    if (status === "warning") {
+      return "bg-amber-50 text-amber-800 border-amber-200/80 font-semibold";
+    }
+    return "bg-emerald-50 text-emerald-800 border-emerald-200/80 font-medium";
+  };
+
+  const getRiskScoreBadge = (status: "Aman" | "Waspada" | "Siaga") => {
+    if (status === "Siaga") {
+      return "bg-rose-100 text-rose-900 border-rose-300 font-bold";
+    }
+    if (status === "Waspada") {
+      return "bg-amber-100 text-amber-900 border-amber-300 font-bold";
+    }
+    return "bg-emerald-100 text-emerald-900 border-emerald-300 font-semibold";
+  };
+
+  return (
+    <div className="w-full bg-surface-card rounded-2xl p-4 sm:p-5 shadow-sm border border-border-subtle">
+      {/* Executive Alert Banner: Focused Hotspot + Actionable Context */}
+      <div className="rounded-xl p-3.5 sm:p-4 bg-amber-50/90 border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 bg-amber-100 text-amber-800 mt-0.5">
+            <span className="material-symbols-outlined text-[18px]">warning</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-label-caps text-xs uppercase font-bold text-amber-900 tracking-wider">
+                Contoh peringatan: harga telur
+              </span>
+              <span className="text-xs font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full border border-rose-200">
+                Siaga · 70/100
+              </span>
+            </div>
+            <p className="text-xs text-text-primary mt-1 leading-snug">
+              Harga telur di Soponyono <strong>Rp 31.000/kg</strong>, sekitar {((31000 - 27000) / 27000 * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}% di atas batas acuan Bapanas Rp 27.000. Ringkasan ini membantu TPID Surabaya menentukan pasar yang perlu dicek lebih dulu.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/early-warning"
+          className="min-h-11 px-3 text-xs font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 rounded-lg transition-colors shrink-0 self-start sm:self-center inline-flex items-center gap-1"
+        >
+          <span>Lihat rincian</span>
+          <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+        </Link>
+      </div>
+
+      {/* Visual Legend Bar: Clear Definition of Colors */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-border-subtle text-xs text-text-secondary">
+        <span className="font-semibold text-text-primary">
+        Harga dan tingkat perhatian di empat pasar
+        </span>
+        <div className="flex items-center gap-3 text-[11px]">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-600" />
+            <span>Normal (di bawah 40)</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-amber-600" />
+            <span>Waspada (40–69)</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-rose-600" />
+            <span>Siaga (70 ke atas)</span>
+          </span>
+        </div>
+      </div>
+
+      {/* 4 Strategic Markets Representative Table */}
+      <div
+        className="overflow-x-auto rounded-xl border border-border-subtle/80 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+        role="region"
+        aria-label="Contoh harga empat bahan pangan di empat pasar"
+        tabIndex={0}
+      >
+        <table className="w-full text-xs text-left">
+          <caption className="sr-only">Contoh harga dan tingkat perhatian untuk empat bahan pangan di empat pasar Surabaya</caption>
+          <thead className="bg-surface-canvas text-text-secondary uppercase text-[10px] font-bold tracking-wider border-b border-border-subtle">
+            <tr>
+              <th scope="col" className="py-2.5 px-3">Bahan pangan</th>
+              <th scope="col" className="py-2.5 px-2 text-right">Rata-rata</th>
+              <th scope="col" className="py-2.5 px-2 text-center">Keputran</th>
+              <th scope="col" className="py-2.5 px-2 text-center">Wonokromo</th>
+              <th scope="col" className="py-2.5 px-2 text-center">Genteng</th>
+              <th scope="col" className="py-2.5 px-2 text-center">Soponyono</th>
+              <th scope="col" className="py-2.5 px-3 text-right">Perhatian</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-subtle/50 font-sans">
+            {EWS_ROWS.map((row) => (
+              <tr key={row.id} className="hover:bg-surface-canvas/60 transition-colors">
+                <th scope="row" className="py-2.5 px-3 font-semibold text-text-primary whitespace-nowrap">
+                  {row.komoditas}
+                </th>
+                <td className="py-2.5 px-2 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">
+                  {row.rerata}
+                </td>
+                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.keputran.status)}`}>
+                    {row.keputran.price}
+                  </span>
+                </td>
+                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.wonokromo.status)}`}>
+                    {row.wonokromo.price}
+                  </span>
+                </td>
+                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.genteng.status)}`}>
+                    {row.genteng.price}
+                  </span>
+                </td>
+                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.soponyono.status)}`}>
+                    {row.soponyono.price}
+                  </span>
+                </td>
+                <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] tabular-nums ${getRiskScoreBadge(row.statusLabel)}`}>
+                    <span>{row.skorRisiko}</span>
+                    <span className="text-[10px] opacity-80">({row.statusLabel})</span>
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Clean Single Bottom Link */}
+      <div className="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-end text-xs">
+        <Link
+          href="/early-warning"
+          className="min-h-11 text-primary font-bold hover:underline inline-flex items-center gap-1 shrink-0"
+        >
+          <span>Lihat semua pasar dan bahan pangan</span>
+          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+        </Link>
+      </div>
+    </div>
+  );
+}

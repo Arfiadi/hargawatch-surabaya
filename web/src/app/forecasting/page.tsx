@@ -447,7 +447,7 @@ export default function ForecastingPage() {
     <div className="bg-surface-canvas text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col">
       <Header />
 
-      <main className="w-full pt-20 bg-surface-canvas min-h-screen">
+      <main className="w-full pt-16 bg-surface-canvas min-h-screen">
         <div className="flex flex-col w-full">
           <div className="w-full max-w-[80rem] mx-auto px-space-md lg:px-gutter-desktop py-space-md flex flex-col gap-space-lg">
             {/* 1. Header & Konteks Halaman */}

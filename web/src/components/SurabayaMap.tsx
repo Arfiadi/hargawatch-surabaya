@@ -29,6 +29,7 @@ interface SurabayaMapProps {
   minPrice: number;
   maxPrice: number;
   cityAvg: number;
+  className?: string;
 }
 
 export default function SurabayaMap({
@@ -41,6 +42,7 @@ export default function SurabayaMap({
   minPrice,
   maxPrice,
   cityAvg,
+  className,
 }: SurabayaMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -277,7 +279,12 @@ export default function SurabayaMap({
   };
 
   return (
-    <div className="relative w-full h-[320px] sm:h-[400px] lg:h-[580px] overflow-hidden select-none bg-surface-subtle rounded-2xl border border-border-subtle shadow-sm">
+    <div
+      className={
+        className ||
+        "relative w-full h-[320px] sm:h-[400px] lg:h-[580px] overflow-hidden select-none bg-surface-subtle rounded-2xl border border-border-subtle shadow-sm"
+      }
+    >
       {/* Real Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 

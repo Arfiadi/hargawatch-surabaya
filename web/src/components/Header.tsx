@@ -16,25 +16,26 @@ export default function Header() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-surface-card/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-      <div className="h-20 w-full px-space-md lg:px-gutter-desktop flex items-center gap-space-md">
+    <header className="fixed top-0 left-0 w-full z-50 bg-surface-card/95 backdrop-blur-md shadow-[0_1px_6px_rgba(0,0,0,0.04)] border-b border-border-subtle/40">
+      <div className="h-16 w-full px-space-md lg:px-gutter-desktop flex items-center gap-space-md">
         {/* Logo & Subtitle */}
         <div className="flex items-center gap-space-md min-w-max">
-          <Link href="/" className="flex items-center gap-space-sm group">
+          {/* Brand → beranda platform (landing); Dashboard Publik tetap di menu */}
+          <Link href="/landing" className="flex items-center gap-2.5 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="HargaWatch Logo"
-              width={40}
-              height={40}
-              style={{ width: "40px", height: "40px", minWidth: "40px" }}
-              className="h-10 w-10 rounded-xl object-contain shadow-sm border border-primary/10 bg-white p-0.5 transition-transform group-hover:scale-105"
+              width={36}
+              height={36}
+              style={{ width: "36px", height: "36px", minWidth: "36px" }}
+              className="h-9 w-9 rounded-lg object-contain shadow-xs border border-primary/10 bg-white p-0.5 transition-transform group-hover:scale-105"
               src="/logo.svg"
             />
             <div className="flex flex-col">
-              <span className="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">
+              <span className="font-headline-sm text-[17px] text-primary tracking-tight leading-none font-bold">
                 HargaWatch
               </span>
-              <span className="font-label-caps text-label-caps text-text-secondary uppercase">
+              <span className="font-label-caps text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">
                 Surabaya Food Intel
               </span>
             </div>
@@ -44,17 +45,17 @@ export default function Header() {
         {/* Right side: Navigation + Actions */}
         <div className="ml-auto flex items-center gap-space-md">
         {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-space-2xs">
+        <nav className="hidden xl:flex items-center gap-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-space-sm py-space-xs rounded-lg transition-[color,background-color,transform,box-shadow] duration-300 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] ${
+                className={`px-3 py-1.5 rounded-lg text-sm transition-[color,background-color,transform,box-shadow] duration-200 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] ${
                                   isActive
-                                    ? "bg-primary-container text-on-primary font-headline-sm"
-                                    : "font-body-md text-body-md text-on-surface-variant hover:text-on-surface"
+                                    ? "bg-primary-container text-on-primary font-semibold shadow-xs"
+                                    : "text-text-secondary hover:text-text-primary hover:bg-surface-subtle font-medium"
                                 }`}
               >
                 {item.label}

@@ -439,7 +439,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <main className="w-full pt-20 bg-surface-canvas flex-1">
+      <main className="w-full pt-16 bg-surface-canvas flex-1">
         <div className="flex flex-col w-full">
           {/* Sub-Hero Section */}
           <section className="relative w-full bg-surface-card shadow-sm overflow-hidden mb-space-lg">
@@ -633,71 +633,6 @@ export default function HomePage() {
                   </div>
                 )}
               </div>
-              {/* Consumer Alert Banner */}
-              {loadingSummary || !stabilitySummary ? (
-                <div className="mt-space-lg rounded-xl p-space-sm sm:p-space-md bg-surface-card border border-border-subtle/60 flex items-center justify-between gap-space-sm animate-pulse">
-                  <div className="flex items-center gap-space-sm">
-                    <div className="w-9 h-9 rounded-lg bg-surface-subtle shrink-0" />
-                    <div className="space-y-1.5">
-                      <div className="h-3 w-36 bg-surface-subtle rounded" />
-                      <div className="h-4 w-72 bg-surface-subtle rounded" />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className={`mt-space-lg rounded-xl p-space-sm sm:p-space-md flex items-start sm:items-center justify-between gap-space-sm ${
-                    stabilitySummary.hasAlert
-                      ? stabilitySummary.isNormal
-                        ? "bg-amber-50/90 border border-amber-200/80"
-                        : "bg-status-warning-bg border border-status-warning/30"
-                      : "bg-status-normal-bg/60 border border-status-normal/20"
-                  }`}
-                >
-                  <div className="flex items-start sm:items-center gap-space-sm">
-                    <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                        stabilitySummary.hasAlert
-                          ? stabilitySummary.isNormal
-                            ? "bg-amber-600 text-white"
-                            : "bg-status-warning text-white"
-                          : "bg-status-normal text-white"
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-title-md">
-                        {stabilitySummary.hasAlert ? "notifications_active" : "verified"}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-space-xs flex-wrap">
-                        <span
-                          className={`font-label-caps text-label-caps uppercase font-semibold ${
-                            stabilitySummary.hasAlert
-                              ? stabilitySummary.isNormal
-                                ? "text-amber-800"
-                                : "text-status-warning"
-                              : "text-status-normal"
-                          }`}
-                        >
-                          {stabilitySummary.bannerTitle}
-                        </span>
-                      </div>
-                      <p className="font-body-md text-body-md text-text-primary mt-0.5 text-justify">
-                        {stabilitySummary.bannerMessage}
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    className={`hidden md:inline-flex items-center gap-1 font-body-sm text-body-sm font-semibold hover:underline shrink-0 ${
-                      stabilitySummary.hasAlert ? "text-status-warning" : "text-status-normal"
-                    }`}
-                    href={stabilitySummary.hasAlert ? "/early-warning" : "#grafik-tren"}
-                  >
-                    {stabilitySummary.hasAlert ? "Cek Detail Risiko EWS" : "Cek Tren Harga"}
-                    <span className="material-symbols-outlined text-body-sm">arrow_forward</span>
-                  </a>
-                </div>
-              )}
             </div>
           </section>
 

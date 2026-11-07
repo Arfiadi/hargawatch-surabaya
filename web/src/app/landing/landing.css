@@ -1,0 +1,415 @@
+/* Hallmark · v2.0.0 · checked: 2026-11-06 · theme: custom · brand: HargaWatch Surabaya (brand-spec 2026-11-06) · idea: "empat jendela pasar: papan, peta, proyeksi, siaga, dari data yang sama" · genre: modern-minimal · posture: committed (hijau = band + CTA + teks aktif; <8 viewport) · paper: #F8FAFC-family · display: Plus Jakarta Sans roman-grotesk 800 · accent: chromatic-green oklch (primary #004328) · hero: Banner, papan penuh di bawah kepala · imagery: screenshots 4 (capture.mjs) · job: open dashboard, action in hero and band
+ * critique: P4 H4 E4 S5 R4 V4 · weakest: H, dua split berurutan (3,4); dibedakan: visual kiri vs teks+tabel kiri
+ * Hallmark · dismissed F19 · weight 500 milik chrome Header/Footer proyek (label-caps); halaman sendiri 400/600/800
+ * hero-review: fix — papan dipotong ulang jadi strip papan (baris harga + ringkasan termurah + sirine Waspada, y297-588 sumber, batas bawah whitespace asli); grid 2 kolom dashboard memang tak segaris (tak ada baris bersama), jadi tepi atas dilarutkan fade 16px ber-cap solid 6px; jarak CTA-papan kini mt 32px nyata (margin:0 di .lw-frame mematikan semua mt utility figure, dihapus); lead seimbang (text-wrap balance + pengikat frasa); papan mobile memakai potret potongan capture ponsel (di bawah judulnya sendiri, papan harga + indeks 57.7%), bawahnya dilarutkan; pergantian varian lewat CSS (dua img, satu tersembunyi per lebar) bukan <picture>: krom headless boleh membekukan pilihan <source> saat lebar diemulasi ulang; afordans semu dalam tangkapan (panah/tautan EWS) diwaiver: live di dashboard yang dibuka CTA
+ * finish-review: fix — subagent · 2 temuan · 2 resolved · gap: none — h1 br disembunyikan di ≤30rem (satu media query; ponsel kini tiga baris berimbang tanpa fragmen "pasar,", desktop dua baris tetap); sel pilar 2 memakai kata kani docs/EWS_methodology.md: "Volatilitas dinamis dan anti-amnesia" (bobot 20 poin tetap)
+ * Picks-last: Floor 0 FAIL · Reflex F19 (answered: bobot 500 milik chrome Header/Footer proyek) · finish-review: fix, 2/2 resolved */
+
+:root {
+  /* landing-scoped tokens; every length and colour is the project's own token or derived */
+  --lw-display: clamp(2.7rem, 5.4vw, 4.25rem);
+  --lw-section: clamp(1.875rem, 3.1vw, 2.875rem);
+  --lw-lead: clamp(1.0625rem, 1.4vw, 1.1875rem);
+  --lw-label: 0.84rem;
+  --lw-figure: clamp(2.25rem, 3.6vw, 3.25rem);
+  --lw-gap: var(--spacing-space-lg);
+  --lw-secgap: clamp(5rem, 9vw, 7.75rem);
+  --lw-secgap-tight: clamp(3rem, 5vw, 4.5rem);
+  --lw-measure: 34rem;
+  --lw-radio-md: 0.875rem;
+  --lw-radio-sm: 0.75rem;
+  --lw-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --lw-dur-short: 220ms;
+  --lw-dur-long: 420ms;
+}
+
+html, body {
+  /* Hallmark F34 */
+  overflow-x: clip;
+}
+
+/* The canvas: one container, one gap, token-backed */
+.lw-container {
+  width: 100%;
+  max-width: var(--spacing-container-max);
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter-mobile);
+}
+@media (min-width: 64rem) {
+  .lw-container { padding-inline: var(--spacing-gutter-desktop); }
+}
+
+.lw-cols {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--lw-gap);
+  align-items: center;
+}
+
+.lw-flow-section {
+  padding-block-end: clamp(3.5rem, 6vw, 5rem);
+}
+
+/* Sections: varied vertical rhythm */
+.lw-section {
+  padding-block: var(--lw-secgap) 0;
+  margin-top: 0;
+}
+.lw-section:first-child { --lw-secgap: var(--lw-secgap-tight); }
+
+/* The document: interrupted prose rows inherit the 16px body floor */
+.lw-defs { font-size: 1rem; }
+.lw-defs dt { font-weight: 600; }
+
+/* Type roles */
+.lw-display {
+  font-size: var(--lw-display);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+/* finish-review: at hand width the br forces a short line inside the balanced
+   h1 (orphaned word); drop the br and let text-wrap balance distribute rows */
+@media (max-width: 30rem) {
+  #lw-h1 br { display: none; }
+}
+.lw-section-head {
+  font-size: var(--lw-section);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.lw-lead {
+  font-size: var(--lw-lead);
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  max-width: 46ch;
+  text-wrap: balance;
+}
+.lw-caption {
+  font-size: var(--lw-label);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+.lw-def {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Controls */
+.lw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-space-xs);
+  min-height: 48px;
+  padding-inline: var(--spacing-space-lg);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-xl);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--lw-dur-short) var(--lw-ease), color var(--lw-dur-short) var(--lw-ease), transform 120ms var(--lw-ease), opacity var(--lw-dur-short) var(--lw-ease);
+}
+.lw-btn:hover { background: color-mix(in oklab, var(--color-primary) 88%, var(--color-inverse-primary)); }
+.lw-btn:active { transform: translateY(1px); }
+.lw-btn:disabled, .lw-btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
+.lw-btn[aria-busy="true"] { cursor: progress; }
+
+.lw-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-space-2xs);
+  min-height: 48px;
+  padding-inline: var(--spacing-space-sm);
+  border-radius: var(--radius-xl);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--lw-dur-short) var(--lw-ease), background-color var(--lw-dur-short) var(--lw-ease);
+}
+.lw-link:hover { background: color-mix(in oklab, var(--color-primary) 8%, transparent); }
+
+/* Product captures in slots */
+.lw-frame {
+  position: relative;
+  border-radius: var(--lw-radio-md);
+  overflow: clip;
+  /* subtle shadow framing to lift screenshots off the page */
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-ink) 6%, transparent),
+    0 4px 20px color-mix(in oklab, var(--color-primary) 6%, transparent),
+    0 1px 4px  color-mix(in oklab, var(--color-ink) 5%, transparent);
+  transition: box-shadow 300ms var(--lw-ease), transform 300ms var(--lw-ease);
+}
+.lw-frame:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-primary) 15%, transparent),
+    0 8px 32px color-mix(in oklab, var(--color-primary) 12%, transparent),
+    0 2px 6px  color-mix(in oklab, var(--color-primary) 6%, transparent);
+  transform: translateY(-3px);
+}
+.lw-frame > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  outline: 1px solid color-mix(in oklab, var(--color-ink) 8%, transparent);
+  outline-offset: -1px;
+}
+
+/* Figures that compare (patterns.md shape) */
+.lw-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.lw-stats > * {
+  padding-inline: var(--spacing-space-lg);
+  border-left: 1px solid var(--color-border-subtle);
+}
+.lw-stats > :first-child { padding-left: 0; border-left: 0; }
+.lw-stat b {
+  display: block;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--lw-figure);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.lw-stat span {
+  display: block;
+  margin-top: var(--spacing-space-2xs);
+  font-size: var(--lw-label);
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* The siaga table (craft § 9: sentence-case heads, horizontal rules only) */
+.lw-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.lw-table th, .lw-table td {
+  padding-block: var(--spacing-space-sm);
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: 1rem;
+  text-align: left;
+  vertical-align: baseline;
+}
+.lw-table tr:last-child :is(th, td) { border-bottom: 0; }
+.lw-table th {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  padding-inline-end: var(--spacing-space-md);
+}
+.lw-table td {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-size: var(--lw-label);
+  white-space: nowrap;
+}
+
+/* The close band */
+.lw-band {
+  margin-top: 0;
+  padding-block: clamp(3.5rem, 6vw, 5rem);
+  background: var(--color-tertiary-container);
+}
+.lw-band .lw-section-head, .lw-band .lw-caption-strong { color: var(--color-on-tertiary); }
+.lw-band .lw-lead, .lw-band .lw-caption { color: color-mix(in oklab, var(--color-on-tertiary) 82%, var(--color-tertiary-fixed-dim)); }
+.lw-band .lw-link { color: var(--color-on-tertiary); }
+.lw-band .lw-link:hover { background: color-mix(in oklab, var(--color-inverse-primary) 14%, transparent); }
+.lw-band :is(.lw-btn, .lw-link):focus-visible { outline-color: var(--color-inverse-primary); }
+
+.lw-bandphone {
+  aspect-ratio: 780 / 1518;
+  max-height: 560px;
+  --lw-frame-ink: var(--color-inverse-primary);
+}
+
+/* Skip link */
+/* Footer credits, landing-scoped: the muted token is too low-contrast on the card,
+   and the credit line sits under 12px, so both lift inside this page only */
+[data-landing] footer .text-text-muted { color: var(--color-text-secondary); }
+[data-landing] footer .text-\[11px\] { font-size: 0.75rem; }
+[data-landing] footer a.underline { color: var(--color-secondary); }
+
+.lw-skip {
+  position: absolute;
+  left: var(--spacing-space-md);
+  top: calc(-1 * var(--spacing-space-2xl));
+  z-index: 500;
+  padding: var(--spacing-space-xs) var(--spacing-space-md);
+  border-radius: var(--radius-xl);
+  background: var(--color-inverse-surface);
+  color: var(--color-inverse-on-surface);
+  transition: top var(--lw-dur-short) var(--lw-ease);
+}
+.lw-skip:focus-visible { top: var(--spacing-space-md); }
+
+.lw-dashboard-mockup {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+.lw-dashboard-mockup img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 16px 28px rgb(0 32 21 / 20%));
+}
+.lw-projection-title, .lw-ews-title {
+  font-size: clamp(1.5rem, 2.55vw, 2.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+.lw-forecast-card {
+  min-width: 0;
+  padding: clamp(0.75rem, 1.7vw, 1.25rem);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  background: var(--color-surface-card);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 5%);
+}
+.lw-forecast-toolbar, .lw-forecast-summary, .lw-forecast-price-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+.lw-forecast-toolbar { flex-wrap: wrap; padding-bottom: 0.7rem; border-bottom: 1px solid var(--color-border-subtle); }
+.lw-forecast-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.lw-forecast-tab { min-height: 2.75rem; padding: 0.45rem 0.7rem; border: 1px solid var(--color-border-subtle); border-radius: 0.55rem; background: var(--color-surface-canvas); color: var(--color-text-secondary); font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+.lw-forecast-tab.is-active { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-on-primary); }
+.lw-forecast-tab:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.lw-forecast-link { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 0.25rem; color: var(--color-primary); font-size: 0.7rem; font-weight: 700; }
+.lw-forecast-summary { align-items: flex-end; flex-wrap: wrap; padding-block: 0.8rem 0.65rem; }
+.lw-forecast-eyebrow { display: block; margin-bottom: 0.3rem; color: var(--color-text-secondary); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.045em; text-transform: uppercase; }
+.lw-forecast-price-line { justify-content: flex-start; flex-wrap: wrap; }
+.lw-forecast-price-line > strong { color: var(--color-text-primary); font-family: inherit; font-size: clamp(1.05rem, 2vw, 1.4rem); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lw-forecast-price-line > strong span { margin-left: 0.15rem; color: var(--color-text-secondary); font-size: 0.65em; font-weight: 500; }
+.lw-forecast-premium { display: inline-flex; align-items: center; border: 1px solid #fecaca; border-radius: 0.5rem; background: #fff1f2; padding: 0.35rem 0.5rem; color: #b4233c; font-size: 0.61rem; font-weight: 700; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.lw-forecast-premium.is-below { border-color: #bbf7d0; background: #f0fdf4; color: #15803d; }
+.lw-forecast-wape { flex: 0 0 auto; color: var(--color-text-secondary); font-size: 0.63rem; }
+.lw-forecast-wape strong { margin-left: 0.2rem; color: var(--color-text-primary); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.lw-forecast-legend { display: flex; flex-wrap: wrap; gap: 0.45rem 0.8rem; padding: 0.1rem 0 0.65rem; color: var(--color-text-secondary); font-size: 0.61rem; line-height: 1.3; }
+.lw-forecast-legend > span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.lw-forecast-legend i { position: relative; display: inline-block; flex: 0 0 auto; width: 0.9rem; height: 0.65rem; }
+.lw-legend-actual::before, .lw-legend-median::before, .lw-legend-benchmark::before { position: absolute; top: 50%; right: 0; left: 0; border-top: 2px solid #004328; content: ""; transform: translateY(-50%); }
+.lw-legend-median::before { border-color: #d97706; border-top-style: dashed; }
+.lw-legend-benchmark::before { border-color: #e11d48; border-top-style: dashed; }
+.lw-legend-band { border: 1px solid #d97706; border-radius: 2px; background: rgb(217 119 6 / 18%); }
+.lw-forecast-chart { width: 100%; aspect-ratio: 800 / 260; overflow: hidden; border: 1px solid color-mix(in oklab, var(--color-border-subtle) 70%, transparent); border-radius: 0.7rem; background: var(--color-surface-canvas); }
+.lw-forecast-chart svg { display: block; width: 100%; height: 100%; }
+.lw-chart-gridline { stroke: #cbd5e1; stroke-width: 1; stroke-dasharray: 4 4; }
+.lw-chart-axis-label { fill: #526174; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.lw-chart-end-label { fill: #a85d00; font-weight: 700; }
+.lw-chart-today-label { fill: var(--color-text-primary); font-weight: 700; }
+.lw-chart-hap-line { stroke: #e11d48; stroke-width: 1.7; stroke-dasharray: 5 3; }
+.lw-chart-hap-label { fill: #be123c; font-size: 10px; font-weight: 700; }
+.lw-chart-bound { fill: none; stroke: #c66c08; stroke-width: 1.15; opacity: 0.85; }
+.lw-chart-median { fill: none; stroke: #d97706; stroke-width: 2.4; stroke-dasharray: 6 4; stroke-linecap: round; stroke-linejoin: round; }
+.lw-chart-actual { fill: none; stroke: #004328; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.lw-chart-point { fill: #004328; stroke: white; stroke-width: 1.6; }
+.lw-chart-today-line { stroke: #64748b; stroke-width: 1; stroke-dasharray: 3 3; }
+.lw-forecast-footnote { margin: 0.5rem 0 0; color: var(--color-text-secondary); font-size: 0.62rem; line-height: 1.4; }
+
+@media (max-width: 39.99rem) {
+  .lw-dashboard-mockup { max-width: 34rem; }
+  .lw-forecast-card { padding: 0.65rem; }
+  .lw-forecast-tab { min-height: 2.75rem; padding-inline: 0.6rem; font-size: 0.68rem; }
+  .lw-forecast-legend { gap: 0.4rem 0.65rem; font-size: 0.58rem; }
+  .lw-forecast-premium { max-width: 100%; }
+  .lw-chart-hap-label { font-size: 11px; }
+}
+
+/* ── Hero entry: stagger-in on page load ───────────────────────────────── */
+/* Each [data-hero-enter] uses --hero-i (0,1,2) for cascaded delay          */
+.js [data-hero-enter] {
+  animation: lw-hero-enter 680ms var(--lw-ease) both;
+  animation-delay: calc(var(--hero-i, 0) * 110ms + 60ms);
+}
+@keyframes lw-hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Scroll-reveal: sections slide up with a bigger lift ───────────────── */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 420ms var(--lw-ease),
+    transform 420ms var(--lw-ease);
+  transition-delay: calc(var(--i, 0) * 30ms);
+}
+.js [data-reveal].is-in { opacity: 1; transform: translateY(0); }
+
+/* ── Hero frame: parallax placeholder (transform set by LandingReveal.tsx) */
+[data-slot="hero"] { will-change: transform; }
+
+/* ── Stat block: pulse accent on first reveal ──────────────────────────── */
+.lw-stat b {
+  transition: color 200ms var(--lw-ease);
+}
+.lw-stats.is-in .lw-stat b,
+.js [data-reveal].is-in .lw-stat b {
+  color: var(--color-primary);
+}
+
+/* ── Band CTA: subtle shimmer sweep ────────────────────────────────────── */
+.lw-band .lw-btn {
+  position: relative;
+  overflow: hidden;
+}
+.lw-band .lw-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    color-mix(in oklab, var(--color-inverse-primary) 20%, transparent) 55%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0ms;
+}
+.lw-band .lw-btn:hover::after {
+  transform: translateX(100%);
+  transition: transform 480ms var(--lw-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-hero-enter] { animation: none; opacity: 1; transform: none; }
+  .js [data-reveal] { opacity: 1; transform: none; transition: none; transition-delay: 0ms; }
+  .lw-frame { transition: none; }
+  .lw-frame:hover { transform: none; }
+  .lw-btn, .lw-link, .lw-skip { transition: none; }
+  .lw-band .lw-btn::after { display: none; }
+}
+
+@media (max-width: 63.94rem) {
+  .lw-cols { grid-template-columns: minmax(0, 1fr); }
+  .lw-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--spacing-space-lg); }
+  .lw-stats > :nth-child(3) { border-left: 0; padding-left: 0; }
+}
