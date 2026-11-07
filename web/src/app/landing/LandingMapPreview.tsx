@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { MapMarketItem } from "@/components/SurabayaMap";
+import { getLiveMarketComparisonForCommodity } from "@/lib/dataService";
 
 // Real Leaflet Map dynamically imported
 const SurabayaMap = dynamic(() => import("@/components/SurabayaMap"), {
@@ -97,9 +98,41 @@ const DEMO_MARKETS: MapMarketItem[] = [
 ];
 
 export default function LandingMapPreview() {
+  const [markets, setMarkets] = useState<MapMarketItem[]>(DEMO_MARKETS);
   const [selectedMarketId, setSelectedMarketId] = useState<string>("5");
-  const activeMarket = DEMO_MARKETS.find((m) => m.id === selectedMarketId) || DEMO_MARKETS[0];
-  const prices = DEMO_MARKETS.map((market) => market.price);
+
+  useEffect(() => {
+    let isMounted = true;
+    getLiveMarketComparisonForCommodity(50).then((row) => {
+      if (!isMounted || !row) return;
+
+      const priceMap: Record<number, number> = {
+        5: row.keputran,
+        2: row.wonokromo,
+        3: row.genteng,
+        4: row.pucang,
+        1: row.tambahrejo,
+        146: row.soponyono,
+      };
+
+      setMarkets((prev) =>
+        prev.map((m) => {
+          const livePrice = priceMap[m.pasar_id];
+          if (livePrice && livePrice > 0) {
+            return { ...m, price: livePrice };
+          }
+          return m;
+        })
+      );
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const activeMarket = markets.find((m) => m.id === selectedMarketId) || markets[0];
+  const prices = markets.map((market) => market.price);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const cityAvg = Math.round(prices.reduce((total, price) => total + price, 0) / prices.length);
@@ -112,17 +145,17 @@ export default function LandingMapPreview() {
           <span className="material-symbols-outlined text-primary text-title-md">map</span>
           <div>
             <span className="font-headline-sm text-sm sm:text-base text-text-primary font-bold">
-              Contoh perbandingan harga cabai
+              Perbandingan harga cabai
             </span>
             <span className="block text-[11px] text-text-muted">
-              Ilustrasi enam pasar Surabaya · rupiah per kilogram
+              Enam pasar Surabaya · rupiah per kilogram
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  Selisih pada contoh ini: Rp {(maxPrice - minPrice).toLocaleString("id-ID")} antarpasar
+            Selisih harga: Rp {(maxPrice - minPrice).toLocaleString("id-ID")} antarpasar
           </span>
           <Link
             href="/peta"
@@ -140,7 +173,7 @@ export default function LandingMapPreview() {
         <div className="lg:col-span-8 flex flex-col h-full min-h-[360px] sm:min-h-[380px]">
           <SurabayaMap
             className="relative w-full h-full min-h-[360px] sm:min-h-[380px] overflow-hidden select-none bg-surface-subtle rounded-xl border border-border-subtle/80 shadow-2xs"
-            markets={DEMO_MARKETS}
+            markets={markets}
             selectedCommodityName="Cabai Rawit Merah"
             unit="kg"
             selectedMarketId={selectedMarketId}
@@ -203,7 +236,7 @@ export default function LandingMapPreview() {
                 Harga cabai per pasar
               </span>
               <div className="space-y-0.5">
-                {DEMO_MARKETS.map((m) => (
+                {markets.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setSelectedMarketId(m.id)}

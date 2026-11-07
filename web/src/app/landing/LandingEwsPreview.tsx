@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getLiveEarlyWarning, EarlyWarningItem } from "@/lib/dataService";
 
 interface StrategicMarketCell {
   price: string;
@@ -19,7 +21,7 @@ interface EwsMatrixRow {
   statusLabel: "Aman" | "Waspada" | "Siaga";
 }
 
-const EWS_ROWS: EwsMatrixRow[] = [
+const DEFAULT_EWS_ROWS: EwsMatrixRow[] = [
   {
     id: 16,
     komoditas: "Telur Ayam Ras",
@@ -67,6 +69,65 @@ const EWS_ROWS: EwsMatrixRow[] = [
 ];
 
 export default function LandingEwsPreview() {
+  const [rows, setRows] = useState<EwsMatrixRow[]>(DEFAULT_EWS_ROWS);
+  const [hotspot, setHotspot] = useState<{
+    title: string;
+    score: number;
+    status: string;
+    desc: string;
+  }>({
+    title: "Fokus perhatian: harga telur",
+    score: 70,
+    status: "Siaga",
+    desc: "Harga telur di Soponyono Rp 31.000/kg, sekitar 14,8% di atas batas acuan Bapanas Rp 27.000. Ringkasan ini membantu TPID Surabaya menentukan pasar yang perlu dicek lebih dulu.",
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    getLiveEarlyWarning().then((res) => {
+      if (!isMounted || !res || !res.items || res.items.length === 0) return;
+
+      const items = res.items;
+      // Cari komoditas dengan skor risiko tertinggi
+      const sorted = [...items].sort((a, b) => (b.total_skor || 0) - (a.total_skor || 0));
+      const top = sorted[0];
+
+      if (top) {
+        const statusLabel =
+          top.status_warning === "TINGGI" ? "Siaga" : top.status_warning === "WASPADA" ? "Waspada" : "Aman";
+        const priceStr = top.harga_terakhir ? `Rp ${top.harga_terakhir.toLocaleString("id-ID")}` : "tercatat bergejolak";
+
+        setHotspot({
+          title: `Fokus perhatian: ${top.nama_komoditas}`,
+          score: top.total_skor,
+          status: statusLabel,
+          desc: `Harga ${top.nama_komoditas} di ${top.nama_pasar} (${priceStr}) memerlukan pemantauan ketat (skor risiko ${top.total_skor}/100). Ringkasan ini memandu prioritas intervensi pasokan TPID Surabaya.`,
+        });
+      }
+
+      // Update skor risiko komoditas di tabel
+      setRows((prevRows) =>
+        prevRows.map((r) => {
+          const match = items.find((i) => i.komoditas_id === r.id);
+          if (match) {
+            const label: "Aman" | "Waspada" | "Siaga" =
+              match.status_warning === "TINGGI" ? "Siaga" : match.status_warning === "WASPADA" ? "Waspada" : "Aman";
+            return {
+              ...r,
+              skorRisiko: match.total_skor,
+              statusLabel: label,
+            };
+          }
+          return r;
+        })
+      );
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const getCellBadge = (status: "normal" | "warning" | "critical") => {
     if (status === "critical") {
       return "bg-rose-50 text-rose-800 border-rose-200/80 font-semibold";
@@ -98,14 +159,14 @@ export default function LandingEwsPreview() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-label-caps text-xs uppercase font-bold text-amber-900 tracking-wider">
-                Contoh peringatan: harga telur
+                {hotspot.title}
               </span>
               <span className="text-xs font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full border border-rose-200">
-                Siaga · 70/100
+                {hotspot.status} · {hotspot.score}/100
               </span>
             </div>
             <p className="text-xs text-text-primary mt-1 leading-snug">
-              Harga telur di Soponyono <strong>Rp 31.000/kg</strong>, sekitar {((31000 - 27000) / 27000 * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}% di atas batas acuan Bapanas Rp 27.000. Ringkasan ini membantu TPID Surabaya menentukan pasar yang perlu dicek lebih dulu.
+              {hotspot.desc}
             </p>
           </div>
         </div>
@@ -122,7 +183,7 @@ export default function LandingEwsPreview() {
       {/* Visual Legend Bar: Clear Definition of Colors */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-border-subtle text-xs text-text-secondary">
         <span className="font-semibold text-text-primary">
-        Harga dan tingkat perhatian di empat pasar
+          Harga dan tingkat perhatian di empat pasar
         </span>
         <div className="flex items-center gap-3 text-[11px]">
           <span className="flex items-center gap-1">
@@ -144,11 +205,11 @@ export default function LandingEwsPreview() {
       <div
         className="overflow-x-auto rounded-xl border border-border-subtle/80 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
         role="region"
-        aria-label="Contoh harga empat bahan pangan di empat pasar"
+        aria-label="Harga empat bahan pangan di empat pasar"
         tabIndex={0}
       >
         <table className="w-full text-xs text-left">
-          <caption className="sr-only">Contoh harga dan tingkat perhatian untuk empat bahan pangan di empat pasar Surabaya</caption>
+          <caption className="sr-only">Harga dan tingkat perhatian untuk empat bahan pangan di empat pasar Surabaya</caption>
           <thead className="bg-surface-canvas text-text-secondary uppercase text-[10px] font-bold tracking-wider border-b border-border-subtle">
             <tr>
               <th scope="col" className="py-2.5 px-3">Bahan pangan</th>
@@ -161,7 +222,7 @@ export default function LandingEwsPreview() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle/50 font-sans">
-            {EWS_ROWS.map((row) => (
+            {rows.map((row) => (
               <tr key={row.id} className="hover:bg-surface-canvas/60 transition-colors">
                 <th scope="row" className="py-2.5 px-3 font-semibold text-text-primary whitespace-nowrap">
                   {row.komoditas}

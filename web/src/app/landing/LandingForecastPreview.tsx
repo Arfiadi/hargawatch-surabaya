@@ -1,11 +1,12 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
   OFFICIAL_MODEL_CHAMPIONS,
   OFFICIAL_REGULATORY_BENCHMARKS,
 } from "@/lib/regulatoryData";
+import { getLiveForecastDetails } from "@/lib/dataService";
 
 interface ForecastScenario {
   id: number;
@@ -55,7 +56,39 @@ const formatRupiah = (value: number) => `Rp ${value.toLocaleString("id-ID")}`;
 
 export default function LandingForecastPreview() {
   const [activeId, setActiveId] = useState<number>(50);
-  const data = FORECAST_DATA.find((item) => item.id === activeId) || FORECAST_DATA[0];
+  const [liveData, setLiveData] = useState<Record<number, ForecastScenario>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    getLiveForecastDetails(activeId, "7d").then((details) => {
+      if (!isMounted || !details || !details.history?.length || !details.forecast?.length) return;
+
+      const hist = details.history.slice(-7).map((h) => h.harga);
+      const p10 = details.forecast.slice(0, 7).map((f) => f.batas_bawah);
+      const p50 = details.forecast.slice(0, 7).map((f) => f.harga_prediksi);
+      const p90 = details.forecast.slice(0, 7).map((f) => f.batas_atas);
+
+      setLiveData((prev) => ({
+        ...prev,
+        [activeId]: {
+          id: activeId,
+          name: details.nama_komoditas,
+          unit: details.satuan,
+          currentPrice: details.currentPrice || hist[hist.length - 1],
+          historical: hist,
+          p10,
+          p50,
+          p90,
+        },
+      }));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeId]);
+
+  const data = liveData[activeId] || FORECAST_DATA.find((item) => item.id === activeId) || FORECAST_DATA[0];
   const chartId = useId().replace(/:/g, "");
   const benchmark = OFFICIAL_REGULATORY_BENCHMARKS[data.id];
   const champion = OFFICIAL_MODEL_CHAMPIONS[data.id];
@@ -137,7 +170,7 @@ export default function LandingForecastPreview() {
 
       <div className="lw-forecast-summary">
         <div>
-          <span className="lw-forecast-eyebrow">Contoh data, bukan harga terkini</span>
+          <span className="lw-forecast-eyebrow">Proyeksi model machine learning</span>
           <div className="lw-forecast-price-line">
             <strong>{formatRupiah(data.currentPrice)}<span>/{data.unit}</span></strong>
             {benchmark && benchmarkDifference !== null && benchmarkDifferencePercent !== null && (
@@ -205,7 +238,7 @@ export default function LandingForecastPreview() {
           <text x={width - padRight} y={height - 7} className="lw-chart-axis-label lw-chart-end-label" textAnchor="end">7 hari lagi</text>
         </svg>
       </div>
-      <p className="lw-forecast-footnote">Contoh kisaran harga tujuh hari. Angka “selisih rata-rata” merangkum hasil pengujian prediksi sebelumnya, bukan jaminan harga akan tepat sebesar itu.</p>
+      <p className="lw-forecast-footnote">Proyeksi harga 7 hari ke depan dengan rentang keyakinan (p10–p90). Galat uji (WAPE) merangkum akurasi model champion terhadap data aktual.</p>
     </div>
   );
 }

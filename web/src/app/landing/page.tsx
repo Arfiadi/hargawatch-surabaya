@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LandingReveal from "./LandingReveal";
 import HeroBoardPreview from "./HeroBoardPreview";
+import LandingResiliencePreview from "./LandingResiliencePreview";
 import LandingMapPreview from "./LandingMapPreview";
 import LandingForecastPreview from "./LandingForecastPreview";
 import LandingEwsPreview from "./LandingEwsPreview";
@@ -28,28 +29,30 @@ export default function LandingPage() {
 
       <main id="lw-main" className="pt-16">
         <section
-          className="lw-container lw-flow-section flex flex-col pt-8 sm:pt-12"
+          className="lw-container lw-flow-section pt-8 sm:pt-12"
           aria-labelledby="lw-h1"
         >
-          <div className="max-w-3xl">
-            <h1 id="lw-h1" className="text-xl sm:text-2xl lg:text-[28px] font-bold text-text-primary tracking-tight leading-tight" data-hero-enter>
-              Bandingkan harga pangan<br />di Surabaya
-            </h1>
-            <p className="mt-2 text-xs sm:text-sm text-text-secondary leading-relaxed max-w-2xl" data-hero-enter>
-              Cek harga cabai, beras, hingga telur di enam pasar Surabaya. Bandingkan pilihan sebelum berangkat dan pantau perubahan harga bahan pangan.
-            </p>
-            <div className="mt-4 flex items-center" data-hero-enter>
-              <Link href="/" className="lw-btn shadow-xs hover:shadow-md transition-all">
-                Bandingkan harga
-              </Link>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)] lg:gap-8 lg:items-stretch">
+            <div className="min-w-0">
+              <div className="max-w-3xl">
+                <h1 id="lw-h1" className="text-xl sm:text-2xl lg:text-[28px] font-bold text-text-primary tracking-tight leading-tight" data-hero-enter>
+                  Bandingkan harga pangan<br />di Surabaya
+                </h1>
+                <p className="mt-2 text-xs sm:text-sm text-text-secondary leading-relaxed max-w-2xl" data-hero-enter>
+                  Cek harga cabai, beras, hingga telur di enam pasar Surabaya. Bandingkan pilihan sebelum berangkat dan pantau perubahan harga bahan pangan.
+                </p>
+              </div>
+              <div
+                className="mt-4 sm:mt-5"
+                data-hero-enter
+                style={{ "--hero-i": "2" } as React.CSSProperties}
+              >
+                <HeroBoardPreview />
+              </div>
             </div>
-          </div>
-          <div
-            className="mt-8 w-full"
-            data-hero-enter
-            style={{ "--hero-i": "2" } as React.CSSProperties}
-          >
-            <HeroBoardPreview />
+            <div className="min-w-0 h-full flex flex-col" data-hero-enter style={{ "--hero-i": "3" } as React.CSSProperties}>
+              <LandingResiliencePreview />
+            </div>
           </div>
         </section>
 
@@ -85,26 +88,55 @@ export default function LandingPage() {
               <p className="mt-2 text-xs sm:text-sm text-text-secondary leading-relaxed max-w-md">
                 Lihat perkiraan harga tujuh hari ke depan dan bandingkan dengan batas harga acuan yang ditetapkan Bapanas.
               </p>
-              <dl className="mt-3.5 border-t border-border-subtle divide-y divide-border-subtle text-xs">
-                <div className="py-2">
-                  <dt className="font-bold text-text-primary">Rencanakan seminggu ke depan</dt>
-                  <dd className="text-text-secondary mt-0.5 text-[11px] sm:text-xs leading-relaxed">
-                    Perkiraan harian memberi gambaran arah harga sebelum berbelanja.
-                  </dd>
+              <div className="mt-5 space-y-3.5">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-primary shadow-2xs">
+                    <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
+                      calendar_today
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold leading-tight text-text-primary">
+                      Rencanakan seminggu ke depan
+                    </h3>
+                    <p className="mt-1 text-xs sm:text-[13px] leading-snug text-text-secondary">
+                      Perkiraan harian memberi gambaran arah harga sebelum berbelanja.
+                    </p>
+                  </div>
                 </div>
-                <div className="py-2">
-                  <dt className="font-bold text-text-primary">Pahami kemungkinan perubahan</dt>
-                  <dd className="text-text-secondary mt-0.5 text-[11px] sm:text-xs leading-relaxed">
-                    Lihat perkiraan utama serta kisaran harga yang mungkin terjadi.
-                  </dd>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-primary shadow-2xs">
+                    <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
+                      insights
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold leading-tight text-text-primary">
+                      Pahami kemungkinan perubahan
+                    </h3>
+                    <p className="mt-1 text-xs sm:text-[13px] leading-snug text-text-secondary">
+                      Lihat perkiraan utama serta kisaran harga yang mungkin terjadi.
+                    </p>
+                  </div>
                 </div>
-                <div className="py-2">
-                  <dt className="font-bold text-text-primary">Bandingkan dengan batas Bapanas</dt>
-                  <dd className="text-text-secondary mt-0.5 text-[11px] sm:text-xs leading-relaxed">
-                    Lihat apakah harga masih di bawah atau sudah melewati batasnya.
-                  </dd>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-primary shadow-2xs">
+                    <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
+                      verified_user
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold leading-tight text-text-primary">
+                      Bandingkan dengan batas Bapanas
+                    </h3>
+                    <p className="mt-1 text-xs sm:text-[13px] leading-snug text-text-secondary">
+                      Lihat apakah harga masih di bawah atau sudah melewati batas acuan resmi.
+                    </p>
+                  </div>
                 </div>
-              </dl>
+              </div>
             </div>
           </div>
         </section>
@@ -124,36 +156,91 @@ export default function LandingPage() {
                 Untuk pemantauan pangan kota, skor ini merangkum perubahan harga dan menunjukkan pasar yang perlu diperiksa lebih dulu.
               </p>
               
-              <dl className="mt-3.5 border-t border-border-subtle divide-y divide-border-subtle text-xs">
-                <div className="py-2 flex items-start justify-between gap-3">
-                  <div>
-                    <dt className="font-bold text-text-primary">Kenaikan harga</dt>
-                    <dd className="text-text-secondary mt-0.5 text-[11px] sm:text-xs leading-relaxed">Menandai harga yang naik lebih cepat dari biasanya.</dd>
+              <div className="mt-5 space-y-3 sm:space-y-3.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-primary shadow-2xs">
+                      <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
+                        trending_up
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold leading-tight text-text-primary">
+                        Kenaikan harga
+                      </h3>
+                      <p className="mt-1 text-xs sm:text-[13px] leading-snug text-text-secondary">
+                        Menandai harga yang naik lebih cepat dari biasanya.
+                      </p>
+                    </div>
                   </div>
-                  <span className="font-semibold text-text-muted shrink-0 text-right text-[11px] sm:text-xs">20%</span>
+                  <span className="shrink-0 px-2.5 py-1 text-xs font-bold rounded-lg border border-border-subtle bg-surface-canvas text-text-secondary font-mono">
+                    20%
+                  </span>
                 </div>
-                <div className="py-2 flex items-start justify-between gap-3">
-                  <div>
-                    <dt className="font-bold text-text-primary">Lonjakan mendadak</dt>
-                    <dd className="text-text-secondary mt-0.5 text-[11px] sm:text-xs leading-relaxed">Menandai perubahan besar yang baru atau berulang.</dd>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-primary shadow-2xs">
+                      <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
+                        bolt
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold leading-tight text-text-primary">
+                        Lonjakan mendadak
+                      </h3>
+                      <p className="mt-1 text-xs sm:text-[13px] leading-snug text-text-secondary">
+                        Menandai perubahan besar yang baru atau berulang.
+                      </p>
+                    </div>
                   </div>
-                  <span className="font-semibold text-text-muted shrink-0 text-right text-[11px] sm:text-xs">20%</span>
+                  <span className="shrink-0 px-2.5 py-1 text-xs font-bold rounded-lg border border-border-subtle bg-surface-canvas text-text-secondary font-mono">
+                    20%
+                  </span>
                 </div>
-                <div className="py-2 flex items-start justify-between gap-3">
-                  <div>
-                    <dt className="font-bold text-text-primary">Perbedaan harga pasar</dt>
-                    <dd className="text-text-secondary mt-0.5 text-[11px] sm:text-xs leading-relaxed">Menandai pasar dengan harga yang jauh berbeda dari lainnya.</dd>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-primary shadow-2xs">
+                      <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
+                        storefront
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold leading-tight text-text-primary">
+                        Perbedaan harga pasar
+                      </h3>
+                      <p className="mt-1 text-xs sm:text-[13px] leading-snug text-text-secondary">
+                        Menandai pasar dengan harga yang jauh berbeda dari lainnya.
+                      </p>
+                    </div>
                   </div>
-                  <span className="font-semibold text-text-muted shrink-0 text-right text-[11px] sm:text-xs">20%</span>
+                  <span className="shrink-0 px-2.5 py-1 text-xs font-bold rounded-lg border border-border-subtle bg-surface-canvas text-text-secondary font-mono">
+                    20%
+                  </span>
                 </div>
-                <div className="py-2 flex items-start justify-between gap-3">
-                  <div>
-                    <dt className="font-bold text-text-primary">Perkiraan harga</dt>
-                    <dd className="text-text-secondary mt-0.5 text-[11px] sm:text-xs leading-relaxed">Menandai kemungkinan harga melewati batas acuan dalam tujuh hari.</dd>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-primary shadow-2xs">
+                      <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
+                        query_stats
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold leading-tight text-text-primary">
+                        Perkiraan harga
+                      </h3>
+                      <p className="mt-1 text-xs sm:text-[13px] leading-snug text-text-secondary">
+                        Menandai kemungkinan harga melewati batas acuan dalam tujuh hari.
+                      </p>
+                    </div>
                   </div>
-                  <span className="font-semibold text-text-muted shrink-0 text-right text-[11px] sm:text-xs">40%</span>
+                  <span className="shrink-0 px-2.5 py-1 text-xs font-bold rounded-lg border border-emerald-200/80 bg-emerald-50 text-primary font-mono">
+                    40%
+                  </span>
                 </div>
-              </dl>
+              </div>
             </div>
             <div className="col-span-12 lg:col-span-7 mt-space-xl lg:mt-0">
               <LandingEwsPreview />
