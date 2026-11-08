@@ -35,8 +35,8 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)] lg:gap-8 lg:items-stretch">
             <div className="min-w-0 w-full">
               <div className="max-w-3xl">
-                <h1 id="lw-h1" className="text-2xl min-[390px]:text-[26px] sm:text-3xl lg:text-[34px] font-bold text-text-primary tracking-tight leading-tight" data-hero-enter>
-                  Bandingkan harga pangan <br className="hidden sm:inline" />di Surabaya
+                <h1 id="lw-h1" className="text-xl min-[390px]:text-[22px] sm:text-2xl lg:text-[28px] font-bold text-text-primary tracking-tight leading-tight" data-hero-enter>
+                  Bandingkan harga pangan di Surabaya
                 </h1>
                 <p className="mt-2 text-xs sm:text-sm text-text-secondary leading-relaxed max-w-2xl" data-hero-enter>
                   Cek harga cabai, beras, hingga telur di enam pasar Surabaya. Bandingkan pilihan sebelum berangkat dan pantau perubahan harga bahan pangan.

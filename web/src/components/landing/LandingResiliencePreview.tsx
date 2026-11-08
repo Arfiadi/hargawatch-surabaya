@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   DEFAULT_BASKET_ITEMS,
   FoodStabilitySummary,
@@ -39,6 +40,8 @@ export default function LandingResiliencePreview() {
       ? "bg-status-warning-bg text-status-warning"
       : "bg-status-normal-bg text-status-normal";
 
+  const stabilityNumber = summary ? parseFloat(summary.stabilityIndex) : 0;
+
   return (
     <section
       aria-labelledby="landing-resilience-title"
@@ -58,7 +61,8 @@ export default function LandingResiliencePreview() {
           <div className="mt-4 h-9 rounded-lg bg-surface-card" />
         </div>
       ) : summary ? (
-        <div className="flex flex-col justify-between h-full">
+        <div className="flex flex-col justify-between h-full gap-3 sm:gap-3.5">
+          {/* Header & Indeks Ketahanan Pangan */}
           <div>
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -75,28 +79,39 @@ export default function LandingResiliencePreview() {
               </span>
             </div>
 
-            <div className="mt-3.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-              <span className="font-metric-display text-4xl sm:text-[42px] font-bold tracking-tight text-primary leading-none">
+            <div className="mt-3 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+              <span className="font-metric-display text-3xl sm:text-4xl font-bold tracking-tight text-primary leading-none">
                 {summary.stabilityIndex}
               </span>
               <span className="text-xs font-semibold text-text-secondary">{summary.targetText}</span>
             </div>
 
-            <div className="mt-3.5 grid grid-cols-2 gap-2.5 rounded-xl bg-surface-card p-2.5 sm:p-3 border border-border-subtle/60 shadow-2xs">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span className="material-symbols-outlined grid h-8 w-8 shrink-0 place-items-center rounded-full bg-status-normal-bg text-status-normal text-[18px]" aria-hidden="true">
+            {/* Visual Progress Bar */}
+            <div className="mt-2 w-full bg-surface-subtle h-2 rounded-full overflow-hidden border border-border-subtle/60">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  summary.isNormal ? "bg-primary" : "bg-status-warning"
+                }`}
+                style={{ width: `${Math.min(100, Math.max(5, stabilityNumber))}%` }}
+              />
+            </div>
+
+            {/* 2 KPI Titik Terkendali & Pengawasan */}
+            <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-surface-card p-2.5 sm:p-3 border border-border-subtle/60 shadow-2xs">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="material-symbols-outlined grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full bg-status-normal-bg text-status-normal text-[16px] sm:text-[18px]" aria-hidden="true">
                   check_circle
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold leading-tight text-text-primary">
+                  <p className="text-xs sm:text-sm font-bold leading-tight text-text-primary">
                     {summary.normalCount} titik
                   </p>
-                  <p className="text-[11px] leading-tight text-text-secondary mt-0.5">Harga terkendali</p>
+                  <p className="text-[10.5px] sm:text-[11px] leading-tight text-text-secondary mt-0.5 truncate">Terkendali</p>
                 </div>
               </div>
-              <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className={`material-symbols-outlined grid h-8 w-8 shrink-0 place-items-center rounded-full text-[18px] ${
+                  className={`material-symbols-outlined grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full text-[16px] sm:text-[18px] ${
                     summary.alertCount > 0 ? "bg-status-warning-bg text-status-warning" : "bg-status-normal-bg text-status-normal"
                   }`}
                   aria-hidden="true"
@@ -104,21 +119,43 @@ export default function LandingResiliencePreview() {
                   {summary.alertCount > 0 ? "warning" : "verified"}
                 </span>
                 <div className="min-w-0">
-                  <p className={`text-sm font-bold leading-tight ${summary.alertCount > 0 ? "text-status-warning" : "text-text-primary"}`}>
+                  <p className={`text-xs sm:text-sm font-bold leading-tight ${summary.alertCount > 0 ? "text-status-warning" : "text-text-primary"}`}>
                     {summary.alertCount} titik
                   </p>
-                  <p className="text-[11px] leading-tight text-text-secondary mt-0.5">Dalam pengawasan</p>
+                  <p className="text-[10.5px] sm:text-[11px] leading-tight text-text-secondary mt-0.5 truncate">Pengawasan</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {basket ? (
-            <div className="mt-3.5 flex items-center gap-2 rounded-lg border border-emerald-200/80 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-              <span className="material-symbols-outlined shrink-0 text-[18px] text-primary" aria-hidden="true">storefront</span>
-              <span className="min-w-0 text-xs">Termurah keranjang: <strong>{basket.cheapestMarket}</strong></span>
-            </div>
-          ) : null}
+          {/* Bottom Module: Rekomendasi Pasar & Link Aksi */}
+          <div className="space-y-2 pt-1 border-t border-border-subtle/60">
+            {basket ? (
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-2 text-xs text-emerald-950">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="material-symbols-outlined shrink-0 text-[18px] text-primary" aria-hidden="true">storefront</span>
+                  <div className="min-w-0">
+                    <span className="block text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Pasar Termurah</span>
+                    <span className="text-xs font-bold text-primary truncate block">{basket.cheapestMarket}</span>
+                  </div>
+                </div>
+                {basket.tripSaving > 0 && (
+                  <div className="text-right shrink-0">
+                    <span className="block text-[10px] text-emerald-700">Estimasi Hemat</span>
+                    <span className="font-bold text-xs text-primary font-mono">Rp {basket.tripSaving.toLocaleString("id-ID")}</span>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            <Link
+              href="/early-warning"
+              className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold bg-surface-card hover:bg-surface-canvas text-text-primary border border-border-subtle shadow-2xs transition-all active:scale-[0.98]"
+            >
+              <span>Buka Detail Peringatan Dini</span>
+              <span className="material-symbols-outlined text-[14px] text-text-secondary" aria-hidden="true">arrow_forward</span>
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="flex h-full min-h-36 flex-col justify-center">
