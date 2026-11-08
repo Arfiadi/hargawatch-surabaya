@@ -45,10 +45,10 @@ export default function LandingResiliencePreview() {
   return (
     <section
       aria-labelledby="landing-resilience-title"
-      className="h-full flex flex-col justify-between rounded-2xl border border-border-subtle bg-gradient-to-br from-emerald-50/70 via-surface-canvas to-surface-card p-4 sm:p-5 shadow-sm"
+      className="flex flex-col rounded-2xl border border-border-subtle bg-gradient-to-br from-emerald-50/70 via-surface-canvas to-surface-card p-4 sm:p-5 shadow-sm"
     >
       {loading ? (
-        <div className="animate-pulse flex flex-col justify-between h-full" role="status" aria-label="Memuat ringkasan ketahanan pangan">
+        <div className="animate-pulse flex flex-col gap-3" role="status" aria-label="Memuat ringkasan ketahanan pangan">
           <div>
             <div className="h-3 w-32 rounded bg-surface-subtle" />
             <div className="mt-2 h-5 w-44 rounded bg-surface-subtle" />
@@ -61,7 +61,7 @@ export default function LandingResiliencePreview() {
           <div className="mt-4 h-9 rounded-lg bg-surface-card" />
         </div>
       ) : summary ? (
-        <div className="flex flex-col justify-between h-full gap-3 sm:gap-3.5">
+        <div className="flex flex-col gap-3 sm:gap-3.5">
           {/* Header & Indeks Ketahanan Pangan */}
           <div>
             <div className="flex items-start justify-between gap-3">

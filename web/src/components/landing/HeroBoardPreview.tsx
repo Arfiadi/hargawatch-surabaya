@@ -84,26 +84,26 @@ export default function HeroBoardPreview() {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         {cards.map((item) => (
           <Link
             key={item.id}
             href={`/dashboard?search=${encodeURIComponent(item.fullName || item.name)}`}
-            className="group relative flex min-w-0 flex-col justify-between gap-2 rounded-xl border border-border-subtle bg-surface-card p-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:border-primary/50 sm:p-3.5"
+            className="group relative flex min-w-0 flex-col justify-between gap-2 rounded-xl border border-border-subtle bg-surface-card p-2.5 sm:p-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:border-primary/50"
           >
-            <span className="flex items-start justify-between gap-1.5">
-              <span className="max-w-[calc(100%-1.5rem)] truncate text-xs sm:text-sm font-semibold text-text-primary">
+            <span className="flex items-start justify-between gap-1">
+              <span className="max-w-[calc(100%-1.25rem)] truncate text-xs sm:text-[13px] font-semibold text-text-primary">
                 {item.name}
               </span>
-              <span className="material-symbols-outlined shrink-0 text-[18px] sm:text-[20px] text-text-muted transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+              <span className="material-symbols-outlined shrink-0 text-[16px] sm:text-[18px] text-text-muted transition-transform group-hover:translate-x-0.5" aria-hidden="true">
                 arrow_forward
               </span>
             </span>
-            <span className="font-mono text-base sm:text-lg font-bold tracking-tight text-text-primary">
+            <span className="font-mono text-sm sm:text-base font-bold tracking-tight text-text-primary">
               {item.price}<span className="ml-1 font-sans text-[10px] sm:text-[11px] font-medium text-text-secondary">{item.unit}</span>
             </span>
-            <span className="flex min-h-8 sm:min-h-8.5 min-w-0 items-center gap-1 sm:gap-1.5 rounded-lg border border-emerald-200/80 bg-emerald-50 px-2 sm:px-2.5 text-[10.5px] sm:text-xs text-emerald-900">
-              <span className="material-symbols-outlined shrink-0 text-[16px] sm:text-[18px] text-primary" aria-hidden="true">storefront</span>
+            <span className="flex min-h-7 sm:min-h-7.5 min-w-0 items-center gap-1 rounded-lg border border-emerald-200/80 bg-emerald-50 px-1.5 sm:px-2 text-[10px] sm:text-[11px] text-emerald-900">
+              <span className="material-symbols-outlined shrink-0 text-[14px] sm:text-[16px] text-primary" aria-hidden="true">storefront</span>
               <span className="truncate">{item.marketName}</span>
             </span>
           </Link>
