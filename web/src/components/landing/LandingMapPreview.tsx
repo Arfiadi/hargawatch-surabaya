@@ -28,12 +28,12 @@ const DEMO_MARKETS: MapMarketItem[] = [
     name: "Pasar Keputran",
     shortName: "Keputran",
     zone: "Pusat",
-    role: "Pasar Induk Grosir",
-    price: 68000,
-    latitude: -7.279,
-    longitude: 112.744,
-    address: "Jl. Keputran No. 1, Tegalsari",
-    characteristic: "Sentra pasokan grosir malam hari dari Malang, Blitar, Kediri",
+    role: "Pasar Induk Grosir Malam",
+    price: 50000,
+    latitude: -7.2753,
+    longitude: 112.7441,
+    address: "Jl. Keputran No. 45, Tegalsari",
+    characteristic: "Pusat pasokan sayur & bumbu yang langsung menerima pasokan dari sentra pertanian (Kediri, Malang). Menjadi patokan harga grosir terendah.",
   },
   {
     id: "2",
@@ -41,12 +41,12 @@ const DEMO_MARKETS: MapMarketItem[] = [
     name: "Pasar Wonokromo",
     shortName: "Wonokromo",
     zone: "Selatan",
-    role: "Pasar Tradisional Strategis",
-    price: 70000,
-    latitude: -7.299,
-    longitude: 112.738,
-    address: "Jl. Stasiun Wonokromo, Jagir",
-    characteristic: "Hub logistik transit selatan dan stasiun kereta komoditas",
+    role: "Sentra Ritel Surabaya Selatan",
+    price: 55000,
+    latitude: -7.3005,
+    longitude: 112.7388,
+    address: "Jl. Wonokromo (Depan Stasiun)",
+    characteristic: "Pasar ritel dan semi-grosir dengan volume protein hewani (daging sapi, ayam, telur) yang besar dan harga bersaing.",
   },
   {
     id: "3",
@@ -54,12 +54,12 @@ const DEMO_MARKETS: MapMarketItem[] = [
     name: "Pasar Genteng",
     shortName: "Genteng",
     zone: "Pusat",
-    role: "Pasar Konsumen & Kuliner",
-    price: 74000,
-    latitude: -7.258,
-    longitude: 112.742,
+    role: "Pasar Ritel Pusat Kota",
+    price: 50000,
+    latitude: -7.2575,
+    longitude: 112.7431,
     address: "Jl. Genteng Besar, Genteng",
-    characteristic: "Pusat oleh-oleh dan pasar ritel kebutuhan kuliner premium",
+    characteristic: "Pasar ritel sentral komersial dengan segmen konsumen menengah-atas di pusat kota Surabaya. Sering mencatat selisih harga eceran tertinggi.",
   },
   {
     id: "4",
@@ -67,12 +67,12 @@ const DEMO_MARKETS: MapMarketItem[] = [
     name: "Pasar Pucang Anom",
     shortName: "Pucang Anom",
     zone: "Timur",
-    role: "Pasar Konsumen Menengah",
-    price: 72000,
-    latitude: -7.283,
-    longitude: 112.757,
+    role: "Ritel Permukiman Timur",
+    price: 55000,
+    latitude: -7.2831,
+    longitude: 112.7554,
     address: "Jl. Pucang Anom, Gubeng",
-    characteristic: "Pasar permukiman padat segmen konsumen rumah tangga",
+    characteristic: "Pasar bahan pokok segar yang melayani kawasan perumahan Surabaya Timur dan Tengah dengan rantai distribusi harian.",
   },
   {
     id: "1",
@@ -80,12 +80,12 @@ const DEMO_MARKETS: MapMarketItem[] = [
     name: "Pasar Tambahrejo",
     shortName: "Tambahrejo",
     zone: "Utara",
-    role: "Pasar Lingkungan Padat",
-    price: 71000,
-    latitude: -7.246,
-    longitude: 112.760,
+    role: "Pasar Semi-Grosir Utara",
+    price: 55000,
+    latitude: -7.2472,
+    longitude: 112.7631,
     address: "Jl. Kapas Krampung, Simokerto",
-    characteristic: "Pusat belanja ritel padat koridor Surabaya Utara & Timur",
+    characteristic: "Pasar semi-grosir efisien untuk komoditas kering (beras, minyak goreng, gula) di wilayah Surabaya Utara.",
   },
   {
     id: "146",
@@ -93,12 +93,12 @@ const DEMO_MARKETS: MapMarketItem[] = [
     name: "Pasar Soponyono",
     shortName: "Soponyono",
     zone: "Timur",
-    role: "Pasar Lingkungan Rungkut",
-    price: 76000,
-    latitude: -7.324,
-    longitude: 112.771,
+    role: "Sentra Konsumsi Rungkut",
+    price: 67000,
+    latitude: -7.3228,
+    longitude: 112.7744,
     address: "Jl. Rungkut Asri, Rungkut",
-    characteristic: "Pasar satelit permukiman modern kawasan Surabaya Timur",
+    characteristic: "Pasar ritel utama bagi sentra industri dan perumahan padat Rungkut & Tenggilis, dipengaruhi biaya angkut dari pusat kota.",
   },
 ];
 
@@ -151,8 +151,8 @@ export default function LandingMapPreview() {
   return (
     <div className="w-full bg-surface-card rounded-2xl p-3 sm:p-4 shadow-sm border border-border-subtle">
       {/* Header bar: Commodity selector dropdown on the left + Action link on the right */}
-      <div className="relative z-30 flex flex-wrap items-center justify-between gap-2.5 pb-2.5 mb-3 border-b border-border-subtle/70">
-        <div className="flex items-center gap-2 min-w-0 flex-1 max-w-xs sm:max-w-sm">
+      <div className="relative z-30 flex items-center justify-between gap-2 pb-2.5 mb-3 border-b border-border-subtle/70">
+        <div className="min-w-0 flex-1 sm:max-w-xs md:max-w-sm">
           <CommoditySearchSelect
             options={ALL_CATALOG_COMMODITIES}
             valueId={selectedCommodityId}
@@ -164,10 +164,10 @@ export default function LandingMapPreview() {
           />
         </div>
 
-        <div>
+        <div className="shrink-0">
           <Link
             href="/peta"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98] shrink-0"
+            className="h-11 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98] whitespace-nowrap"
           >
             <span>Lihat Semua Pasar</span>
             <span className="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>
@@ -193,76 +193,115 @@ export default function LandingMapPreview() {
           />
         </div>
 
-        {/* Real Market Inspector Panel */}
-        <div className="lg:col-span-4 bg-surface-canvas rounded-xl p-3 sm:p-3.5 border border-border-subtle/80 flex flex-col justify-between h-full">
+        {/* Real Market Inspector Panel matching /peta */}
+        <div className="lg:col-span-4 bg-surface-card rounded-xl p-3 sm:p-4 border border-border-subtle shadow-xs flex flex-col justify-between h-full">
           <div>
-            <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-border-subtle">
-              <div>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">
-                  Pasar yang dipilih · {activeMarket.zone} Surabaya
-                </span>
-                <span className="font-headline-sm text-sm font-bold text-text-primary">
-                  {activeMarket.name}
+            {/* Header: Market Name + Address + Status Badge */}
+            <div className="flex items-start justify-between pb-2.5 mb-2.5 border-b border-border-subtle gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-primary text-base sm:text-lg shrink-0">
+                    storefront
+                  </span>
+                  <h3 className="font-headline-sm text-sm sm:text-base font-bold text-text-primary truncate">
+                    {activeMarket.name}
+                  </h3>
+                </div>
+                <span
+                  className="text-[11px] sm:text-xs text-text-secondary mt-0.5 block whitespace-nowrap truncate"
+                  title={`${activeMarket.address} • Surabaya ${activeMarket.zone}`}
+                >
+                  {activeMarket.address} &bull; Surabaya {activeMarket.zone}
                 </span>
               </div>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                Dipilih
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10.5px] sm:text-xs font-bold whitespace-nowrap shrink-0 ${
+                  activeMarket.price === minPrice
+                    ? "bg-status-normal-bg text-status-normal border border-emerald-200"
+                    : activeMarket.price === maxPrice
+                    ? "bg-status-critical-bg text-status-critical border border-rose-200"
+                    : "bg-surface-subtle text-text-secondary border border-border-subtle"
+                }`}
+              >
+                {activeMarket.price === minPrice
+                  ? "Termurah"
+                  : activeMarket.price === maxPrice
+                  ? "Tertinggi"
+                  : "Rata-rata"}
               </span>
             </div>
 
             {/* Price block */}
-            <div className="bg-surface-card p-2 rounded-lg border border-border-subtle/60 mb-2">
-              <span className="text-[10px] text-text-muted font-medium block">
-                Harga {commodityDisplayName}
+            <div className="p-2 sm:p-2.5 rounded-lg bg-surface-subtle flex flex-col gap-0.5 mb-2 border border-border-subtle/50">
+              <span className="text-[11px] sm:text-xs text-text-secondary">
+                Harga {commodityDisplayName}:
               </span>
-              <div className="flex items-baseline gap-1 my-0.2">
-                <span className="font-metric-display text-base sm:text-lg font-bold text-text-primary font-mono">
+              <div className="flex items-baseline justify-between">
+                <span className="font-metric-value text-base sm:text-lg text-text-primary font-bold">
                   Rp {activeMarket.price.toLocaleString("id-ID")}
                 </span>
-                <span className="text-[10px] text-text-muted">/{selectedCommodity.unit}</span>
+                <span className="text-xs text-text-muted">
+                  /{selectedCommodity.unit}
+                </span>
               </div>
-              <span
-                className={`text-[10px] font-semibold ${
-                  activeMarket.price < cityAvg
-                    ? "text-status-normal"
-                    : activeMarket.price > cityAvg
-                    ? "text-status-warning"
-                    : "text-text-muted"
-                }`}
-              >
-                {activeMarket.price < cityAvg
-                  ? `Rp ${(cityAvg - activeMarket.price).toLocaleString("id-ID")} di bawah rata-rata enam pasar`
-                  : activeMarket.price > cityAvg
-                  ? `Rp ${(activeMarket.price - cityAvg).toLocaleString("id-ID")} di atas rata-rata enam pasar`
-                  : "Sama dengan rata-rata enam pasar"}
-              </span>
             </div>
 
-            {/* Market ranking list */}
-            <div>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block mb-1">
-                Harga {commodityDisplayName} per Pasar
-              </span>
-              <div className="space-y-0.5">
-                {markets.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setSelectedMarketId(m.id)}
-                    type="button"
-                    aria-pressed={m.id === selectedMarketId}
-                    className={`w-full min-h-11 flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition-colors text-left ${
-                      m.id === selectedMarketId
-                        ? "bg-primary text-on-primary font-bold shadow-xs"
-                        : "hover:bg-surface-subtle text-text-primary"
-                    }`}
-                  >
-                    <span className="truncate">{m.name}</span>
-                    <span className="font-mono text-[10px] shrink-0 ml-1">
-                      Rp {m.price.toLocaleString("id-ID")}
-                    </span>
-                  </button>
-                ))}
+            {/* 2-Column Submetrics: Rerata Kota & Selisih vs Termurah */}
+            <div className="grid grid-cols-2 gap-2 text-xs mb-2.5">
+              <div className="p-2 rounded-lg bg-surface-subtle flex flex-col border border-border-subtle/50">
+                <span className="text-text-muted text-[10.5px] sm:text-[11px]">Rerata Kota:</span>
+                <strong className="text-text-primary mt-0.5 text-xs sm:text-[13px]">
+                  Rp {cityAvg.toLocaleString("id-ID")}
+                </strong>
               </div>
+              <div className="p-2 rounded-lg bg-surface-subtle flex flex-col border border-border-subtle/50">
+                <span className="text-text-muted text-[10.5px] sm:text-[11px]">Selisih vs Termurah:</span>
+                <strong
+                  className={`mt-0.5 text-xs sm:text-[13px] ${
+                    activeMarket.price === minPrice
+                      ? "text-status-normal font-bold"
+                      : "text-status-critical font-bold"
+                  }`}
+                >
+                  {activeMarket.price === minPrice
+                    ? "Acuan Termurah"
+                    : `+Rp ${(activeMarket.price - minPrice).toLocaleString("id-ID")}`}
+                </strong>
+              </div>
+            </div>
+
+            {/* Role & Characteristics */}
+            <div className="bg-surface-subtle p-2 sm:p-2.5 rounded-lg mb-2.5 border border-border-subtle/50">
+              <div className="flex items-center gap-1.5 text-primary text-xs font-semibold mb-1">
+                <span className="material-symbols-outlined text-[15px]">info</span>
+                <span>Peran Distribusi &amp; Karakter Pasar:</span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-text-secondary leading-relaxed">
+                {activeMarket.characteristic}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Market Selector (3 Columns) */}
+          <div className="mt-auto pt-1">
+            <span className="text-[10px] sm:text-[11px] text-text-muted block mb-1.5 font-bold uppercase tracking-wider">
+              PILIH PASAR LAIN:
+            </span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {markets.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setSelectedMarketId(m.id)}
+                  className={`py-1.5 px-1.5 rounded-lg text-xs font-semibold transition-all text-center truncate cursor-pointer ${
+                    selectedMarketId === m.id
+                      ? "bg-primary text-white font-bold shadow-xs"
+                      : "bg-surface-subtle text-text-secondary hover:text-text-primary hover:bg-slate-200/60 border border-border-subtle/40"
+                  }`}
+                >
+                  {m.shortName}
+                </button>
+              ))}
             </div>
           </div>
         </div>

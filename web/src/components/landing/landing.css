@@ -47,7 +47,7 @@ html, body {
 }
 
 .lw-flow-section {
-  padding-block-end: clamp(3.5rem, 6vw, 5rem);
+  padding-block-end: clamp(1.75rem, 3.5vw, 4.5rem);
 }
 
 /* Sections: varied vertical rhythm */
@@ -225,8 +225,16 @@ html, body {
 /* The close band */
 .lw-band {
   margin-top: 0;
-  padding-block: clamp(3.5rem, 6vw, 5rem);
+  padding-block: clamp(2.25rem, 4.5vw, 4.5rem);
   background: var(--color-tertiary-container);
+}
+.lw-band .lw-cols {
+  gap: 1.5rem;
+}
+@media (min-width: 64rem) {
+  .lw-band .lw-cols {
+    gap: var(--spacing-space-2xl);
+  }
 }
 .lw-band .lw-section-head, .lw-band .lw-caption-strong { color: var(--color-on-tertiary); }
 .lw-band .lw-lead, .lw-band .lw-caption { color: color-mix(in oklab, var(--color-on-tertiary) 82%, var(--color-tertiary-fixed-dim)); }
@@ -290,7 +298,7 @@ html, body {
   justify-content: space-between;
   gap: 0.65rem;
 }
-.lw-forecast-toolbar { flex-wrap: wrap; padding-bottom: 0.7rem; border-bottom: 1px solid var(--color-border-subtle); }
+.lw-forecast-toolbar { flex-wrap: nowrap; padding-bottom: 0.7rem; border-bottom: 1px solid var(--color-border-subtle); }
 .lw-forecast-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .lw-forecast-tab { min-height: 2.75rem; padding: 0.45rem 0.7rem; border: 1px solid var(--color-border-subtle); border-radius: 0.55rem; background: var(--color-surface-canvas); color: var(--color-text-secondary); font-size: 0.72rem; font-weight: 600; cursor: pointer; }
 .lw-forecast-tab.is-active { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-on-primary); }
@@ -409,7 +417,15 @@ html, body {
 }
 
 @media (max-width: 63.94rem) {
-  .lw-cols { grid-template-columns: minmax(0, 1fr); }
+  .lw-cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  .lw-cols > * {
+    grid-column: span 1 / span 1 !important;
+    min-width: 0;
+    width: 100%;
+  }
   .lw-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--spacing-space-lg); }
   .lw-stats > :nth-child(3) { border-left: 0; padding-left: 0; }
 }

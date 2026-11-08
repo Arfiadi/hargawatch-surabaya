@@ -166,8 +166,8 @@ export default function LandingForecastPreview() {
 
   return (
     <div className="lw-forecast-card">
-      <div className="lw-forecast-toolbar relative z-30">
-        <div className="flex items-center gap-2 min-w-0 flex-1 max-w-xs sm:max-w-sm">
+      <div className="lw-forecast-toolbar relative z-30 flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-border-subtle/70">
+        <div className="min-w-0 flex-1 sm:max-w-xs md:max-w-sm">
           <CommoditySearchSelect
             options={ALL_CATALOG_COMMODITIES}
             valueId={activeId}
@@ -178,13 +178,15 @@ export default function LandingForecastPreview() {
             panelClassName="w-[calc(100vw-2.5rem)] max-w-sm sm:w-96"
           />
         </div>
-        <Link
-          href="/forecasting"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98] shrink-0"
-        >
-          <span>Buka Halaman Perkiraan</span>
-          <span className="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>
-        </Link>
+        <div className="shrink-0">
+          <Link
+            href="/forecasting"
+            className="h-11 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98] whitespace-nowrap"
+          >
+            <span>Buka<span className="hidden sm:inline"> Halaman</span> Perkiraan</span>
+            <span className="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>
+          </Link>
+        </div>
       </div>
 
       <div className="lw-forecast-summary">

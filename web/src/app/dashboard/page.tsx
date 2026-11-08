@@ -1417,7 +1417,6 @@ export default function DashboardPage() {
                                 <div className="space-y-1.5">
                                   {winners.map((winner) => {
                                     const cleanWilayah = winner.wilayah.replace(/^Surabaya\s+/i, "");
-                                    const marketType = winner.pasar_id === 5 ? "Pasar Induk (Grosir)" : "Pasar Tradisional (Ritel)";
                                     return (
                                       <div key={winner.pasar_id} className="flex items-center justify-between text-xs gap-2 pt-1 border-t border-emerald-200/50 first:border-t-0 first:pt-0">
                                         <div className="min-w-0">
@@ -1425,7 +1424,7 @@ export default function DashboardPage() {
                                             {winner.nama_pasar}
                                           </span>
                                           <span className="text-slate-500 text-[10.5px] sm:text-[11px] truncate block">
-                                            Surabaya {cleanWilayah} • {marketType}
+                                            Surabaya {cleanWilayah}
                                           </span>
                                         </div>
                                         {maxSaving > 0 && (

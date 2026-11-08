@@ -468,7 +468,7 @@ export default function SpatialMapPage() {
                   Peta Disparitas Harga Antar-Pasar
                 </h1>
                 <p className="font-body-sm text-body-sm text-text-secondary mt-1">
-                  Pantauan spasial 6 pasar Kota Surabaya untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman{latestDate ? ` (Data per ${latestDate})` : ""}.
+                  Pantauan spasial 6 pasar Kota Surabaya untuk analisis perbandingan harga bahan pokok antara pasar induk grosir dan pasar ritel permukiman.
                 </p>
               </div>
 

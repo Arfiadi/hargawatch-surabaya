@@ -149,99 +149,101 @@ export default function LandingEwsPreview() {
   };
 
   return (
-    <div className="w-full bg-surface-card rounded-2xl p-4 sm:p-5 shadow-sm border border-border-subtle">
+    <div className="w-full bg-surface-card rounded-2xl p-3 sm:p-5 shadow-sm border border-border-subtle">
       {/* Executive Alert Banner: Focused Hotspot + Actionable Context */}
-      <div className="rounded-xl p-3.5 sm:p-4 bg-amber-50/90 border border-amber-200/90 flex items-start gap-3 mb-3.5">
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 bg-amber-100 text-amber-800 mt-0.5">
-          <span className="material-symbols-outlined text-[18px]">warning</span>
+      <div className="rounded-xl p-3 sm:p-4 bg-amber-50/90 border border-amber-200/90 flex items-start gap-2.5 sm:gap-3 mb-3 sm:mb-3.5">
+        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 bg-amber-100 text-amber-800 mt-0.5">
+          <span className="material-symbols-outlined text-[16px] sm:text-[18px]">warning</span>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-xs uppercase text-amber-900 tracking-wider">
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-bold text-[11px] sm:text-xs uppercase text-amber-900 tracking-wider leading-tight">
               {hotspot.title}
             </span>
-            <span className="text-xs font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full border border-rose-200">
+            <span className="text-[10px] sm:text-[11px] font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full border border-rose-200 shrink-0 whitespace-nowrap">
               {hotspot.status} · {hotspot.score}/100
             </span>
           </div>
-          <p className="text-xs text-text-primary mt-1 leading-snug">
+          <p className="text-[11.5px] sm:text-xs text-text-primary mt-1.5 leading-snug">
             {hotspot.desc}
           </p>
         </div>
       </div>
 
       {/* Visual Legend Bar: Clear Definition of Colors */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-border-subtle text-xs text-text-secondary">
-        <span className="font-semibold text-text-primary">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 pb-2.5 mb-2.5 border-b border-border-subtle text-xs text-text-secondary">
+        <span className="font-semibold text-text-primary text-[11px] sm:text-xs">
           Harga dan tingkat perhatian di empat pasar
         </span>
-        <div className="flex items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span>Normal (di bawah 40)</span>
+        <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-3 gap-y-1 text-[10.5px] sm:text-[11px]">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+            <span>Normal (&lt;40)</span>
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-amber-600" />
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0" />
             <span>Waspada (40–69)</span>
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-rose-600" />
-            <span>Siaga (70 ke atas)</span>
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0" />
+            <span>Siaga (&ge;70)</span>
           </span>
         </div>
       </div>
 
       {/* 4 Strategic Markets Representative Table */}
       <div
-        className="overflow-x-auto rounded-xl border border-border-subtle/80 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+        className="overflow-x-auto rounded-xl border border-border-subtle/80 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 scrollbar-thin"
         role="region"
         aria-label="Harga empat bahan pangan di empat pasar"
         tabIndex={0}
       >
-        <table className="w-full min-w-[640px] text-xs text-left font-sans">
+        <table className="w-full min-w-[560px] text-xs text-left font-sans">
           <caption className="sr-only">Harga dan tingkat perhatian untuk empat bahan pangan di empat pasar Surabaya</caption>
           <thead className="bg-surface-canvas text-text-secondary uppercase text-[10px] font-bold tracking-wider border-b border-border-subtle">
             <tr className="align-middle">
-              <th scope="col" className="py-2.5 px-3 whitespace-nowrap">Bahan Pangan</th>
-              <th scope="col" className="py-2.5 px-3 text-right whitespace-nowrap">Rata-rata</th>
-              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Keputran</th>
-              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Wonokromo</th>
-              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Genteng</th>
-              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Soponyono</th>
-              <th scope="col" className="py-2.5 px-3 text-right whitespace-nowrap">Perhatian</th>
+              <th scope="col" className="sticky left-0 z-20 bg-surface-canvas py-2 sm:py-2.5 px-2.5 sm:px-3 whitespace-nowrap shadow-[1px_0_0_rgba(0,0,0,0.06)]">
+                Bahan Pangan
+              </th>
+              <th scope="col" className="py-2 sm:py-2.5 px-2 sm:px-3 text-right whitespace-nowrap">Rata-rata</th>
+              <th scope="col" className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">Keputran</th>
+              <th scope="col" className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">Wonokromo</th>
+              <th scope="col" className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">Genteng</th>
+              <th scope="col" className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">Soponyono</th>
+              <th scope="col" className="py-2 sm:py-2.5 px-2.5 sm:px-3 text-right whitespace-nowrap">Perhatian</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle/50">
             {rows.map((row) => (
-              <tr key={row.id} className="hover:bg-surface-canvas/60 transition-colors align-middle">
-                <th scope="row" className="py-2.5 px-3 font-semibold text-text-primary whitespace-nowrap">
+              <tr key={row.id} className="group hover:bg-surface-canvas/60 transition-colors align-middle">
+                <th scope="row" className="sticky left-0 z-10 bg-surface-card group-hover:bg-surface-canvas/60 py-2 sm:py-2.5 px-2.5 sm:px-3 font-semibold text-text-primary whitespace-nowrap shadow-[1px_0_0_rgba(0,0,0,0.06)]">
                   {row.komoditas}
                 </th>
-                <td className="py-2.5 px-3 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">
+                <td className="py-2 sm:py-2.5 px-2 sm:px-3 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">
                   {row.rerata}
                 </td>
-                <td className="py-2.5 px-2 text-center whitespace-nowrap">
-                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.keputran.status)}`}>
+                <td className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">
+                  <span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded border text-[10.5px] sm:text-[11px] tabular-nums ${getCellBadge(row.keputran.status)}`}>
                     {row.keputran.price}
                   </span>
                 </td>
-                <td className="py-2.5 px-2 text-center whitespace-nowrap">
-                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.wonokromo.status)}`}>
+                <td className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">
+                  <span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded border text-[10.5px] sm:text-[11px] tabular-nums ${getCellBadge(row.wonokromo.status)}`}>
                     {row.wonokromo.price}
                   </span>
                 </td>
-                <td className="py-2.5 px-2 text-center whitespace-nowrap">
-                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.genteng.status)}`}>
+                <td className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">
+                  <span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded border text-[10.5px] sm:text-[11px] tabular-nums ${getCellBadge(row.genteng.status)}`}>
                     {row.genteng.price}
                   </span>
                 </td>
-                <td className="py-2.5 px-2 text-center whitespace-nowrap">
-                  <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.soponyono.status)}`}>
+                <td className="py-2 sm:py-2.5 px-1.5 sm:px-2 text-center whitespace-nowrap">
+                  <span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded border text-[10.5px] sm:text-[11px] tabular-nums ${getCellBadge(row.soponyono.status)}`}>
                     {row.soponyono.price}
                   </span>
                 </td>
-                <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] tabular-nums ${getRiskScoreBadge(row.statusLabel)}`}>
+                <td className="py-2 sm:py-2.5 px-2.5 sm:px-3 text-right whitespace-nowrap">
+                  <span className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full border text-[10.5px] sm:text-[11px] tabular-nums ${getRiskScoreBadge(row.statusLabel)}`}>
                     <span>{row.skorRisiko}</span>
                     <span className="text-[10px] opacity-80">({row.statusLabel})</span>
                   </span>
@@ -256,7 +258,7 @@ export default function LandingEwsPreview() {
       <div className="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-end">
         <Link
           href="/early-warning"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98] shrink-0"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-xl text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98]"
         >
           <span>Lihat Semua Pasar dan Bahan Pangan</span>
           <span className="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>

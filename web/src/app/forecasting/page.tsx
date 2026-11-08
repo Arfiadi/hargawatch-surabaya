@@ -634,8 +634,7 @@ export default function ForecastingPage() {
                       Grafik Riwayat &amp; Proyeksi
                     </h2>
                     <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                      Menampilkan {forecastData?.history.length || 14} hari data historis transaksi pasar dan {actualHorizon} hari proyeksi ke depan
-                      {forecastData?.formattedModelCreatedAt ? ` • Diperbarui: ${forecastData.formattedModelCreatedAt}` : ""}.
+                      Menampilkan {forecastData?.history.length || 14} hari data historis transaksi pasar dan {actualHorizon} hari proyeksi ke depan.
                     </p>
                   </div>
 

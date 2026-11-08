@@ -17,27 +17,7 @@ export default function Footer() {
           Portal keterbukaan data komoditas pangan dan instrumen mitigasi volatilitas inflasi pangan daerah berbasis data harian dari 6 pasar induk dan strategis di Kota Surabaya.
         </p>
 
-        <div className="pt-space-md border-t border-border-subtle/50 w-full max-w-xl text-center flex flex-col items-center gap-1.5">
-          <span className="text-[11px] text-text-muted font-normal normal-case">
-            Peta didukung oleh{" "}
-            <a
-              href="https://www.openstreetmap.org/copyright"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-primary transition-colors"
-            >
-              OpenStreetMap
-            </a>{" "}
-            &amp;{" "}
-            <a
-              href="https://leafletjs.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-primary transition-colors"
-            >
-              Leaflet
-            </a>
-          </span>
+        <div className="pt-space-md border-t border-border-subtle/50 w-full max-w-xl text-center flex flex-col items-center">
           <span className="text-text-muted font-label-caps text-label-caps">
             &copy; 2026 HargaWatch Surabaya.
           </span>
