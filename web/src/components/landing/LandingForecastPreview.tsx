@@ -6,7 +6,12 @@ import {
   OFFICIAL_MODEL_CHAMPIONS,
   OFFICIAL_REGULATORY_BENCHMARKS,
 } from "@/lib/regulatoryData";
-import { getLiveForecastDetails } from "@/lib/dataService";
+import CommoditySearchSelect from "@/components/CommoditySearchSelect";
+import {
+  getLiveForecastDetails,
+  ALL_CATALOG_COMMODITIES,
+  formatCommodityName,
+} from "@/lib/dataService";
 
 interface ForecastScenario {
   id: number;
@@ -88,7 +93,17 @@ export default function LandingForecastPreview() {
     };
   }, [activeId]);
 
-  const data = liveData[activeId] || FORECAST_DATA.find((item) => item.id === activeId) || FORECAST_DATA[0];
+  const fallbackCommodity = ALL_CATALOG_COMMODITIES.find((c) => c.id === activeId);
+  const data = liveData[activeId] || FORECAST_DATA.find((item) => item.id === activeId) || {
+    id: activeId,
+    name: fallbackCommodity ? formatCommodityName(fallbackCommodity.name) : "Komoditas",
+    unit: fallbackCommodity?.unit || "kg",
+    currentPrice: FORECAST_DATA[0].currentPrice,
+    historical: FORECAST_DATA[0].historical,
+    p10: FORECAST_DATA[0].p10,
+    p50: FORECAST_DATA[0].p50,
+    p90: FORECAST_DATA[0].p90,
+  };
   const chartId = useId().replace(/:/g, "");
   const benchmark = OFFICIAL_REGULATORY_BENCHMARKS[data.id];
   const champion = OFFICIAL_MODEL_CHAMPIONS[data.id];
@@ -110,8 +125,10 @@ export default function LandingForecastPreview() {
     ...data.p90,
     ...(benchmark ? [benchmark.price] : []),
   ];
-  const minValue = Math.floor((Math.min(...allValues) - 5000) / 10000) * 10000 + 5000;
-  const maxValue = Math.ceil((Math.max(...allValues) - 5000) / 10000) * 10000 + 5000;
+  const computedMin = Math.floor((Math.min(...allValues) - 5000) / 10000) * 10000 + 5000;
+  const computedMax = Math.ceil((Math.max(...allValues) - 5000) / 10000) * 10000 + 5000;
+  const minValue = Math.max(0, computedMin);
+  const maxValue = computedMax <= minValue ? minValue + 10000 : computedMax;
   const tickStep = maxValue - minValue >= 20000 ? 10000 : 5000;
   const yTicks = Array.from(
     { length: Math.floor((maxValue - minValue) / tickStep) + 1 },
@@ -149,28 +166,30 @@ export default function LandingForecastPreview() {
 
   return (
     <div className="lw-forecast-card">
-      <div className="lw-forecast-toolbar">
-        <div className="lw-forecast-tabs" role="group" aria-label="Pilih bahan pangan">
-          {FORECAST_DATA.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-pressed={item.id === activeId}
-              onClick={() => setActiveId(item.id)}
-              className={`lw-forecast-tab${item.id === activeId ? " is-active" : ""}`}
-            >
-              {item.name}
-            </button>
-          ))}
+      <div className="lw-forecast-toolbar relative z-30">
+        <div className="flex items-center gap-2 min-w-0 flex-1 max-w-xs sm:max-w-sm">
+          <CommoditySearchSelect
+            options={ALL_CATALOG_COMMODITIES}
+            valueId={activeId}
+            onChange={setActiveId}
+            searchPlaceholder="Cari dari 37 komoditas Surabaya..."
+            emptyNoun="komoditas"
+            className="w-full"
+            panelClassName="w-[calc(100vw-2.5rem)] max-w-sm sm:w-96"
+          />
         </div>
-        <Link href="/forecasting" className="lw-forecast-link min-h-11">
-          Buka halaman perkiraan <span aria-hidden="true">→</span>
+        <Link
+          href="/forecasting"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98] shrink-0"
+        >
+          <span>Buka Halaman Perkiraan</span>
+          <span className="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>
         </Link>
       </div>
 
       <div className="lw-forecast-summary">
         <div>
-          <span className="lw-forecast-eyebrow">Proyeksi model machine learning</span>
+          <span className="lw-forecast-eyebrow">Perkiraan harga berbasis data</span>
           <div className="lw-forecast-price-line">
             <strong>{formatRupiah(data.currentPrice)}<span>/{data.unit}</span></strong>
             {benchmark && benchmarkDifference !== null && benchmarkDifferencePercent !== null && (
@@ -182,7 +201,7 @@ export default function LandingForecastPreview() {
             )}
           </div>
         </div>
-        <span className="lw-forecast-wape">Galat uji perkiraan 7 hari <strong>{champion ? `${champion.wape.toLocaleString("id-ID", { maximumFractionDigits: 2 })}%` : "—"}</strong></span>
+        <span className="lw-forecast-wape">Rata-rata selisih perkiraan 7 hari <strong>{champion ? `${champion.wape.toLocaleString("id-ID", { maximumFractionDigits: 2 })}%` : "—"}</strong></span>
       </div>
 
       <div className="lw-forecast-legend" aria-label="Keterangan grafik">
@@ -238,7 +257,7 @@ export default function LandingForecastPreview() {
           <text x={width - padRight} y={height - 7} className="lw-chart-axis-label lw-chart-end-label" textAnchor="end">7 hari lagi</text>
         </svg>
       </div>
-      <p className="lw-forecast-footnote">Proyeksi harga 7 hari ke depan dengan rentang keyakinan (p10–p90). Galat uji (WAPE) merangkum akurasi model champion terhadap data aktual.</p>
+      <p className="lw-forecast-footnote">Perkiraan harga 7 hari ke depan menampilkan kisaran kemungkinan (harga terendah hingga tertinggi). Rata-rata selisih dihitung dari hasil pengujian prediksi sebelumnya terhadap harga riil di pasar.</p>
     </div>
   );
 }

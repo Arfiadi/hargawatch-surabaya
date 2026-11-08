@@ -76,7 +76,7 @@ export default function LandingEwsPreview() {
     status: string;
     desc: string;
   }>({
-    title: "Fokus perhatian: harga telur",
+    title: "Fokus Perhatian: Harga Telur",
     score: 70,
     status: "Siaga",
     desc: "Harga telur di Soponyono Rp 31.000/kg, sekitar 14,8% di atas batas acuan Bapanas Rp 27.000. Ringkasan ini membantu TPID Surabaya menentukan pasar yang perlu dicek lebih dulu.",
@@ -98,7 +98,7 @@ export default function LandingEwsPreview() {
         const priceStr = top.harga_terakhir ? `Rp ${top.harga_terakhir.toLocaleString("id-ID")}` : "tercatat bergejolak";
 
         setHotspot({
-          title: `Fokus perhatian: ${top.nama_komoditas}`,
+          title: `Fokus Perhatian: ${top.nama_komoditas}`,
           score: top.total_skor,
           status: statusLabel,
           desc: `Harga ${top.nama_komoditas} di ${top.nama_pasar} (${priceStr}) memerlukan pemantauan ketat (skor risiko ${top.total_skor}/100). Ringkasan ini memandu prioritas intervensi pasokan TPID Surabaya.`,
@@ -151,33 +151,23 @@ export default function LandingEwsPreview() {
   return (
     <div className="w-full bg-surface-card rounded-2xl p-4 sm:p-5 shadow-sm border border-border-subtle">
       {/* Executive Alert Banner: Focused Hotspot + Actionable Context */}
-      <div className="rounded-xl p-3.5 sm:p-4 bg-amber-50/90 border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 bg-amber-100 text-amber-800 mt-0.5">
-            <span className="material-symbols-outlined text-[18px]">warning</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-label-caps text-xs uppercase font-bold text-amber-900 tracking-wider">
-                {hotspot.title}
-              </span>
-              <span className="text-xs font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full border border-rose-200">
-                {hotspot.status} · {hotspot.score}/100
-              </span>
-            </div>
-            <p className="text-xs text-text-primary mt-1 leading-snug">
-              {hotspot.desc}
-            </p>
-          </div>
+      <div className="rounded-xl p-3.5 sm:p-4 bg-amber-50/90 border border-amber-200/90 flex items-start gap-3 mb-3.5">
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 bg-amber-100 text-amber-800 mt-0.5">
+          <span className="material-symbols-outlined text-[18px]">warning</span>
         </div>
-
-        <Link
-          href="/early-warning"
-          className="min-h-11 px-3 text-xs font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 rounded-lg transition-colors shrink-0 self-start sm:self-center inline-flex items-center gap-1"
-        >
-          <span>Lihat rincian</span>
-          <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-xs uppercase text-amber-900 tracking-wider">
+              {hotspot.title}
+            </span>
+            <span className="text-xs font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full border border-rose-200">
+              {hotspot.status} · {hotspot.score}/100
+            </span>
+          </div>
+          <p className="text-xs text-text-primary mt-1 leading-snug">
+            {hotspot.desc}
+          </p>
+        </div>
       </div>
 
       {/* Visual Legend Bar: Clear Definition of Colors */}
@@ -208,44 +198,44 @@ export default function LandingEwsPreview() {
         aria-label="Harga empat bahan pangan di empat pasar"
         tabIndex={0}
       >
-        <table className="w-full text-xs text-left">
+        <table className="w-full min-w-[640px] text-xs text-left font-sans">
           <caption className="sr-only">Harga dan tingkat perhatian untuk empat bahan pangan di empat pasar Surabaya</caption>
           <thead className="bg-surface-canvas text-text-secondary uppercase text-[10px] font-bold tracking-wider border-b border-border-subtle">
-            <tr>
-              <th scope="col" className="py-2.5 px-3">Bahan pangan</th>
-              <th scope="col" className="py-2.5 px-2 text-right">Rata-rata</th>
-              <th scope="col" className="py-2.5 px-2 text-center">Keputran</th>
-              <th scope="col" className="py-2.5 px-2 text-center">Wonokromo</th>
-              <th scope="col" className="py-2.5 px-2 text-center">Genteng</th>
-              <th scope="col" className="py-2.5 px-2 text-center">Soponyono</th>
-              <th scope="col" className="py-2.5 px-3 text-right">Perhatian</th>
+            <tr className="align-middle">
+              <th scope="col" className="py-2.5 px-3 whitespace-nowrap">Bahan Pangan</th>
+              <th scope="col" className="py-2.5 px-3 text-right whitespace-nowrap">Rata-rata</th>
+              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Keputran</th>
+              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Wonokromo</th>
+              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Genteng</th>
+              <th scope="col" className="py-2.5 px-2 text-center whitespace-nowrap">Soponyono</th>
+              <th scope="col" className="py-2.5 px-3 text-right whitespace-nowrap">Perhatian</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border-subtle/50 font-sans">
+          <tbody className="divide-y divide-border-subtle/50">
             {rows.map((row) => (
-              <tr key={row.id} className="hover:bg-surface-canvas/60 transition-colors">
+              <tr key={row.id} className="hover:bg-surface-canvas/60 transition-colors align-middle">
                 <th scope="row" className="py-2.5 px-3 font-semibold text-text-primary whitespace-nowrap">
                   {row.komoditas}
                 </th>
-                <td className="py-2.5 px-2 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">
+                <td className="py-2.5 px-3 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">
                   {row.rerata}
                 </td>
-                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                <td className="py-2.5 px-2 text-center whitespace-nowrap">
                   <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.keputran.status)}`}>
                     {row.keputran.price}
                   </span>
                 </td>
-                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                <td className="py-2.5 px-2 text-center whitespace-nowrap">
                   <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.wonokromo.status)}`}>
                     {row.wonokromo.price}
                   </span>
                 </td>
-                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                <td className="py-2.5 px-2 text-center whitespace-nowrap">
                   <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.genteng.status)}`}>
                     {row.genteng.price}
                   </span>
                 </td>
-                <td className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                <td className="py-2.5 px-2 text-center whitespace-nowrap">
                   <span className={`inline-block px-2 py-0.5 rounded border text-[11px] tabular-nums ${getCellBadge(row.soponyono.status)}`}>
                     {row.soponyono.price}
                   </span>
@@ -263,13 +253,13 @@ export default function LandingEwsPreview() {
       </div>
 
       {/* Clean Single Bottom Link */}
-      <div className="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-end text-xs">
+      <div className="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-end">
         <Link
           href="/early-warning"
-          className="min-h-11 text-primary font-bold hover:underline inline-flex items-center gap-1 shrink-0"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-xs transition-all active:scale-[0.98] shrink-0"
         >
-          <span>Lihat semua pasar dan bahan pangan</span>
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+          <span>Lihat Semua Pasar dan Bahan Pangan</span>
+          <span className="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span>
         </Link>
       </div>
     </div>

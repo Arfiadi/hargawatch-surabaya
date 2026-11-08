@@ -60,10 +60,10 @@ export default function HomePage() {
         <section className="lw-container lw-flow-section" aria-labelledby="lw-peta" data-reveal>
           <div className="max-w-3xl mb-3 sm:mb-4">
             <h2 id="lw-peta" className="text-xl sm:text-2xl lg:text-[28px] font-bold text-text-primary tracking-tight leading-tight">
-              Bandingkan harga cabai di tiap pasar
+              Bandingkan harga pangan di tiap pasar
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-text-secondary leading-relaxed max-w-2xl">
-              Bandingkan harga cabai di enam pasar Surabaya. Pilih pasar pada peta untuk melihat harganya dan selisih dari rata-rata kota.
+              Bandingkan harga pangan di enam pasar Surabaya. Pilih komoditas dan pasar pada peta untuk melihat harganya serta selisih dari rata-rata kota.
             </p>
           </div>
           <div>
