@@ -1,28 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
-  DEFAULT_BASKET_ITEMS,
   FoodStabilitySummary,
-  ShoppingBasketSimulation,
-  getLiveShoppingBasket,
   getLiveStabilitySummary,
 } from "@/lib/dataService";
 
 export default function LandingResiliencePreview() {
   const [summary, setSummary] = useState<FoodStabilitySummary | null>(null);
-  const [basket, setBasket] = useState<ShoppingBasketSimulation | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([getLiveStabilitySummary(), getLiveShoppingBasket(DEFAULT_BASKET_ITEMS)])
-      .then(([liveSummary, liveBasket]) => {
+    getLiveStabilitySummary()
+      .then((liveSummary) => {
         if (!isMounted) return;
         setSummary(liveSummary);
-        setBasket(liveBasket);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -126,35 +120,6 @@ export default function LandingResiliencePreview() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Bottom Module: Rekomendasi Pasar & Link Aksi */}
-          <div className="space-y-2 pt-1 border-t border-border-subtle/60">
-            {basket ? (
-              <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-2 text-xs text-emerald-950">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="material-symbols-outlined shrink-0 text-[18px] text-primary" aria-hidden="true">storefront</span>
-                  <div className="min-w-0">
-                    <span className="block text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Pasar Termurah</span>
-                    <span className="text-xs font-bold text-primary truncate block">{basket.cheapestMarket}</span>
-                  </div>
-                </div>
-                {basket.tripSaving > 0 && (
-                  <div className="text-right shrink-0">
-                    <span className="block text-[10px] text-emerald-700">Estimasi Hemat</span>
-                    <span className="font-bold text-xs text-primary font-mono">Rp {basket.tripSaving.toLocaleString("id-ID")}</span>
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            <Link
-              href="/early-warning"
-              className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold bg-surface-card hover:bg-surface-canvas text-text-primary border border-border-subtle shadow-2xs transition-all active:scale-[0.98]"
-            >
-              <span>Buka Detail Peringatan Dini</span>
-              <span className="material-symbols-outlined text-[14px] text-text-secondary" aria-hidden="true">arrow_forward</span>
-            </Link>
           </div>
         </div>
       ) : (
