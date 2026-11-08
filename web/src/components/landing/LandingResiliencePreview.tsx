@@ -39,10 +39,10 @@ export default function LandingResiliencePreview() {
   return (
     <section
       aria-labelledby="landing-resilience-title"
-      className="flex flex-col rounded-2xl border border-border-subtle bg-gradient-to-br from-emerald-50/70 via-surface-canvas to-surface-card p-4 sm:p-5 shadow-sm"
+      className="h-full flex flex-col justify-between rounded-2xl border border-border-subtle bg-gradient-to-br from-emerald-50/70 via-surface-canvas to-surface-card p-4 sm:p-5 shadow-sm"
     >
       {loading ? (
-        <div className="animate-pulse flex flex-col gap-3" role="status" aria-label="Memuat ringkasan ketahanan pangan">
+        <div className="animate-pulse flex flex-col justify-between h-full" role="status" aria-label="Memuat ringkasan ketahanan pangan">
           <div>
             <div className="h-3 w-32 rounded bg-surface-subtle" />
             <div className="mt-2 h-5 w-44 rounded bg-surface-subtle" />
@@ -52,10 +52,9 @@ export default function LandingResiliencePreview() {
               <div className="h-16 rounded-xl bg-surface-card" />
             </div>
           </div>
-          <div className="mt-4 h-9 rounded-lg bg-surface-card" />
         </div>
       ) : summary ? (
-        <div className="flex flex-col gap-3 sm:gap-3.5">
+        <div className="flex flex-col justify-between h-full gap-3 sm:gap-4">
           {/* Header & Indeks Ketahanan Pangan */}
           <div>
             <div className="flex items-start justify-between gap-3">
@@ -81,7 +80,7 @@ export default function LandingResiliencePreview() {
             </div>
 
             {/* Visual Progress Bar */}
-            <div className="mt-2 w-full bg-surface-subtle h-2 rounded-full overflow-hidden border border-border-subtle/60">
+            <div className="mt-2.5 w-full bg-surface-subtle h-2 rounded-full overflow-hidden border border-border-subtle/60">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   summary.isNormal ? "bg-primary" : "bg-status-warning"
@@ -89,35 +88,35 @@ export default function LandingResiliencePreview() {
                 style={{ width: `${Math.min(100, Math.max(5, stabilityNumber))}%` }}
               />
             </div>
+          </div>
 
-            {/* 2 KPI Titik Terkendali & Pengawasan */}
-            <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-surface-card p-2.5 sm:p-3 border border-border-subtle/60 shadow-2xs">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="material-symbols-outlined grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full bg-status-normal-bg text-status-normal text-[16px] sm:text-[18px]" aria-hidden="true">
-                  check_circle
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-bold leading-tight text-text-primary">
-                    {summary.normalCount} titik
-                  </p>
-                  <p className="text-[10.5px] sm:text-[11px] leading-tight text-text-secondary mt-0.5 truncate">Terkendali</p>
-                </div>
+          {/* 2 KPI Titik Terkendali & Pengawasan */}
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface-card p-2.5 sm:p-3 border border-border-subtle/60 shadow-2xs">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="material-symbols-outlined grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full bg-status-normal-bg text-status-normal text-[16px] sm:text-[18px]" aria-hidden="true">
+                check_circle
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold leading-tight text-text-primary">
+                  {summary.normalCount} titik
+                </p>
+                <p className="text-[10.5px] sm:text-[11px] leading-tight text-text-secondary mt-0.5 truncate">Terkendali</p>
               </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <span
-                  className={`material-symbols-outlined grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full text-[16px] sm:text-[18px] ${
-                    summary.alertCount > 0 ? "bg-status-warning-bg text-status-warning" : "bg-status-normal-bg text-status-normal"
-                  }`}
-                  aria-hidden="true"
-                >
-                  {summary.alertCount > 0 ? "warning" : "verified"}
-                </span>
-                <div className="min-w-0">
-                  <p className={`text-xs sm:text-sm font-bold leading-tight ${summary.alertCount > 0 ? "text-status-warning" : "text-text-primary"}`}>
-                    {summary.alertCount} titik
-                  </p>
-                  <p className="text-[10.5px] sm:text-[11px] leading-tight text-text-secondary mt-0.5 truncate">Pengawasan</p>
-                </div>
+            </div>
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                className={`material-symbols-outlined grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full text-[16px] sm:text-[18px] ${
+                  summary.alertCount > 0 ? "bg-status-warning-bg text-status-warning" : "bg-status-normal-bg text-status-normal"
+                }`}
+                aria-hidden="true"
+              >
+                {summary.alertCount > 0 ? "warning" : "verified"}
+              </span>
+              <div className="min-w-0">
+                <p className={`text-xs sm:text-sm font-bold leading-tight ${summary.alertCount > 0 ? "text-status-warning" : "text-text-primary"}`}>
+                  {summary.alertCount} titik
+                </p>
+                <p className="text-[10.5px] sm:text-[11px] leading-tight text-text-secondary mt-0.5 truncate">Pengawasan</p>
               </div>
             </div>
           </div>

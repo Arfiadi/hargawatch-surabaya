@@ -32,7 +32,7 @@ export default function HomePage() {
           className="lw-container lw-flow-section pt-4 sm:pt-8"
           aria-labelledby="lw-h1"
         >
-          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)] lg:gap-8 lg:items-start">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)] lg:gap-8 lg:items-stretch">
             <div className="min-w-0 w-full">
               <div className="max-w-3xl">
                 <h1 id="lw-h1" className="text-xl min-[390px]:text-[22px] sm:text-2xl lg:text-[28px] font-bold text-text-primary tracking-tight leading-tight" data-hero-enter>
@@ -50,7 +50,7 @@ export default function HomePage() {
                 <HeroBoardPreview />
               </div>
             </div>
-            <div className="min-w-0 w-full flex flex-col" data-hero-enter style={{ "--hero-i": "3" } as React.CSSProperties}>
+            <div className="min-w-0 w-full h-full flex flex-col" data-hero-enter style={{ "--hero-i": "3" } as React.CSSProperties}>
               <LandingResiliencePreview />
             </div>
           </div>
