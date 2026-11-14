@@ -1415,7 +1415,7 @@ export default function SpatialMapPage() {
         </div>
       </main>
 
-      <Footer />
+      <Footer showMapAttribution />
     </div>
   );
 }
