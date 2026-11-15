@@ -21,21 +21,21 @@ export default function Header() {
         {/* Logo & Subtitle */}
         <div className="flex items-center gap-space-md min-w-max">
           {/* Brand → beranda platform (landing); Dashboard Publik tetap di menu */}
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-2.5 group py-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="HargaWatch Logo"
-              width={34}
-              height={34}
-              style={{ width: "34px", height: "34px", minWidth: "34px" }}
-              className="h-[34px] w-[34px] object-contain transition-transform duration-200 group-hover:scale-105"
+              width={30}
+              height={30}
+              style={{ width: "30px", height: "30px", minWidth: "30px" }}
+              className="h-[30px] w-[30px] object-contain transition-transform duration-200 group-hover:scale-105 shrink-0"
               src="/logo-symbol.svg"
             />
-            <div className="flex flex-col">
-              <span className="font-headline-sm text-[17px] text-primary tracking-tight leading-none font-bold">
+            <div className="flex flex-col justify-center">
+              <span className="font-headline-sm text-base sm:text-[17px] text-primary tracking-tight leading-tight font-bold">
                 HargaWatch
               </span>
-              <span className="font-label-caps text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">
+              <span className="font-label-caps text-[9.5px] sm:text-[10px] text-text-secondary uppercase tracking-wider leading-none mt-0.5">
                 Surabaya Food Intel
               </span>
             </div>
