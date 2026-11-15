@@ -28,7 +28,7 @@ export interface ModelChampionMeta {
 
 /**
  * Batas Acuan Regulasi Resmi Pemerintah (HAP Bapanas & HET Kemendag)
- * Diverifikasi berdasarkan Perbadan No. 11/2022, Perbadan No. 17/2023, & Permendag No. 18/2024.
+ * Diverifikasi berdasarkan Perbadan No. 12/2024, Perbadan No. 6/2024, Perbadan No. 5/2024, & Permendag No. 18/2024.
  */
 export const OFFICIAL_REGULATORY_BENCHMARKS: Record<number, RegulatoryBenchmark> = {
   // 50: Cabai Rawit Merah (Batas atas HAP konsumen Bapanas)
@@ -38,15 +38,15 @@ export const OFFICIAL_REGULATORY_BENCHMARKS: Record<number, RegulatoryBenchmark>
     unit: "kg",
     displayPrice: "Rp 57.000 / kg",
     note: "Harga Acuan Penjualan Konsumen Nasional (Batas Atas)",
-    source: "Badan Pangan Nasional (Bapanas)",
+    source: "Perbadan No. 12/2024",
   },
-  // 38: Cabai Merah Besar (Batas atas HAP konsumen Bapanas)
+  // 38: Cabai Merah Besar (Batas atas HAP konsumen Bapanas - Proksi)
   38: {
     label: "HAP Bapanas",
     price: 55000,
     unit: "kg",
     displayPrice: "Rp 55.000 / kg",
-    note: "Batas Atas HAP Konsumen Cabai Merah Besar",
+    note: "Batas Atas HAP Konsumen Cabai Merah Besar (Proksi Bapanas)",
     source: "Badan Pangan Nasional (Bapanas)",
   },
   // 37: Cabai Merah Keriting (Batas atas HAP konsumen Bapanas)
@@ -56,70 +56,79 @@ export const OFFICIAL_REGULATORY_BENCHMARKS: Record<number, RegulatoryBenchmark>
     unit: "kg",
     displayPrice: "Rp 55.000 / kg",
     note: "Batas Atas HAP Konsumen Cabai Keriting",
-    source: "Badan Pangan Nasional (Bapanas)",
+    source: "Perbadan No. 12/2024",
   },
-  // 39: Bawang Merah (Perbadan 11/2022: Batas atas konsumen)
+  // 39: Bawang Merah (Perbadan 12/2024: Batas atas konsumen)
   39: {
     label: "HAP Bapanas",
     price: 41500,
     unit: "kg",
     displayPrice: "Rp 41.500 / kg",
     note: "Batas Atas Harga Acuan Penjualan Konsumen",
-    source: "Perbadan No. 11/2022",
+    source: "Perbadan No. 12/2024",
   },
-  // 16: Telur Ayam Ras (Perbadan 11/2022: Konsumen Jawa Timur)
+  // 49: Bawang Putih Honan (Perbadan 12/2024: Batas atas konsumen)
+  49: {
+    label: "HAP Bapanas",
+    price: 40000,
+    unit: "kg",
+    displayPrice: "Rp 40.000 / kg",
+    note: "Batas Atas Harga Acuan Penjualan Konsumen",
+    source: "Perbadan No. 12/2024",
+  },
+  // 16: Telur Ayam Ras (Perbadan 6/2024: Konsumen Jawa)
   16: {
     label: "HAP Bapanas",
-    price: 27000,
+    price: 30000,
     unit: "kg",
-    displayPrice: "Rp 27.000 / kg",
-    note: "Harga Acuan Konsumen Telur Ayam Ras",
-    source: "Perbadan No. 11/2022",
+    displayPrice: "Rp 30.000 / kg",
+    note: "Harga Acuan Penjualan Konsumen Telur Ayam Ras",
+    source: "Perbadan No. 6/2024",
   },
-  // 13: Daging Ayam Ras (Perbadan 11/2022)
+  // 13: Daging Ayam Ras (Perbadan 6/2024: Konsumen)
   13: {
     label: "HAP Bapanas",
-    price: 36750,
+    price: 40000,
     unit: "kg",
-    displayPrice: "Rp 36.750 / kg",
-    note: "Harga Acuan Konsumen Daging Ayam Ras",
-    source: "Perbadan No. 11/2022",
+    displayPrice: "Rp 40.000 / kg",
+    note: "Harga Acuan Penjualan Konsumen Daging Ayam Ras",
+    source: "Perbadan No. 6/2024",
   },
-  // 12: Daging Sapi Paha Belakang (Perbadan 11/2022)
+  // 12: Daging Sapi Paha Belakang (Perbadan 12/2024)
   12: {
     label: "HAP Bapanas",
     price: 140000,
     unit: "kg",
     displayPrice: "Rp 140.000 / kg",
-    note: "Harga Acuan Konsumen Daging Sapi Segar",
-    source: "Perbadan No. 11/2022",
+    note: "Harga Acuan Konsumen Daging Sapi Segar Paha Belakang",
+    source: "Perbadan No. 12/2024",
   },
-  // 7: Gula Kristal Putih (Perbadan 17/2023)
+  // 7: Gula Kristal Putih (Perbadan 12/2024)
   7: {
     label: "HAP Bapanas",
     price: 17500,
     unit: "kg",
     displayPrice: "Rp 17.500 / kg",
     note: "Harga Acuan Penjualan Ritel Konsumen",
-    source: "Perbadan No. 17/2023",
+    source: "Perbadan No. 12/2024",
   },
-  // 2: Beras Premium (HET Zona 1 Jawa Timur)
+  // 2: Beras Premium (HET Zona 1 Jawa)
   2: {
     label: "HET Beras Premium",
     price: 14900,
     unit: "kg",
     displayPrice: "Rp 14.900 / kg",
-    note: "Harga Eceran Tertinggi Zona 1 Kemendag / Bapanas",
-    source: "Kemendag / Bapanas",
+    note: "Harga Eceran Tertinggi Zona 1 (Jawa)",
+    source: "Perbadan No. 5/2024",
   },
-  // 4: Beras Medium (SPHP Bulog)
+  // 4: Beras Medium (SPHP Bulog / Zona 1 Jawa)
   4: {
     label: "HET Beras Medium",
     price: 12500,
     unit: "kg",
     displayPrice: "Rp 12.500 / kg",
-    note: "Harga Eceran Tertinggi Beras SPHP Bulog",
-    source: "Bapanas / Bulog",
+    note: "Harga Eceran Tertinggi Beras SPHP Bulog / Zona 1",
+    source: "Perbadan No. 5/2024",
   },
   // 10: Minyak Goreng Curah
   10: {
@@ -127,8 +136,8 @@ export const OFFICIAL_REGULATORY_BENCHMARKS: Record<number, RegulatoryBenchmark>
     price: 15700,
     unit: "liter",
     displayPrice: "Rp 15.700 / liter",
-    note: "Harga Eceran Tertinggi Minyak Curah (DMO)",
-    source: "Kemendag",
+    note: "Harga Eceran Tertinggi Minyak Curah (Proksi Permendag 18/2024)",
+    source: "Kemendag (Proksi Permendag 18/2024)",
   },
   // 96: Minyakita (Permendag 18/2024)
   96: {
@@ -146,7 +155,7 @@ export const OFFICIAL_REGULATORY_BENCHMARKS: Record<number, RegulatoryBenchmark>
     unit: "kg",
     displayPrice: "Rp 5.800 / kg",
     note: "Harga Acuan Pembelian Jagung Pipilan Kering (KA 15%)",
-    source: "Bapanas",
+    source: "Perbadan No. 6/2024",
   },
   // 32: Kedelai Impor
   32: {
@@ -155,7 +164,7 @@ export const OFFICIAL_REGULATORY_BENCHMARKS: Record<number, RegulatoryBenchmark>
     unit: "kg",
     displayPrice: "Rp 12.000 / kg",
     note: "Harga Acuan Pembelian Kedelai Konsumen",
-    source: "Bapanas",
+    source: "Perbadan No. 12/2024",
   },
 };
 

@@ -79,7 +79,7 @@ export default function LandingEwsPreview() {
     title: "Fokus Perhatian: Harga Telur",
     score: 70,
     status: "Siaga",
-    desc: "Harga telur di Soponyono Rp 31.000/kg, sekitar 14,8% di atas batas acuan Bapanas Rp 27.000. Ringkasan ini membantu TPID Surabaya menentukan pasar yang perlu dicek lebih dulu.",
+    desc: "Harga telur di Soponyono Rp 31.000/kg, sekitar 3,3% di atas batas acuan Bapanas Rp 30.000. Ringkasan ini membantu TPID Surabaya menentukan pasar yang perlu dicek lebih dulu.",
   });
 
   useEffect(() => {

@@ -481,8 +481,8 @@ export default function EarlyWarningPage() {
                   <span className="font-body-sm text-body-sm text-text-muted">
                     {ewsStats
                       ? ewsStats.stabilityPercentage >= 90
-                        ? "Toleransi Batas Aman Pemkot Surabaya"
-                        : "Di bawah batas toleransi aman Pemkot"
+                        ? "Target Stabilitas Sistem (≥ 90%)"
+                        : "Di bawah target stabilitas sistem (≥ 90%)"
                       : "Menunggu pembaruan data terkini"}
                   </span>
                 </div>
@@ -886,9 +886,16 @@ export default function EarlyWarningPage() {
                                     onMouseLeave={() => setActiveTooltip(null)}
                                   >
                                     <div className="flex flex-col items-center">
-                                      <span className={`font-metric-value text-xs sm:text-body-md ${priceTextClass}`}>
-                                        Rp {(price || 0).toLocaleString("id-ID")}
-                                      </span>
+                                      <div className="inline-flex items-center gap-1">
+                                        {score >= 70 ? (
+                                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse shrink-0" title="EWS: Risiko Tinggi (≥ 70)" />
+                                        ) : score >= 40 ? (
+                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="EWS: Waspada (40-69)" />
+                                        ) : null}
+                                        <span className={`font-metric-value text-xs sm:text-body-md ${priceTextClass}`}>
+                                          Rp {(price || 0).toLocaleString("id-ID")}
+                                        </span>
+                                      </div>
                                       <span
                                         className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded-full font-label-caps text-[9px] sm:text-[10px] mt-0.5 sm:mt-1 ${badgeClass}`}
                                       >
@@ -939,14 +946,14 @@ export default function EarlyWarningPage() {
                                             <span className="text-text-muted text-[11px]">Skor Risiko EWS:</span>
                                             <span
                                               className={`text-[11px] px-1.5 py-0.5 rounded font-bold ${
-                                                score >= 60
-                                                  ? "bg-rose-100 text-rose-700"
-                                                  : score >= 35
-                                                  ? "bg-amber-100 text-amber-800"
-                                                  : "bg-emerald-100 text-emerald-800"
+                                                score >= 70
+                                                  ? "bg-rose-100 text-rose-700 font-bold"
+                                                  : score >= 40
+                                                  ? "bg-amber-100 text-amber-800 font-bold"
+                                                  : "bg-emerald-100 text-emerald-800 font-medium"
                                               }`}
                                             >
-                                              {score}/100
+                                              {score}/100 ({score >= 70 ? "TINGGI" : score >= 40 ? "WASPADA" : "NORMAL"})
                                             </span>
                                           </div>
                                         ) : (
@@ -1155,6 +1162,7 @@ export default function EarlyWarningPage() {
                                 {MARKET_CONFIGS.map((m) => {
                                   const marketItem = row.markets[m.id];
                                   const price = marketItem?.harga_terakhir || 0;
+                                  const score = marketItem?.total_skor || 0;
                                   const isMin = hasSpread && price === minPrice;
                                   const isMax = hasSpread && price === maxPrice;
 
@@ -1184,13 +1192,20 @@ export default function EarlyWarningPage() {
                                           </span>
                                         )}
                                       </div>
-                                      <span
-                                        className={`text-[11px] shrink-0 font-bold ${
-                                          isMin ? "text-emerald-700" : isMax ? "text-rose-700" : "text-slate-900"
-                                        }`}
-                                      >
-                                        Rp {price > 0 ? price.toLocaleString("id-ID") : "-"}
-                                      </span>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        {score >= 70 ? (
+                                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse shrink-0" title="EWS: Risiko Tinggi (≥ 70)" />
+                                        ) : score >= 40 ? (
+                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="EWS: Waspada (40-69)" />
+                                        ) : null}
+                                        <span
+                                          className={`text-[11px] font-bold ${
+                                            isMin ? "text-emerald-700" : isMax ? "text-rose-700" : "text-slate-900"
+                                          }`}
+                                        >
+                                          Rp {price > 0 ? price.toLocaleString("id-ID") : "-"}
+                                        </span>
+                                      </div>
                                     </div>
                                   );
                                 })}

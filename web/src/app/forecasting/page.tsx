@@ -31,7 +31,7 @@ const COMMODITY_SUPPLY_INSIGHTS: Record<number, CommoditySupplyInsight> = {
     characteristics:
       "Komoditas hortikultura (cabai rawit merah) tergolong cepat busuk (perishable) dan sangat sensitif terhadap gangguan anomali cuaca serta curah hujan di sentra Jawa Timur, sehingga model Machine Learning (LightGBM/CatBoost) menyertakan toleransi variansi lebih adaptif dibanding pangan pokok bersubsidi.",
     distribution:
-      "Stabilitas harga pasar di Surabaya ditopang arus bongkar muat harian dari sentra Kediri, Malang, Probolinggo, dan Blitar yang masuk melalui Pasar Induk Keputran dan Pasar Osowilangun sebelum didistribusikan ke pasar-pasar lingkungan.",
+      "Stabilitas harga pasar di Surabaya ditopang arus bongkar muat harian dari sentra Kediri, Malang, Probolinggo, dan Blitar yang masuk melalui Pasar Induk Keputran sebelum didistribusikan ke pasar-pasar lingkungan.",
   },
   39: {
     characteristics:
@@ -189,7 +189,7 @@ export default function ForecastingPage() {
     } else if (isAboveBenchmark) {
       return `Harga berada di atas ${benchmarkShortLabel} (+${deltaHapPercent}%). Direkomendasikan fasilitasi kelancaran logistik antar-daerah dan pengawasan margin pedagang eceran.`;
     } else if (deltaProj >= 6) {
-      return `Harga saat ini aman di bawah ${benchmarkShortLabel}, namun diproyeksikan melonjak +${deltaProj}% dalam ${actualHorizon} hari. Tingkatkan pemantauan volume masuk di Pasar Induk Keputran & Osowilangun.`;
+      return `Harga saat ini aman di bawah ${benchmarkShortLabel}, namun diproyeksikan melonjak +${deltaProj}% dalam ${actualHorizon} hari. Tingkatkan pemantauan volume masuk di Pasar Induk Keputran.`;
     } else {
       return `Harga aman di bawah acuan ${benchmarkMeta.label} dan tren proyeksi terpantau terkendali. Cukup pemantauan pasokan rutin tanpa alokasi intervensi pasar darurat.`;
     }
@@ -307,7 +307,7 @@ export default function ForecastingPage() {
     const fcCoords = forecastPoints.map((f, i) => ({
       x: getX(todayIdx + 1 + i),
       y: getY(f.harga_prediksi),
-      yLow: getY(Math.max(f.batas_bawah, forecastData.currentPrice * 0.7)),
+      yLow: getY(Math.max(0, f.batas_bawah)),
       yHigh: getY(f.batas_atas),
       data: f,
     }));

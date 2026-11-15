@@ -798,7 +798,12 @@ export async function getLiveForecastDetails(
       };
     });
 
-    const currentPrice = history.length > 0 ? history[history.length - 1].harga : 60000;
+    if (history.length === 0) {
+      console.warn(`getLiveForecastDetails: no historical price points found for commodity ${komoditasId}`);
+      return null;
+    }
+
+    const currentPrice = history[history.length - 1].harga;
 
     // 4. Ambil proyeksi masa depan dari fact_forecast (tanggal > latestDate)
     let { data: fcData, error: fcErr } = await supabase

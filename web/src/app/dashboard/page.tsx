@@ -552,10 +552,10 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between gap-space-sm mb-space-xs">
                       <div>
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                          Status Pasokan Kota (TPID)
+                          Status Stabilitas Harga Kota
                         </span>
                         <span className="font-headline-sm text-headline-sm text-text-primary">
-                          Indeks Ketahanan Pangan
+                          Indeks Stabilitas Harga Pangan
                         </span>
                       </div>
                       <span

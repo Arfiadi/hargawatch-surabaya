@@ -42,7 +42,7 @@ export default function LandingResiliencePreview() {
       className="h-full flex flex-col justify-between rounded-2xl border border-border-subtle bg-gradient-to-br from-emerald-50/70 via-surface-canvas to-surface-card p-4 sm:p-5 shadow-sm"
     >
       {loading ? (
-        <div className="animate-pulse flex flex-col justify-between h-full" role="status" aria-label="Memuat ringkasan ketahanan pangan">
+        <div className="animate-pulse flex flex-col justify-between h-full" role="status" aria-label="Memuat ringkasan stabilitas harga pangan">
           <div>
             <div className="h-3 w-32 rounded bg-surface-subtle" />
             <div className="mt-2 h-5 w-44 rounded bg-surface-subtle" />
@@ -55,15 +55,15 @@ export default function LandingResiliencePreview() {
         </div>
       ) : summary ? (
         <div className="flex flex-col justify-between h-full gap-3 sm:gap-4">
-          {/* Header & Indeks Ketahanan Pangan */}
+          {/* Header & Indeks Stabilitas Harga Pangan */}
           <div>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-                  Status pasokan kota · TPID
+                  Status Stabilitas Harga Kota
                 </p>
                 <h2 id="landing-resilience-title" className="mt-0.5 text-base font-bold leading-tight text-text-primary">
-                  Indeks Ketahanan Pangan
+                  Indeks Stabilitas Harga Pangan
                 </h2>
               </div>
               <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${statusTone}`}>
