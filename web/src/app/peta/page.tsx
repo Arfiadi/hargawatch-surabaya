@@ -436,7 +436,7 @@ export default function SpatialMapPage() {
 
   const handleExportCSV = () => {
     const csvContent =
-      "Komoditas Pokok,Satuan,Keputran (Induk),Wonokromo,Pucang Anom,Genteng,Tambahrejo,Soponyono,Rerata Kota,Disparitas Rp,Disparitas %\n" +
+      "Komoditas Pokok,Satuan,Keputran,Wonokromo,Pucang Anom,Genteng,Tambahrejo,Soponyono,Rerata Kota,Disparitas Rp,Disparitas %\n" +
       filteredTableRows
         .map(
           (r) =>
@@ -918,7 +918,7 @@ export default function SpatialMapPage() {
                         Komoditas Pokok
                       </th>
                       <th className="py-2.5 sm:py-3 px-1.5 sm:px-space-xs text-center min-w-[55px] sm:min-w-[70px]">Satuan</th>
-                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(5) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Keputran (Induk)</th>
+                      <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(5) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Keputran</th>
                       <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(2) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Wonokromo</th>
                       <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(4) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Pucang Anom</th>
                       <th className={`py-2.5 sm:py-3 px-1.5 sm:px-space-sm min-w-[95px] sm:min-w-[110px] transition-colors ${selectedZone !== "Semua" && ZONE_MARKETS[selectedZone]?.includes(3) ? "bg-primary/15 text-primary font-bold border-b-2 border-primary" : selectedZone !== "Semua" ? "opacity-60" : ""}`}>Genteng</th>
@@ -1146,7 +1146,7 @@ export default function SpatialMapPage() {
                 ) : (
                   paginatedTableRows.map((row, idx) => {
                     const marketEntries = [
-                      { id: "keputran", pasar_id: 5, name: "Keputran (Induk)", shortName: "Keputran", price: row.keputran },
+                      { id: "keputran", pasar_id: 5, name: "Pasar Keputran", shortName: "Keputran", price: row.keputran },
                       { id: "wonokromo", pasar_id: 2, name: "Pasar Wonokromo", shortName: "Wonokromo", price: row.wonokromo },
                       { id: "pucang", pasar_id: 4, name: "Pasar Pucang Anom", shortName: "Pucang Anom", price: row.pucang },
                       { id: "genteng", pasar_id: 3, name: "Pasar Genteng", shortName: "Genteng", price: row.genteng },
