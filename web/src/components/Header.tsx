@@ -25,11 +25,11 @@ export default function Header() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="HargaWatch Logo"
-              width={36}
-              height={36}
-              style={{ width: "36px", height: "36px", minWidth: "36px" }}
-              className="h-9 w-9 rounded-lg object-contain shadow-xs border border-primary/10 bg-white p-0.5 transition-transform group-hover:scale-105"
-              src="/logo.svg"
+              width={34}
+              height={34}
+              style={{ width: "34px", height: "34px", minWidth: "34px" }}
+              className="h-[34px] w-[34px] object-contain transition-transform duration-200 group-hover:scale-105"
+              src="/logo-symbol.svg"
             />
             <div className="flex flex-col">
               <span className="font-headline-sm text-[17px] text-primary tracking-tight leading-none font-bold">
