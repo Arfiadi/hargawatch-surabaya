@@ -440,7 +440,7 @@ export default function SpatialMapPage() {
       filteredTableRows
         .map(
           (r) =>
-            `"${r.komoditas}","${r.satuan}","Rp ${r.keputran.toLocaleString("id-ID")}","Rp ${r.wonokromo.toLocaleString("id-ID")}","Rp ${r.pucang.toLocaleString("id-ID")}","Rp ${r.genteng.toLocaleString("id-ID")}","Rp ${r.tambahrejo.toLocaleString("id-ID")}","Rp ${r.soponyono.toLocaleString("id-ID")}","Rp ${r.rerata.toLocaleString("id-ID")}","Rp ${r.disparitasRp.toLocaleString("id-ID")}","${r.disparitasPct}%"`
+            `"${r.komoditas}","${r.satuan}",${r.keputran > 0 ? `"Rp ${r.keputran.toLocaleString("id-ID")}"` : `"-"`},${r.wonokromo > 0 ? `"Rp ${r.wonokromo.toLocaleString("id-ID")}"` : `"-"`},${r.pucang > 0 ? `"Rp ${r.pucang.toLocaleString("id-ID")}"` : `"-"`},${r.genteng > 0 ? `"Rp ${r.genteng.toLocaleString("id-ID")}"` : `"-"`},${r.tambahrejo > 0 ? `"Rp ${r.tambahrejo.toLocaleString("id-ID")}"` : `"-"`},${r.soponyono > 0 ? `"Rp ${r.soponyono.toLocaleString("id-ID")}"` : `"-"`},"Rp ${r.rerata.toLocaleString("id-ID")}","Rp ${r.disparitasRp.toLocaleString("id-ID")}","${r.disparitasPct}%"`
         )
         .join("\n");
 
@@ -711,13 +711,13 @@ export default function SpatialMapPage() {
 
                     {/* Price Comparison Metric for Selected Commodity */}
                     <div className="space-y-space-sm mb-space-md">
-                      {activeCommodity.missingMarkets?.includes(selectedMarket.pasar_id) && (
-                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs flex items-start gap-1.5">
-                          <span className="material-symbols-outlined text-sm mt-0.5 shrink-0 text-amber-600">warning</span>
+                      {(selectedMarket.price <= 0 || activeCommodity.missingMarkets?.includes(selectedMarket.pasar_id)) && (
+                        <div className="p-2.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-xs flex items-start gap-1.5">
+                          <span className="material-symbols-outlined text-sm mt-0.5 shrink-0 text-slate-500">info</span>
                           <div>
-                            <span className="font-semibold block">Laporan Tertunda (Estimasi)</span>
-                            <span className="text-[11px] leading-tight text-amber-900/80 block">
-                              Pasar ini belum memasukkan laporan harga hari ini. Sistem menampilkan estimasi rerata kota.
+                            <span className="font-semibold block">Komoditas Tidak Tersedia</span>
+                            <span className="text-[11px] leading-tight text-slate-600 block">
+                              Komoditas ini tidak diperjualbelikan di {selectedMarket.name}.
                             </span>
                           </div>
                         </div>
@@ -729,36 +729,40 @@ export default function SpatialMapPage() {
                         </span>
                         <div className="flex items-baseline justify-between">
                           <span className="font-metric-value text-headline-sm text-text-primary font-bold">
-                            {activeCommodity.missingMarkets?.includes(selectedMarket.pasar_id) ? "~" : ""}Rp {selectedMarket.price.toLocaleString("id-ID")}
+                            {selectedMarket.price > 0 ? `Rp ${selectedMarket.price.toLocaleString("id-ID")}` : "-"}
                           </span>
-                          <span className="text-xs text-text-muted">
-                            /{activeCommodity.satuan}
-                          </span>
+                          {selectedMarket.price > 0 && (
+                            <span className="text-xs text-text-muted">
+                              /{activeCommodity.satuan}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
-                          <span className="text-text-muted">Rerata Kota:</span>
-                          <strong className="text-text-primary mt-0.5">
-                            Rp {activeCommodity.rerata.toLocaleString("id-ID")}
-                          </strong>
+                      {selectedMarket.price > 0 && (
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
+                            <span className="text-text-muted">Rerata Kota:</span>
+                            <strong className="text-text-primary mt-0.5">
+                              Rp {activeCommodity.rerata.toLocaleString("id-ID")}
+                            </strong>
+                          </div>
+                          <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
+                            <span className="text-text-muted">Selisih vs Termurah:</span>
+                            <strong
+                              className={
+                                selectedMarket.price === minPrice
+                                  ? "text-status-normal mt-0.5"
+                                  : "text-status-critical mt-0.5"
+                              }
+                            >
+                              {selectedMarket.price === minPrice
+                                ? "Acuan Termurah ⭐"
+                                : `+Rp ${(selectedMarket.price - minPrice).toLocaleString("id-ID")}`}
+                            </strong>
+                          </div>
                         </div>
-                        <div className="p-space-xs rounded-lg bg-surface-subtle flex flex-col">
-                          <span className="text-text-muted">Selisih vs Termurah:</span>
-                          <strong
-                            className={
-                              selectedMarket.price === minPrice
-                                ? "text-status-normal mt-0.5"
-                                : "text-status-critical mt-0.5"
-                            }
-                          >
-                            {selectedMarket.price === minPrice
-                              ? "Acuan Termurah"
-                              : `+Rp ${(selectedMarket.price - minPrice).toLocaleString("id-ID")}`}
-                          </strong>
-                        </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Market Logistics Characteristics */}
@@ -991,13 +995,26 @@ export default function SpatialMapPage() {
                         row.tambahrejo,
                         row.soponyono,
                       ];
-                      const rowMin = Math.min(...prices);
-                      const rowMax = Math.max(...prices);
+                      const validPrices = prices.filter((p) => p > 0);
+                      const rowMin = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+                      const rowMax = validPrices.length > 0 ? Math.max(...validPrices) : 0;
+                      const hasSpread = rowMin < rowMax && rowMin > 0;
 
                       const renderCell = (price: number, pasarId: number) => {
-                        const isMin = price === rowMin;
-                        const isMax = price === rowMax;
-                        const isMissing = Boolean(row.missingMarkets?.includes(pasarId));
+                        const isMissing = Boolean(row.missingMarkets?.includes(pasarId)) || price <= 0;
+                        if (isMissing || price <= 0) {
+                          return (
+                            <td
+                              className="py-2.5 sm:py-3.5 px-1.5 sm:px-space-sm text-center text-text-muted text-xs min-w-[95px] sm:min-w-[110px]"
+                              title="Komoditas tidak diperjualbelikan di pasar ini"
+                            >
+                              -
+                            </td>
+                          );
+                        }
+
+                        const isMin = hasSpread && price === rowMin;
+                        const isMax = hasSpread && price === rowMax;
                         const isZoneActive = selectedZone !== "Semua" && (ZONE_MARKETS[selectedZone]?.includes(pasarId) ?? false);
 
                         return (
@@ -1015,15 +1032,7 @@ export default function SpatialMapPage() {
                             } ${isZoneActive ? "border-x border-primary/20" : ""}`}
                           >
                             <div className="flex items-center gap-1">
-                              <span>{isMissing ? "~" : ""}Rp {price.toLocaleString("id-ID")}</span>
-                              {isMissing && (
-                                <span
-                                  className="inline-flex items-center px-1 py-0.2 rounded font-label-caps text-[8px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
-                                  title="Laporan Tertunda: Estimasi Rerata Kota"
-                                >
-                                  Est
-                                </span>
-                              )}
+                              <span>Rp {price.toLocaleString("id-ID")}</span>
                             </div>
                             {isMin && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-label-caps text-[9px] font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 leading-tight mt-0.5">
@@ -1319,28 +1328,29 @@ export default function SpatialMapPage() {
                                           Zona
                                         </span>
                                       )}
-                                      {isMin && (
+                                      {m.price > 0 && isMin && (
                                         <span className="text-[8.5px] font-extrabold text-emerald-800 bg-emerald-100 px-1 py-0.2 rounded">
                                           Min
                                         </span>
                                       )}
-                                      {isMax && (
+                                      {m.price > 0 && isMax && (
                                         <span className="text-[8.5px] font-extrabold text-rose-800 bg-rose-100 px-1 py-0.2 rounded">
                                           Max
-                                        </span>
-                                      )}
-                                      {isMissing && (
-                                        <span className="text-[8px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded" title="Estimasi Rerata Kota">
-                                          Est
                                         </span>
                                       )}
                                     </div>
                                     <span
                                       className={`text-[11px] shrink-0 font-bold ${
-                                        isMin ? "text-emerald-700" : isMax ? "text-rose-700" : "text-slate-900"
+                                        m.price <= 0
+                                          ? "text-slate-400 font-normal"
+                                          : isMin
+                                          ? "text-emerald-700"
+                                          : isMax
+                                          ? "text-rose-700"
+                                          : "text-slate-900"
                                       }`}
                                     >
-                                      {isMissing ? "~" : ""}Rp {m.price > 0 ? m.price.toLocaleString("id-ID") : "-"}
+                                      {m.price > 0 ? `Rp ${m.price.toLocaleString("id-ID")}` : "-"}
                                     </span>
                                   </div>
                                 );

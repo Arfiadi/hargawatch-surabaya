@@ -109,13 +109,16 @@ export default function SurabayaMap({
     markerMapRef.current = {};
 
     markets.forEach((m) => {
-      const isMin = m.price === minPrice && minPrice > 0;
-      const isMax = m.price === maxPrice && maxPrice > 0;
+      const isAvailable = m.price > 0;
+      const isMin = isAvailable && m.price === minPrice && minPrice > 0;
+      const isMax = isAvailable && m.price === maxPrice && maxPrice > 0;
       const isSelected = m.id === selectedMarketId;
       const inZone = selectedZone === "Semua" || m.zone === selectedZone;
 
       // Nike / Apple Maps Minimalist Marker Pin
-      const pinColor = isSelected
+      const pinColor = !isAvailable
+        ? "#94A3B8" // Slate neutral for unavailable
+        : isSelected
         ? "#004328" // Brand Deep Pine Green
         : isMin
         ? "#059669" // Vibrant Emerald for cheapest
@@ -123,8 +126,8 @@ export default function SurabayaMap({
         ? "#DC2626" // Ruby for highest
         : "#0F172A"; // Sleek Rich Black like Nike pins
 
-      const iconSymbol = isMin ? "local_mall" : isMax ? "priority_high" : "storefront";
-      const opacity = inZone ? "1" : "0.35";
+      const iconSymbol = !isAvailable ? "remove" : isMin ? "local_mall" : isMax ? "priority_high" : "storefront";
+      const opacity = !isAvailable ? "0.6" : inZone ? "1" : "0.35";
       const scale = isSelected ? "scale(1.15)" : "scale(1)";
 
       const html = `
@@ -153,9 +156,9 @@ export default function SurabayaMap({
               ${m.shortName}
             </span>
             <span style="font-size: 10px; font-weight: 700; color: ${
-              isMin ? "#059669" : isMax ? "#DC2626" : "#334155"
+              !isAvailable ? "#64748B" : isMin ? "#059669" : isMax ? "#DC2626" : "#334155"
             }; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(4px); padding: 1.5px 7px; border-radius: 9999px; border: 1px solid rgba(226, 232, 240, 0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.06); white-space: nowrap; margin-top: 1px;">
-              ${m.isImputed ? "~" : ""}Rp ${m.price.toLocaleString("id-ID")}
+              ${isAvailable ? `Rp ${m.price.toLocaleString("id-ID")}` : "-"}
             </span>
           </div>
         </div>
@@ -185,6 +188,7 @@ export default function SurabayaMap({
           <!-- Alamat Pasar -->
           <div style="font-size: 11px; font-weight: 500; color: #64748B; margin-bottom: 8px; line-height: 1.35;">${m.address}</div>
           
+          ${isAvailable ? `
           <!-- Box Komoditas & Harga -->
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 7px 9px; border-radius: 8px; margin-bottom: 8px;">
             <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748B; margin-bottom: 2px;">
@@ -193,7 +197,7 @@ export default function SurabayaMap({
             <div style="display: flex; align-items: baseline; justify-content: space-between;">
               <div>
                 <span style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em; color: ${isMin ? "#16A34A" : isMax ? "#DC2626" : "#0F172A"};">
-                  ${m.isImputed ? "~" : ""}Rp ${m.price.toLocaleString("id-ID")}
+                  Rp ${m.price.toLocaleString("id-ID")}
                 </span>
                 <span style="font-size: 10.5px; font-weight: 500; color: #64748B;">/${unit}</span>
               </div>
@@ -217,6 +221,17 @@ export default function SurabayaMap({
               </strong>
             </div>
           </div>
+          ` : `
+          <!-- Box Komoditas Tidak Tersedia -->
+          <div style="background: #F1F5F9; border: 1px solid #E2E8F0; padding: 9px 11px; border-radius: 8px; margin-bottom: 8px;">
+            <div style="font-size: 11.5px; font-weight: 700; color: #475569; margin-bottom: 2px;">
+              Komoditas Tidak Tersedia
+            </div>
+            <div style="font-size: 11px; color: #64748B; line-height: 1.4;">
+              Komoditas ${selectedCommodityName} tidak diperjualbelikan di pasar ini.
+            </div>
+          </div>
+          `}
 
           <!-- Peran Distribusi Pasar -->
           <div style="margin-top: 8px; font-size: 10.5px; font-weight: 500; color: #64748B; line-height: 1.35; border-top: 1px dashed #E2E8F0; padding-top: 6px;">
