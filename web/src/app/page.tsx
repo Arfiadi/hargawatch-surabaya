@@ -284,7 +284,7 @@ export default function HomePage() {
         </div>
       </main>
 
-      <Footer showMapAttribution />
+      <Footer />
     </div>
   );
 }
